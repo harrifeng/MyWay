@@ -2,7 +2,8 @@
 
 ** 1.6 Problems:
 
-*** Problem 1 If memory were not scare, how would you implement a sort in a language with libraries for representing and sorting sets?
+*** Problem 
+    If memory were not scare, how would you implement a sort in a language with libraries for representing and sorting sets?
     + C language
       #+begin_src c
         int intcomp(int *x, int *y)
@@ -37,4 +38,89 @@
             }
             return 0;
         }                
+      #+end_src
+*** Problem 2
+    How would you implement bit vector using bitwise logical operations (such as and, or and shift)?
+    + We should understand the useage of MACRO, because the computer maybe 32-bit or 64-bit
+      #+begin_src c bitwise_operation_demo
+        #define BITSPERWORD 32
+        #define SHIFT 5
+        #define MASK 0x1F
+        #define N 10000000
+        int a[1 + N/BITSPERWORD];
+        
+        void set(int i) {        a[i>>SHIFT] |=  (1<<(i & MASK));}
+        void clr(int i) {        a[i>>SHIFT] &= ~(1<<(i & MASK));}
+        int test(int i) { return a[i>>SHIFT] &   (1<<(i & MASK));}
+      #+end_src
+*** Problem 3
+    Run-time efficiency was an important part of the design goal, and the resulting program was efficit enough.
+    Implement the bitmap sort on your system and measure its run time; how does it compare to the system sort and
+    to the sorts in Problem 1? Assume that n is 10000000, and that the input file contains 1000000 integers.
+    + To set up a test, complie two process, use pipe to connect them.
+    + C/C++ language sort would be easy to set up the test
+      For bitmap, the following is the demo code
+      #+begin_src c build_up_test
+        int main(int argc, char const* argv[])
+        {
+            int i;
+            for (i = 0; i < N; i++)
+                clr(i);
+            while (scanf("%d", &i) != EOF)
+                set(i);
+            for (i = 0; i < N; i++){
+                if (test(i))
+                    printf("%d\n", i);
+            }
+            return 0;
+        }
+      #+end_src
+    + I can see the difference between bitmap and c and cpp is not too much
+
+      |   |               | C++ STL | C qsort | C bitmap |
+      |---+---------------+---------+---------+----------|
+      | / | <>            | <>      | <>      | <>       |
+      | # | Total Seconds | 45.649  | 42.828  | 42.245   |
+
+
+*** Problem 4
+    If you take Problem 3 seriously, you will face the problem of generating k integers less than n without duplicates,
+    The simplest approach uses the first k positive integers. This extreme data set won't alter the run time of the 
+    bitmap method by much, but it might skew the run time of a system sort. How would you generate a file of k unique
+    random integers between 0 and n-1 in random order? Strive for a short program that is also efficient.
+    + Following is the code, its essential part is to swap the number, in other words, the algorithm is to generate a location,
+      and put the location's content to the front. Next time, if the same location is randomed, the content is different.
+      In this way, the algorithm keeps the content unique.
+      #+begin_src c unique_random_set
+        #include <stdlib.h>
+        #include <stdio.h>
+        #define NUM    1000000
+        #define TOTAL 10000000
+        
+        void swap(int *a, int *b)
+        {
+            int t;
+            t = *a;  *a = *b;  *b = t;
+        }
+        
+        int randint(int M, int N)
+        {
+            return M + rand()/ (RAND_MAX/(N-M+1) + 1);
+        }
+        
+        int main()
+        {
+            int i;
+            int arr[TOTAL];
+            for (i = 0; i < TOTAL; i++){
+                arr[i] = i;
+            }
+            for (i = 0; i < NUM; i++){
+                /*randint(l,u) returns a random integer in l ... u*/
+                int k = randint(i, TOTAL - 1);
+                swap(&arr[i], &arr[k]);
+                printf("%d ", arr[i]);
+            }
+            return 0;
+        }      
       #+end_src
