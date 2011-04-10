@@ -1,0 +1,40 @@
+* Column1: Cracking The Oyster
+
+** 1.6 Problems:
+
+*** Problem 1 If memory were not scare, how would you implement a sort in a language with libraries for representing and sorting sets?
+    + C language
+      #+begin_src c
+        int intcomp(int *x, int *y)
+        { return *x - *y; }
+        
+        int a[1000000];
+        int main(void)
+        {
+            int i, n = 0;
+            while (scanf("%d", &a[n]) != EOF)
+                n++;
+            /* usage of qsort is important */
+            qsort(a, n, sizeof(int), intcomp);
+            for (i = 0; i < n; i++){
+                printf("%d\n", a[i]);
+            }
+        }
+      #+end_src
+    + C++ language
+      #+begin_src c++
+        /* this C++ program uses the set container from STL */
+        int main(void)
+        {
+            set<int> S;
+            int i;
+            set<int>::iterator j;
+            while (cin >> i){
+                S.insert(i);
+            }
+            for (j = S.begin(); j != S.end(); ++j){
+                cout << *j << "\n";
+            }
+            return 0;
+        }                
+      #+end_src
