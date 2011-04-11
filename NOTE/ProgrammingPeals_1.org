@@ -40,6 +40,7 @@
         }                
       #+end_src
 
+
 *** Problem 2
     How would you implement bit vector using bitwise logical operations (such as and, or and shift)?
     + We should understand the useage of MACRO, because the computer maybe 32-bit or 64-bit
@@ -54,6 +55,7 @@
         void clr(int i) {        a[i>>SHIFT] &= ~(1<<(i & MASK));}
         int test(int i) { return a[i>>SHIFT] &   (1<<(i & MASK));}
       #+end_src
+
 
 *** Problem 3
     Run-time efficiency was an important part of the design goal, and the resulting program was efficit enough.
@@ -175,6 +177,7 @@
          int test(int i) { return a[i>>SHIFT] & (1<<(i & MASK))
       #+end_src
 
+
 *** Problem 9
     One problem with trading more space to use less time is that  initializing the space can
     itself take a great deal of time. Show how to circumvent this problem by dssigning a 
@@ -206,3 +209,38 @@
       #+end_src
 
     + This problem contains key indexing and wily signature scheme.
+
+*** Problem 10
+    Before the days of low-cost overnight deliveries, a store allowed customers to 
+    order items over the telephone, which they picked up a few days later. The store's
+    database used the customer's telphone number as the primary key for retrieval 
+    (customer know their phone numbers and the keys are close to unique). How would
+    you organize the store's databse to allow orders to be inserted and retrieved efficiently?
+    + The store placed the paper orders forms in a 10*10 array of bins, using the last
+      two digits of the customer's phone number as the hash index. When the customer
+      telephoned an order, it was placed in the proper bin. When the customer arrived 
+      to retrieve the merchandise, the salesperson sequentially searched through the 
+      orders in the appropriate bin - This is classical 'open hasing with collision 
+      resolution by sequential search'
+    + The last two digit of the phone number are 
+      quite close to random and therefore an excellent hash function, while the first
+      two digit would be a horrible hash function - why? Some municipalities use a 
+      similar scheme to record deeds in sets of record books.
+
+
+*** Problem 11
+    In the early 1980's Lockheed engineers transmitted daily a dozen drawins from a
+    Computer Aided Design(CAD) System in their Sunnyvale, California, plant to a
+    test station in Santa Cruz. Although the facilites was just 25 miles apart, an
+    automobile courier service took over an hour (due to traffic jams and mountain
+    roads) and cost a hundred dollars per day. Propose alternative data transmission
+    schemes and estimate their cost
+    + The answer seems like a joke: the engineer use the pigeon to transmit file.
+
+*** Problem 12
+    Pioneers of human space flight soon realized the need for writing implements that 
+    work well in the extreme environment of space. A popular urban legend asserts that
+    the United States National Aeronautics and Space Administration (NASA) solved the
+    problem with a million dollars of research to develop a spcial pen. According to 
+    the legend, how did the former Soviet Union solve the same problem?
+    + Pencil, of course.
