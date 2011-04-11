@@ -2,7 +2,7 @@
 
 ** 1.6 Problems:
 
-*** Problem 
+*** Problem 1
     If memory were not scare, how would you implement a sort in a language with libraries for representing and sorting sets?
     + C language
       #+begin_src c
@@ -39,6 +39,7 @@
             return 0;
         }                
       #+end_src
+
 *** Problem 2
     How would you implement bit vector using bitwise logical operations (such as and, or and shift)?
     + We should understand the useage of MACRO, because the computer maybe 32-bit or 64-bit
@@ -53,6 +54,7 @@
         void clr(int i) {        a[i>>SHIFT] &= ~(1<<(i & MASK));}
         int test(int i) { return a[i>>SHIFT] &   (1<<(i & MASK));}
       #+end_src
+
 *** Problem 3
     Run-time efficiency was an important part of the design goal, and the resulting program was efficit enough.
     Implement the bitmap sort on your system and measure its run time; how does it compare to the system sort and
@@ -124,3 +126,83 @@
             return 0;
         }      
       #+end_src
+
+        
+        
+
+*** Problem 5
+    The programmer said that he had about a megabyte of free storage, but the code
+    we sketched uses 1.25megabytes. He was able to scrounge the extra space without
+    much trouble. If the megabyte had been a hard and fast boundary, what would you
+    have recommended? what is the run time of your algorithm?
+    + This problem also comes from the bitmap question, as if you use bitmap to stand
+      for the 10,000,000 number, it will use 10,000,000 bits, in other words, 1.25 
+      megabytes. A two-pass algorithm solves this problem. That is to say, first sort
+      0 to 4,999,999. then sort 5,000,000 to 9,999,999
+
+
+*** Problem 6
+    What would you recommend to the programmer if, instead of saying that each integer
+    could appear at most once, he told you that each integer could appear at most ten
+    times? How would your solution change as a function of the amount of available 
+    storage?
+    + We can also use bitmap to storage the count, we use 4 bits, rather than 1 bit to 
+      stand for the occurence. The total memory usage would be 10,000,000*4/8 Bytes
+
+
+*** Problem 7
+    [R. Weil] The program as sketched has several flaws. The first is that it assumes that
+    no integer appears twice in the input. What happens if one does show up more than once?
+    How could the program be modified to call an error function in that case? What happened
+    when an input integer is less than zero or greater than or equal to n? What if an input
+    is not numeric? What should a progam do under those circumstances? What other sanity 
+    check could the program incorporate? Describe small data sets that test the program, 
+    including its proper handling of these and other ill-behaved cases.
+    + This shows the important of error handling, for C language, these sanity check should
+      be done at the beginning of every program. for more complicated language like C++, 
+      exception should be used.
+
+
+*** Problem 8
+    When the programmer faced the problem, all toll-free phone numbers in the United States
+    had the 800 area code. Toll-free codes now include 800,877 and 888, and the list is 
+    growing. How would you sort all of the toll-free numbers using only a megabyte? How can
+    you store a set of toll-free numbers to allow very rapid lookup to determine whether a 
+    given whether a given toll-free number is available or alreay taken?
+    + This can be solved by bitmap, about the rapid lookup for availablity, it is the test
+      bit function, as below. Detailed information can be found at Problem 2
+      #+begin_src c 
+         int test(int i) { return a[i>>SHIFT] & (1<<(i & MASK))
+      #+end_src
+
+*** Problem 9
+    One problem with trading more space to use less time is that  initializing the space can
+    itself take a great deal of time. Show how to circumvent this problem by dssigning a 
+    technique to initialize an entry of a vector to zero the first time it is accessed. Your
+    scheme should use constant time for initialization and for each vector access, and use 
+    extra space proportional to the size of the vector. Because this method reduces initialization 
+    time by using even more space, it should be considered only when space is cheap, time is
+    dear and the vector is sparce.
+    + The effect of initializing the vector data[0...n-1] can be accomplished with a signature 
+      contained in two additional n-element vectors, from and to, and an integer top. If the
+      element data[i] has been initialized, then from[i] < top and to[from[i]] = i. Thus from
+      is a simple signature, and to and top together make sure that from is not accidentally signed
+      by the random contents of memory.
+   
+      | / | <>   | <> | <> | <> | <> | <> | <> | <> | <> |
+      | # | data |    |  3 |    |  2 |    |  8 |    |    |
+      |---+------+----+----+----+----+----+----+----+----|
+      | # | from |    |  0 |    |  2 |    |  1 |    |    |
+      |---+------+----+----+----+----+----+----+----+----|
+      | # | to   |  1 |  5 |  3 |    |    |    |    |    |
+                                  
+
+    + The variable top is initially zero; the array element i is first accessed by the code
+      #+begin_src c
+         from[i] = top;
+         to[top] = i;
+         data[i] = 0;
+         top++;
+      #+end_src
+
+    + This problem contains key indexing and wily signature scheme.
