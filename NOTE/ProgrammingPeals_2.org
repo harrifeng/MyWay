@@ -3,10 +3,9 @@
 
 ** Three Problems
    + A. Given a sequential file that contains at most four billion 32-bit integers in random
-     order, find a 32-bit integer that isn't in the file (and there must be at least one missing
-     -why?).How would you solve this problem with ample quantities of main memory? How would you
-     solve it if you could use several external "scratch" file but only a few hundred  bytes of 
-     main memory?
+     order, find a 32-bit integer that isn't in the file. How would you solve this problem with
+     ample quantities of main memory? How would you solve it if you could use several external
+     "scratch" file but only a few hundred bytes of main memory?
    + Rotate a one-dimensional vector of n elements left by i positions. For instance,  with n=8
      and i=3, the vector abcdefgh is rotated to defghabc. Simple code uses an n-element intermediate
      vector to do the job in n steps. Can you rotate the vector in time proportional to n using 
@@ -35,3 +34,55 @@
      6) This problem can also be found by sorting the file and then scanning, but that would require time proportional 
         to n log n, rather than n.
    
+** The Power of Primitives
+   + Problem B is to rotate the n-element vector x left by i positions in time proportional to n and with just 
+     a few bytes of memory. First we have to say this kind of rotate is very common, such as in vector's operation,
+     or more important, rotation corresponds to swapping adjacent block of memory of unequal size: whenever
+     you drag-and-drop a block of text elsewhere in a file, you ask the program to swap two blocks of memory.
+   + The solution can be concluded as : two negatives make a positive.
+     #+begin_src c
+       reverse(0, i-1) /* cbadefgh */
+       reverse(i, n-1) /* cbahgfed */
+       reverse(0, n-1) /* defghabc */     
+     #+end_src
+
+** Getting It Together: Sorting
+   + It is obvious that Problem B can not be solved by multiplications, we need a smarter algorithm. The essential
+     part of this algorithm is that words in the same anagram class have the same signature
+   + so "dopiest" and "deposit" share a same signature "deposite", which is sorted alphabetically.
+
+** Principles
+*** Sorting:
+    + The most obvious use of sorting is to produce sorted output, either as part of the system specification
+      or as preparation for another problems
+    + In the anagram problem, ordering the letters within a word provides a canonical form for the words within
+      an anagram class.
+*** Binary Search:
+    + The algorithm for looking up an element in a sorted table is remarkably efficient and can be usd in main 
+      memory or on disk
+    + Its only drawback is that the entire table must be known and sorted in advance.
+*** Signatures
+    + When an equivalence relation defines classes, it is helpful to define a signature such that every item in
+      the same class has the same signature and no other item does.
+    + Sorting the letters within a word yields one signature for an anagram class
+    + Another knid of signature might be following: "mississippi" may have a signature "i4m1p2s4", and so on.
+*** Problem Definition
+    + Column 1 show the importance of determining what the user really want, Column 2 is the next step in 
+      problem definition: what primitives will we use to solve the problem?
+*** A Problem Solver's Perspectie
+    + Good programmers are a little bit lazy: they sit back and wait for an insight rather than rushing forward
+      with their first idea.
+
+** Problems
+*** Problem 1
+    Consider the problem of finding all the anagrams of a given input word. How would you solve this problem
+    given only the word and dictionary? What if you could spend some time and space to process the dictionary 
+    before answering any questions?
+    + To find all anagrams of a given word we first compute its signature, if no preprocessing is allowed then
+      we have to read the entire dictorary sequentially, compute the signature of each word, and compare the 
+      two signatures.
+    + With preprocessing, we could perform a binary search in a precomputed structure containing (signature, word)
+      pairs sorted by signature.
+*** Problem 2
+    Given a sequantial file containing 4,300,000,000 32-bit integers, how can you find one that appears at least twice?
+    + 
