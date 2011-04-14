@@ -1,0 +1,37 @@
+* Column2: AHA! Algorithms
+  A problem that seems difficult may have a simple, unexpected solution
+
+** Three Problems
+   + A. Given a sequential file that contains at most four billion 32-bit integers in random
+     order, find a 32-bit integer that isn't in the file (and there must be at least one missing
+     -why?).How would you solve this problem with ample quantities of main memory? How would you
+     solve it if you could use several external "scratch" file but only a few hundred  bytes of 
+     main memory?
+   + Rotate a one-dimensional vector of n elements left by i positions. For instance,  with n=8
+     and i=3, the vector abcdefgh is rotated to defghabc. Simple code uses an n-element intermediate
+     vector to do the job in n steps. Can you rotate the vector in time proportional to n using 
+     only a few dozen extra bytes of storage?
+   + Given a dictionary of English words, find all sets of anagrams. For instance, "pots", "stop"
+     and "tops" are all anagrams of one another because each can be formed by permuting the letters
+     of the others.
+
+** Ubiquitous Binary Search
+   + We initially know that the object is within a given range, binary search is a very good solution.
+   + Sequential search uses about n/2 comparisons on average to search a table of n elements, while
+     binary search never uses more than about log_2N comparisons.
+   + Programmers start with the simple data structure of sequential search, which is often fast enough.
+     if it becomes too slow, sorting the table and using a binary search can usually remove the bottleneck.
+   + Of course, if we have ample memory, we can use the bitmap technique from Column 1. 
+   + But also, we need to solve this problem with a few hundred bytes of memory. Apparently, the solution 
+     should be binary search, the question is how to configure binary search. Following is Ed Regingold's
+     solution:
+     1) In order to save memory, we will put all the numbers in the file.
+     2) It is helpful to view this binary search in term of the 32 bits that represent each integer.
+     3) First time, we split the numbers by last bit of the number (you can compare it split odd and even
+        number.
+     4) After the first around, we will have two files, the bigger one is abandoned, we will began the second
+        round spliting the numbers by last second bit.
+     5) Finally, we will be able to find this missing number in the smallest file.
+     6) This problem can also be found by sorting the file and then scanning, but that would require time proportional 
+        to n log n, rather than n.
+   
