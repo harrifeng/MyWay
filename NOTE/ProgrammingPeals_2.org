@@ -85,4 +85,62 @@
       pairs sorted by signature.
 *** Problem 2
     Given a sequantial file containing 4,300,000,000 32-bit integers, how can you find one that appears at least twice?
-    + 
+    + I can not follow the answer very much, as for me, the best way is to use the bitmap to stand for these numbers,
+      one bit per number, firstly, all zero, then if one number appears once, the bit become one, if appears and the 
+      corresponding bit is already one, it shows that the number appears twice.
+
+*** Problem 3
+    We skimmed two vector rotation algorithm that require subtle code; implement each as a program. How does the greatest
+    common divisor of i and n appear in each program?
+    + The "juggling" code rotates x[n] left by rotdist. Its essential part is to find the right place to go, at the first
+      time
+      #+begin_src c
+        #include <iostream>
+        using namespace std;
+        
+        /* get i and j 's greatest common divisor */
+        int gcd(int i, int j)
+        {
+            while (i != j){
+                if (i > j)
+                    i -= j;
+                else
+                    j -= i;
+            }
+            return i;
+        }
+        
+        /* Every time we use x[j] = x[k] to put the right
+           value for right slot */
+        void juggling(int* x, int n, int rotsit)
+        {
+            for (int i = 0; i < gcd(rotsit, n); i++){
+                int t = x[i];
+                int j = i;
+                while(1){
+                    int k = j + rotsit;
+                    if (k >= n)
+                        k -= n;
+                    if (k == i)
+                        break;
+                    x[j] = x[k];
+                    j = k;
+                }
+                x[j] = t;
+            }
+        }
+        
+        int main()
+        {
+            int arr[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+            for (int i = 0; i < 10; i++){
+                cout << arr[i] << endl;
+            }
+        
+            juggling(arr, 10, 4);
+            cout << "----------" << endl;
+            for (int i = 0; i < 10; i++){
+                cout << i << " " <<  arr[i] << endl;
+            }
+        }
+      #+end_src
