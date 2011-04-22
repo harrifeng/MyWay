@@ -178,3 +178,42 @@
       its push-button encoding we use a structure that contains the signatures and the other data. While we could sort that
       structure and then look up a push-button encoding by binary search, in a real system we would probably use hasing or a 
       database system.
+
+*** Problem 7
+    In the early 1960's, Vic Vyssotsky worked with a programmer who had to transpose a 4000-by-4000 matrix stored on matrix 
+    stored on magnetic tape(each record had the same format in serveral dozen bytes). The original program his colleague 
+    suggested would have taken fifty hours to run; how did Vyssotsky reduce the run time to half an hour?
+    + Previously there is one such matrix:
+      | 1 | 2 | 3 |
+      | 4 | 5 | 6 |   will be stored on magnetic tape in this order: 1,2,3,4,5,6,7,8,9
+      | 7 | 8 | 9 |
+    + Vyssotosky gave the number location information like this:
+      [0,0]1, [0,1]2, [0,2]3, [1,0]4, [1,1]5, [1,2]6, [2,0]7, [2,1]8, [2,2]9
+      We can find that this order is sorted by row first and then by column
+    + We then sorted previous sequence by column first, then row. The sequence will be
+      [0,0]1, [1,0]4, [2,0]7, [0,1]2, [1,1]5, [2,1]8, [0,2]3, [1,2]6, [2,2]9
+    + 1,4,7,2,5,8,3,6,9 will result matrix like this:
+      | 1 | 4 | 7 |
+      | 2 | 5 | 8 |
+      | 3 | 6 | 9 |
+
+*** Problem 8
+    [J.Ullman] Given a set of n real numbers, a real number t, and an integer k, how quickly can you determine whether there
+    exists a k-element subset of the set that sums to at most t?
+    + The key for this problem is that some k-element subset sums to at most t if and only if the subset consisting of the k
+      smallest element does. 
+    + That subset can be found in time proportional to n log n by sorting the original set, or in time proportional to n by 
+      using a selection algorithm (Problem 9 in Column 11)
+
+*** Problem 9
+    Sequential search and binary search represent a tradeoff between search time and preprocessing time. How many binary search
+    need be performed in an n-element table to buy back the preprocessing time required to sort the table?
+    + Sorting the table will be finished in tim proportional to n log n, searching then would be reduced to logn
+    + Sequential search will always to be n/2
+    + nlogn + Xlogn = Xn/2 => X will be the threshold value. 
+
+*** Problem 10
+    On the day a new researcher reported to work for Thomas Edison, Edison asked him eo compute the volume of an empty light bulb 
+    shell. After several hours with calipers and calculus, the fresh hire returned with the answer of 150 cubic centimetrs. In a
+    few seconds, Edison computed and responded "closer to 155" - how did he do it?
+    + Edison filled the shell with water and emptied it into a graduated cylinder.
