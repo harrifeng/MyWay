@@ -185,8 +185,9 @@
     suggested would have taken fifty hours to run; how did Vyssotsky reduce the run time to half an hour?
     + Previously there is one such matrix:
       | 1 | 2 | 3 |
-      | 4 | 5 | 6 |   will be stored on magnetic tape in this order: 1,2,3,4,5,6,7,8,9
+      | 4 | 5 | 6 |
       | 7 | 8 | 9 |
+    + Will be stored on magnetic tape in this order: 1,2,3,4,5,6,7,8,9
     + Vyssotosky gave the number location information like this:
       [0,0]1, [0,1]2, [0,2]3, [1,0]4, [1,1]5, [1,2]6, [2,0]7, [2,1]8, [2,2]9
       We can find that this order is sorted by row first and then by column
@@ -217,3 +218,64 @@
     shell. After several hours with calipers and calculus, the fresh hire returned with the answer of 150 cubic centimetrs. In a
     few seconds, Edison computed and responded "closer to 155" - how did he do it?
     + Edison filled the shell with water and emptied it into a graduated cylinder.
+
+** Further Reading
+   You can find several good books on algorithm on section8.8
+** Implementing an Anagram Program
+   + We can implement the program by 3 parts
+     pans               anps pans                anps pans
+     pots               opst pots                anps snap                 pans snap
+     opt    -> SIGN ->   opt opt   -> SORT ->     opt opt   -> SQUASH ->      opt
+     snap               anps snap                opst pots               pots stop tops
+     stop               opst stop                opst stop
+     tops               opst tops                opst tops
+
+   + SORT is implemented by system sort
+
+   + SIGN is implemented by following code
+     #+begin_src c       #include <stdio.h>
+       #include <stdlib.h>
+       #define WORDMAX 100
+       
+       int charcomp(char *x, char *y)
+       {
+           return *x - *y;
+       }
+       
+       int main()
+       {
+           char word[WORDMAX], sig[WORDMAX];
+           while(scanf("%s", word) != EOF) {
+               strcpy(sig, word);
+               qsort(sig, strlen(sig), sizeof(char), charcomp);
+               printf("%s %s\n", sig, word);
+           }
+           return 0;
+       }
+       #+end_src
+
+   + squash is implemented by following code
+     #+begin_src c       #include <stdio.h>
+       #define WORDMAX 100
+       
+       int main()
+       {
+           char word[WORDMAX], sig[WORDMAX], oldsig[WORDMAX];
+           int linenum = 0;
+           strcpy(oldsig, "");
+           
+           while (scanf("%s %s", sig, word) != EOF) {
+               if (strcmp(oldsig, sig) != 0 && linenum > 0)
+                   printf("\n");
+               strcpy(oldsig, sig);
+               linenum ++;
+               printf("%s ", word);
+           }
+           printf("\n");
+           return 0;
+       }
+       #+end_src
+
+   + Input the words into the file dictionary and type following in the shell:
+     sign < dictionary | sort | squash > gramlist
+
