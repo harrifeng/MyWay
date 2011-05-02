@@ -1,0 +1,6 @@
+* Chapter1 Introduction 
+  + 在Unix系统里面，process就可以被看成是一种thread,另外加上address space, file descriptor 和一些其他数据。
+  + 有些版本的Unix支持一些叫做"lightweight" 的process， 他们之所以被称之为lightweight，就是因为他们可以摆脱一些 
+    甚至所有的数据，这样一来，可以提高他们的效率。
+  + 虽然摆脱了数据的束缚，但是处理数据以外的其他一切东东，比如address space 和 file descriptor等等，这些lightweight
+    process 还是需要的。这样一来，你就可以使用同一个address space，但是利用不同的thread，做不同的事情。
