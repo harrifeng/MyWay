@@ -1,4 +1,52 @@
 * Column3 Data Structures Programs
 ** A Survey Program
    As for me, this example is not that intresting, as it told us only one thing: get order-of-magnitude
-   reduction in code length
+   reduction in code length, it means less possibility of errors
+** Form-Letter Programming
+   This example shows the importance of separating the data from the control, for instance, we may write
+   a form letter schema like this:
+   #+begin_src c     
+     Welcome back $1
+     We hope that you and all the members
+     of the $0 family are constaly reminding
+     your neighbors there on $5 to shop with 
+     us. We will ship your order to $2, $3
+   #+end_src
+   And, you can write some code of control like this, even the text previously written changed, the following
+   code still works.
+   #+begin_src c
+     read file from database
+     loop from start to end of schema
+         c = next character in schema
+         if c != '$'
+             printchar c
+         else
+             c = next character in schema
+             case c of
+                  '$'        printchar '$'
+                  '0' - '9'  printstring field[c]
+                  default    error("bad schema")
+   #+end_src
+   程序员在节省空间方面无计可施时，将自己从代码中解脱出来，退回起点并集中精力研究数据，常常有奇效，数据
+   的表现形式是程序设计的根本
+** An Array of Example
+   这个例子更多的是讲的Don't Repeat Your Code的故事。
+   Gathering repeated code into a common function reduced 100 lines of code to 25, and judicisou
+   use of arrays dropped that to 4 lines.
+   下面是一些Don't Repeat Your Code 的经典例子
+   + Error Message: Dirty system have hundreds of error message throughout the code, while
+     clean systems have them accessed through a single function. Consider the difficulty of
+     performing the following action: produce a list of all possible error messages, change
+     each "serious" error message to sound an alarm, and translate the error message into
+     French or German.
+   + Date Function: Problem 4
+   + Word Analysis: Problem 5
+** Structuring Data
+   What is well-structured data?
+   + In old days, structured data meant well-chosen variable names, David Parnas extended :
+     Approach to observe that the data a system is to process give deep insight into a good
+     module structure. (好像就是前面说的，数据表现形式是程序设计的根本)
+   + Nowdays, "Object-Oriented Programming" took the next step. Programmers learned to identify
+     the fundamental objects in their design, publish to the world an abstraction and the essential
+     operations on it and hide the implementation details from view.
+
