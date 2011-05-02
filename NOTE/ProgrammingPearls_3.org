@@ -1,0 +1,4 @@
+* Column3 Data Structures Programs
+** A Survey Program
+   As for me, this example is not that intresting, as it told us only one thing: get order-of-magnitude
+   reduction in code length
