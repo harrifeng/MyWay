@@ -4,3 +4,67 @@
     甚至所有的数据，这样一来，可以提高他们的效率。
   + 虽然摆脱了数据的束缚，但是处理数据以外的其他一切东东，比如address space 和 file descriptor等等，这些lightweight
     process 还是需要的。这样一来，你就可以使用同一个address space，但是利用不同的thread，做不同的事情。
+** The "bailing programmers"
+   + 在这里作者举了个例子，讲一写programmer在快要沉的船上轮流向外舀水的故事，在这个故事当中，很多角色适合于Pthread：
+     - Programmer 代表 thread
+     - bailing bucket 代表在一段时间内只能由一个thread占有的东西，比如 shared data, or asynchronization object,
+       主要的Pthread synchronization object叫做mutex
+     - Nudges and shouts 代表同步的机制。 Pthread 提供了condition variables来传达shared data state的改变
+** Definitions and terminology
+*** Asynchronous
+    + Asynchronous(异步) means that things happen independently unless there's some enforced dependency
+    + Life is asynchronous. Events that are not dependent on one another can occur simultaneously.
+    + Traditional computer programming, on the other hand, causes all events to occur in series unless
+      the programmer takes "extraordinary measurement" to allow them to happen concurrently.
+    + If you can start an asynchronous operation, but then you can do nothing but wait for it, you're
+      not getting much benefit from the asynchrony.
+*** Concurrency
+    + Concurrency(并发) is used to refer to things that appear to happen at the same time, but which may
+      occur serially.
+    + Concurrency describes the behavior of threads or processes on a uniprocessor system.
+    + The definition of concurrent execution in POSIX requires that "functions that suspend the execution
+      of the calling thread shall not cause the execution of other threads to be indefinitely suspended.
+    + Concurrency的做法在于让progress之间相互独立，这样一来不同的progress可以交叉运行，但是concurrency并不意味着
+      这些process是同时运行的。
+    + concurrency可以利用自己异步的优势，在其他independent operation运行的情况下，做自己的事情。
+    + Pthread provide you with both concurrency and asynchrony, and the combination is exacly what you need
+      to easily write responsive and efficient programs.
+*** Uniprocessor and muliprocessor
+    These term are easy to understand.
+*** Parallelism
+    + Parallelism (并行) describes _concurrent_ sequences that proceed _simultaneously_
+    + That is to say, true parallellism can occur *only* on a multiprocessor system.
+    + While concurrency can coccur on a uniprocessor because concurrency is, essentially, the illusion of
+      parallelism.
+    + Parallelism requires that a program be able to perform two computations at once, while concurrency
+      requires that the programmer be able to pretend that two things can happen at once.(并发保证一个没做完
+      另外一个也可以做，间或就可以，没一定要同时发生）
+*** Thread safety and reentrancy
+    + Thread-safe means that the code can be clled from umltiple threads without destructive result.
+    + 这里只提到safe，并没有提到效率，其实如果真的想保证function的thread-safe，可以用mutex锁，这样一来其实只有一个
+      thread在用function, 那肯定没有问题。
+    + 更好的办法是把function内部分成小的不同的critical sections.这样不同的critical section可以被不同的thread来调用
+    + 更上一层楼的办法是重新设计函数，让这些函数 protect critical data， 而不是critical code, 因为thread不会再同一时间
+      使用同一data，这种设计方法可以保证fully parallel execution of the code.
+    + 比如 /putchar/ function, 我们不应该把 /putchar/ 这个函数给lock住，而是应该associate the mutext with the stream
+      也就是我们说的protecting the data rather the code.这样一来，你的thread如果想写stream就可以并行的使用 /putchar/
+      了，而且can use the same mutex to safely coordinate their access to that stream
+    + reentrant 其实就是efficiently thread-safe的同义词。要做到reentrant就要做到不依赖static data，最好不要依赖any form
+      of synchronization between threads.
+    + 一般来说a function can avoid internal synchronization by saving state in a "context structure" that is controlled
+      by the caller. The caller is then responsible for any necessary synchronization of the data.
+*** Concurrency control functions
+    + Any "concurrent system" must provide a core set of essential functions that you need to create concurrent execution
+      contexts:
+      - Execution context: when one needs to wait for an external event, it must be able to continue a context from
+        the point where it last executed, with the same register contents, at a later time
+      - Scheduling (调度策略): determines which context (or set of contexts) should execute at any given pint in time, and
+        switches between contexts when necessary
+      - Synchronization (同步机制）： provides mechanisms for concurrent execution context to coordinate their use of shared
+        resources.
+    + 下面的表格可以清晰的表示上面的概念
+      |                     | Execution context | Scheduling               | Synchronization                 |
+      | Real traffic        | automobile        | traffic lights and signs | turn signals and barke lights   |
+      | Unix(before threas) | process           | priority(nice)           | wait and pipes                  |
+      | Pthreads            | thread            | policy, priority         | condition variables and mutexes |
+      |---------------------+-------------------+--------------------------+---------------------------------|
