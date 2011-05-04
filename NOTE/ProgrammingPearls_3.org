@@ -49,4 +49,50 @@
    + Nowdays, "Object-Oriented Programming" took the next step. Programmers learned to identify
      the fundamental objects in their design, publish to the world an abstraction and the essential
      operations on it and hide the implementation details from view.
-
+** Powerful Tools for Specialized Data
+   Modern tools allow programmers to build applications with minimal effort:
+   + Hypertext
+   + Name-Value Pairs
+   + Spreadsheets
+   + Database
+   + Domain-Specific Language 
+** Principles
+   + All in all, /don't write a big program when a little one will do/
+   + Some principles for you to ponder as you rear back
+     - /Rework repeated code into arrays/: A long stretch of similar code is often best expressed by the
+       simplest of data structure, the array
+     - /Use advanced tools when possible/: like Hypertext, name-value pairs, spreadsheets.
+     - /Let the data structure the program/: Before writing code, good programmers thoroughly understand
+       the input, the output and the intermediate data structures around which their programs are built.
+** Problems
+*** Problem 1:
+    #+begin_src c
+      int income;
+      if (income <= 2200)
+          tax = 0;
+      else if (income <= 2700)
+          tax =        0.14 * (income - 2200);
+      else if (income <= 3200)
+          tax =        0.15 * (income - 2700);
+      else if (income <= 3700)
+          tax =        0.16 * (income - 3200);
+      else if (income <= 4200)
+          tax =        0.17 * (income - 3700);
+      /* .......... */
+      else
+          tax = 53090 + 0.7 * (income - 102200);
+    #+end_src
+    上面这个程序，看似没有什么更改的地方，但是其实因为这是个分段的函数程序，这种程序可以加一个infinite的 _哨兵值_
+    回使得线性查找(sequential search) 更加好写，也更加快。因为哨兵可以减少判断条件。
+*** Problem 2：
+    基本就是告诉我们在重复机械劳动的代码当中，使用数组。
+*** Problem 3：
+    大写字母I可以被解释成为：
+    3 lines 9x
+    6 lines 3 blank 3x 3 blank
+    3 lines 9x
+    这样就可以把所有的大写字母，用这种数组的方式存储下来，好比预先计算好答案。
+*** Problem 4：
+    1) 计算两个日期之间差多少天： 计算两个日期所在的年份天数，后面的日期前去甜蜜的日期（不够借365天）， 然后加上年份乘以365（考虑闰年).
+    2) 找出某天是星期几： 计算给定日期和已知星期天之间天数差距利用1)，然后%7.
+    3) 给指定年份的某个月做日历：知道该月是几天，然后利用2)求出该月第一天周几.

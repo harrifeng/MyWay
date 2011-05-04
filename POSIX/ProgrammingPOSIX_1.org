@@ -63,8 +63,8 @@
       - Synchronization (同步机制）： provides mechanisms for concurrent execution context to coordinate their use of shared
         resources.
     + 下面的表格可以清晰的表示上面的概念
+      |---------------------+-------------------+--------------------------+---------------------------------|
       |                     | Execution context | Scheduling               | Synchronization                 |
       | Real traffic        | automobile        | traffic lights and signs | turn signals and barke lights   |
       | Unix(before threas) | process           | priority(nice)           | wait and pipes                  |
       | Pthreads            | thread            | policy, priority         | condition variables and mutexes |
-      |---------------------+-------------------+--------------------------+---------------------------------|
