@@ -68,3 +68,17 @@
       | Real traffic        | automobile        | traffic lights and signs | turn signals and barke lights   |
       | Unix(before threas) | process           | priority(nice)           | wait and pipes                  |
       | Pthreads            | thread            | policy, priority         | condition variables and mutexes |
+** Asynchronous programming is intutive
+   可能大家不知道，Unix就是一个asynchronous programming的实例。
+*** because Unix is asynchronous
+    + If you run the program in the background, it runs asynchronously with the shell.
+    + /Time is a synchronization mechanism/
+    + /Unix pipes and files can be synchronization mechanism/
+    + 比如在Bash中 ls|more 其实bash就是同时开启了两个process. Both commands proceed concurrently (or even in parallel on a
+      multiprocessor) with /ls/ supplying data and /more/ processing that data.
+    + Unix process可以异步运转的主要原因是因为operating system save the state of one process and switch to another without
+      affecting the operation of either.
+    + Unix process 不及保留了足够的进程切换的信息，他们还额外的保留了些东西，比如address space和file descriptors.
+    + Thread的诞生，正是轻量级的process，他们不再保留那些额外的东西(address space), 仅仅保留进程切换所需要的最基础的信息（如，寄存器），
+      而那些额外的东西，在一个process里面的threads是共享的。
+    + /Threads are "simpler" than processes./
