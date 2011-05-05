@@ -82,3 +82,12 @@
     + Thread的诞生，正是轻量级的process，他们不再保留那些额外的东西(address space), 仅仅保留进程切换所需要的最基础的信息（如，寄存器），
       而那些额外的东西，在一个process里面的threads是共享的。
     + /Threads are "simpler" than processes./
+    + 在process内部进行thread的切换非常的快捷，很大一部分的原因是由于threads within a process share the adrress space - code, data
+      stack, everything.
+*** because the world is asynchronous
+    + Like moter vehicles move in parallel on a highway, and have to agree to certain conventions in order to avoid collisions,
+      Threads must be coded to "agree" to rules that protect the program.
+    + You need enough thread, but not too many； enough communication, but not too much. A key to good threaded programming is
+      learning how to judge the proper balance for each situation.
+** About the examples in this book
+** Asynchronous programming, by example.
