@@ -91,3 +91,34 @@
       learning how to judge the proper balance for each situation.
 ** About the examples in this book
 ** Asynchronous programming, by example.
+   + 下面就是我们第一个例子(alarm.c)它能够让我们提醒自己在600秒后做的事情，但可惜的是在这600秒里面，我们除了啥等，啥都不能做
+   + The prgoram is doing something synchronously that you would probaly like to be asynchronous.
+     #+begin_src c 
+       #include "errors.h"
+       
+       int main(int argc, char *argv[])
+       {
+           int seconds;
+           char line[128];
+           char message[64];
+       
+           while (1) {
+               printf("Alarm > ");
+               if (fgets(line, sizeof(line), stdin) == NULL)
+                   exit(0);
+               if (strlen(line) <= 1)
+                   continue;
+               /*
+                * Parse input line into seconds (%d) and a message
+                * (%64[^\n]), consisting of up to 64 characters
+                * separated from the seconds by whitespace.
+                */
+               if (sscanf(line, "%d %64[^\n]", &seconds, message) < 2){
+                   fprintf(stderr, "Bad command\n");
+               } else {
+                   sleep(seconds);
+                   printf("(%d) %s\n", seconds, message);
+               }
+           }
+       }
+     #+end_src
