@@ -91,7 +91,7 @@
       learning how to judge the proper balance for each situation.
 ** About the examples in this book
 ** Asynchronous programming, by example.
-   + 下面就是我们第一个例子(alarm.c)它能够让我们提醒自己在600秒后做的事情，但可惜的是在这600秒里面，我们除了啥等，啥都不能做
+   + 下面就是我们第一个例子(alarm.c)它能够让我们提醒自己在600秒后做的事情，但可惜的是在这600秒里面，我们除了傻等，啥都不能做
    + The prgoram is doing something synchronously that you would probaly like to be asynchronous.
      #+begin_src c 
        #include "errors.h"
@@ -122,3 +122,135 @@
            }
        }
      #+end_src
+** A version using multiple processes
+   + We will use alarm_fork.c to make the program asynchronous: you can enter commands at any time, and they will be carried
+     out independently.
+     #+begin_src c
+
+       #include <sys/types.h>
+       #include <wait.h>
+       #include "errors.h"
+       
+       int main(int argc, char *argv[])
+       {
+           int status;
+           char line[128];
+           int seconds;
+           pid_t pid;
+           char message[64];
+       
+           while (1) {
+               printf("Alarm > ");
+               if (fgets(line, sizeof(line), stdin) == NULL)
+                   exit(0);
+               if (strlen(line) <= 1)
+                   continue;
+               /*
+                * Parse input line into seconds (%d) and a message
+                * (%64[^\n]), consisting of up to 64 characters
+                * separated from the seconds by whitespace.
+                */
+               if (sscanf(line, "%d %64[^\n]", &seconds, message) < 2){
+                   fprintf(stderr, "Bad command\n");
+               } else {
+                   pid = fork();
+                   if (pid == (pid_t)-1)
+                       errno_abort("Fork");
+                   if (pid == (pid_t)0) {
+                       /*
+                        * In the child, wait and then print a message
+                        */
+                       sleep(seconds);
+                       printf("(%d) %s\n", seconds, message);
+                       exit(0);
+                   } else {
+                       /*
+                        * In the parent, call waitpid() to collect children
+                        * that have already terminated.
+                        */
+                       do {
+                           pid = waitpid((pid_t)-1, NULL, WNOHANG);
+                           if (pid == (pid_t)-1)
+                               errno_abort("Wait for child");
+                       } while (pid != (pid_t)0);
+                   }
+               }
+           }
+       }
+     #+end_src
+   + 这个方法是tcp/ip经常用的，那就是fork一个child来处理当前的情况。
+** A version using multiple threads
+   + alarm_thread.c version is much like the fork version, except that it uses threads
+     instead of child processes to create asynchronous alarms.
+   + 下面的程序用到如下的pthread函数
+     - pthread_create: create a thread running the routine specified in the third argument(alarm_thread)， returning an identifier
+       for the new thread to the variable referenced by thread.
+     - pthread_detach: allows Pthreads to reclaim the thread's resources as soon as it terminates.
+     - pthread_exit: terminates the calling thread
+     - pthread_self: returns the calling thread's identifier.
+     #+begin_src c
+       #include <pthread.h>
+       #include "errors.h"
+       
+       typedef struct alarm_tag{
+           int  seconds;
+           char message[64];
+       }alarm_t;
+       
+       void *alarm_thread(void *arg)
+       {
+           alarm_t *alarm = (alarm_t*)arg;
+           int status;
+       
+           status = pthread_detach(pthread_self());
+           if (status != 0)
+               err_abort(status, "Detach thread");
+           sleep(alarm->seconds);
+           printf("(%d) %s\n", alarm->seconds, alarm->message);
+           free(alarm);
+           return NULL;
+       }
+       
+       int main(int argc, char *argv[])
+       {
+           int status;
+           char line[128];
+           alarm_t *alarm;
+           pthread_t thread;
+       
+           while (1) {
+               printf("Alarm > ");
+               if (fgets(line, sizeof(line), stdin) == NULL)
+                   exit(0);
+               if (strlen(line) <= 1)
+                   continue;
+       
+               alarm = (alarm_t*)malloc(sizeof(alarm_t));
+               if (alarm == NULL)
+                   errno_abort("Allocate alarm");
+       
+               /*
+                * Parse input line into seconds (%d) and a message
+                * (%64[^\n]), consisting of up to 64 charactesrs
+                * separated from the seconds by whitespace.
+                */
+               if (sscanf(line, "%d %64[^\n]",
+                          &alarm->seconds,
+                          alarm->message) < 2) {
+                   free(alarm);
+               } else {
+                   status = pthread_create(&thread, NULL, alarm_thread, alarm);
+                   if (status != 0)
+                       err_abort(status, "Create alarm thread");
+               }
+           }
+       }
+     #+end_src
+** Summany
+   + In the fork version, each alarm has an independent address space, copied from the main program.
+     That means we can put the seconds and message values into local variables, once the
+     child has been created (when fork returns), the parent can change the values withou
+     affecting the alarm (as the child has its own copy).
+   + In the threaded version, on the other hand, all threads share the same address space
+     - so we call malloc to create a new structure for each alarm, which is passed to the
+       new thread.
