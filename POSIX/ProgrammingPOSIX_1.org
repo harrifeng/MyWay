@@ -188,7 +188,7 @@
      - pthread_detach: allows Pthreads to reclaim the thread's resources as soon as it terminates.
      - pthread_exit: terminates the calling thread
      - pthread_self: returns the calling thread's identifier.
-     #+begin_src c
+       #+begin_src c
        #include <pthread.h>
        #include "errors.h"
        
@@ -249,8 +249,176 @@
 ** Summany
    + In the fork version, each alarm has an independent address space, copied from the main program.
      That means we can put the seconds and message values into local variables, once the
-     child has been created (when fork returns), the parent can change the values withou
+     child has been created (when fork returns), the parent can change the values without
      affecting the alarm (as the child has its own copy).
    + In the threaded version, on the other hand, all threads share the same address space
-     - so we call malloc to create a new structure for each alarm, which is passed to the
-       new thread.
+     so we call malloc to create a new structure for each alarm, which is passed to the
+     new thread.
+   + In the fork version, 主程序负责free子程序产生的那些resources，要用到waitpid
+   + In the threaded version, each alarm thread detaches itself so that the resources held
+     by the thread will be returned immediately when it terminates.
+   + In the fork version, 程序要做的主要事情(sleep & print)是放在一主函数里面实现的。小型项目还行，大的肯定不可以。
+     而且系统不会允许你创建如此多的process的。
+   + In the threaded version，(sleep & print)是单独有一个函数的，这样更好管理，在大型项目中更容易实现（每个事情给他
+     一个函数routine嘛）
+
+* Benefits of threading
+  Some advantages of the multithreaded programming model follow:
+  1) Exploitation of program parallelism on multiprocessor hardware
+  2) More efficient exploitation of a program's natural concurrency, by allowing the
+     program to perform computations while waiting for slow I/O operations to complete
+  3) A modular programming model that clearly expresses relationships between independent "event" within
+     the program.
+  Detailed will be shown following.
+
+** Parallelism
+   + 说到并行，这必然是在多核cpu上，才能做到的啦 Amdahl定理:Speedup = 1/(（1-p） + p/n)
+   + 由于p并不能精确计算，所以Amdahl其实只是存在理论意义，在实际情况中，你不仅仅要考虑你自己代码中的serialized region,你同时
+     要考虑操作系统中的serialize region，因为在多核CPU中，每个核都有一个私有的data cache, the contents of those caches
+     must be kept consistent with each other and with the data in memory. 
+** Concurrency
+   + threaded programming 允许在等待io操作的时候让process进行computational progress.这个对于C/S系统尤为重要，这也是为什么
+     大多数C/S系统都使用这个thread的原因
+   + 在一个thread等待冗长IO操作的时候，另外的thread可以利用这个时间进行操作，这个是"并发"性质的，也就是说不需要多核cpu的。
+   + 有些系统支持asynchronous I/O 和thread起到的作用是一样的，但是asynchronous IO非常复杂，而且不是所有的Unix系统都支持这个
+     feature（Unix普遍支持的是Nonblocking I/O, 即 allows the program to defer issuing an I/O operation until it
+     can complete without blocking.
+   + Synchronous I/O within multiple threads gives nearly all the advantages of asynchronous I/O.
+   + Asynchronous I/O 比 thread 更轻量级， 但是也更麻烦，比如stdio这种synchronous 的function就不能利用了。
+   + 除了Asynchronous IO, 我们还有一种方法叫做 Event，它比较适合simple application，因为它建立起来简单。但是因为它是sequential
+     的，也就说，不支持并发，一个时期只能做一件事情，那么user interface很可能就会失去响应很久。
+** Programming model
+   + 即便你的代码永远不会在多核系统中运行，programming with thread依然是一个很好的主意。因为Writing with threads forces you to
+     think about and plan for the synchronization requirements of your program.
+   + If activities are designed as threads, each function must include explicit synchronization to enforce its
+     dependencies.
+* Costs of threading
+** Computing overhead
+   + 需要过多的时间进行"同步",比如 分开保护两个变量，但是这俩变量却经常一块被使用。
+   + 想通过加入thread的方式来解决系统瓶颈的时候，经常会引入其他底层的瓶颈，而且更难以察觉。
+   + compute-bound的thread很难被外来的event打断，所以多加几个compute-bound似乎更好的利用机器，其实因为引入了更多的synchronization和
+     scheduling，反而性能可能会下降。
+** Programming discipline
+   + POSIX会保证大部分函数是thread-safe的，但是有些不是哦。这个要自己小心
+   + 在一个process里面的thread是共享address space的。 If a thread writes to memory through an uninitialized pointer, it
+     can wipe out another thread's stack, or heap memory being used by some other thread.
+   + Good sequential code is not necessarily good threaded code.
+** Harder to debug
+   + When debugging asynchronous code, if one thread runs even slightly slower than another because it had to process a
+     debugger trap, the problem you're trying to track down may not happen. You'll run a lot more of them when you use
+     threads
+   + It is difficult to track down a memory corruptor
+   + Your most powerful and portable thread debugging tool is your mind, applied through the old fashinoed manual human-powered
+     code review.
+* To thread or not to thread
+  The most obvious candidates for threaded coding are new applications that accomplish the following:
+  + Perform extensive computation that can be parallelized into multiple threads, and which is intended
+    to run on multiprocessor hardware
+  + Perform substantial I/O which can be *overlapped* to improve throughtput - many threads can wait for different I/O requests
+    at the same time. *Distributed server* applications are good candidates, since they may have work to do in response to multiple
+    clients, and they must also be prepared for unsolicited I/O over relatively slow network connections.
+* POSIX thread concepts
+  POSIX is short for Portable Operating System System Interface for Unix
+** Architectural overview
+   + Three essential aspects of a thread system are execution context, scheduling, and synchronization.
+   + With Pthreads, you creat an /execution context/ (thread) by calling pthread_create.
+   + Creating a thread also /schedules/ the thread for execution, when you specify the "thread start function", the
+     thread will run.
+   + Pthreads allows you to specify /scheduling/ parameters either at the time you create the thread, or later on while the thread     
+     is running.
+   + A thread may return either from the thread start function, or when the thread calls pthread_exit.
+   + The primary Pthreads /synchronization/ model uses *mutexes* for protection, and *condition* *variables* for communication. 
+** Types and interfaces
+   Following is the thread information in this book
+   | type                | section | Description                              |
+   |---------------------+---------+------------------------------------------|
+   | pthread_t           |       2 | thread identifier                        |
+   | pthread_mutex_t     |     3.2 | mutex                                    |
+   | pthread_cond_t      |     3.3 | condition variables                      |
+   | pthread_key_t       |     5.4 | "access key" for thread-specific data    |
+   | pthread_attr_t      |   5.2.3 | thread attributes object                 |
+   | pthread_mutexattr_t |   5.2.1 | mutex attributes object                  |
+   | pthread_condattr_t  |   5.2.2 | condition variable attributes objects    |
+   | pthread_once_t      |     5.1 | "one time initialization" control contex |
+** Checking for errors
+   + Following is the source code for thread_error.c, which checks for an error and waits for a thread.
+     #+begin_src c
+       #include <pthread.h>
+       #include <stdio.h>
+       #include <errno.h>
+       
+       int main(int argc, char *argv[])
+       {
+           pthread_t thread;
+           int status;
+       
+           /*
+            * Attempt to join with an uninitialized thread ID. On most
+            * implementations, this will return an ESRCH error code. If
+            * the local (and uninitialized) pthread_t happens to be a valid
+            * thread ID, it is almost certainly that of the initial thread,
+            * which is running main(). In that case, your Pthreads
+            * implementation may either return EDEADLK (self-deadlock),
+            * or it may hang. If it hangs, quit and try again.
+            */
+           status = pthread_join(thread, NULL);
+           if (status != 0)
+               fprintf(stderr, "error %d: %s\n", status, strerror(status));
+           return status;
+       }
+     #+end_src
+   + Following code is the source code for errors.h, in which err_abort detects a standard Pthreads error,
+     and errno_abort is used when a value of -1 means that errno contains an error code.
+     #+begin_src c
+       #ifndef __errors_h
+       #define __errors_h
+       
+       #include <unistd.h>
+       #include <errno.h>
+       #include <stdio.h>
+       #include <stdlib.h>
+       #include <string.h>
+       
+       /*
+        * Define a macro that can be used for diagnostic output from
+        * examples. When compiled -DDEBUG, it results in calling printf
+        * with the specified argument list. When DEBUG is not defined, it
+        * expands to nothing.
+        */
+       #ifdef DEBUG
+       # define DPRINTF(arg) printf arg
+       #else
+       # define DPRINTF(arg)
+       #endif
+       
+       /*
+        * NOTE: the "do {" ... "} while (0);" bracketing around the macros
+        * allows the err_abort and errno_abort macros to be used as if they
+        * were function calls, even in contexts where a trailing ";" would
+        * generate a null statement. For example,
+        *
+        *      if (status != 0)
+        *          err_abort (status, "message");
+        *      else
+        *          return status;
+        *
+        * will not compile if err_abort is a macro ending with "}", because
+        * C does not expect a ";" to follow the "}". Because C does expect
+        * a ";" following the ")" in the do...while construct, err_abort and
+        * errno_abort can be used as if they were function calls.
+        */
+       #define err_abort(code,text) do { \
+           fprintf (stderr, "%s at \"%s\":%d: %s\n", \
+               text, __FILE__, __LINE__, strerror (code)); \
+           abort (); \
+           } while (0)
+       #define errno_abort(text) do { \
+           fprintf (stderr, "%s at \"%s\":%d: %s\n", \
+               text, __FILE__, __LINE__, strerror (errno)); \
+           abort (); \
+           } while (0)
+       
+       #endif 
+        
+     #+end_src
+
