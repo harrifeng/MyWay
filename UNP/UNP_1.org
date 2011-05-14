@@ -1,3 +1,7 @@
 * Chapter 1
 ** Introduction
-
+   + 不管怎样，要先设计protocol，Web Server是一个long-running program(or daemon) that sends
+     network messages *only* in response to requests coming in from the network.
+   + client一般一次连接一个server，而server一次却要处理很多的client访问
+   + client and server are typically user processes, while the TCP and IP protocols are
+     normally part of the protocol stack within the kernel.
