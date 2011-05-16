@@ -5,3 +5,52 @@
    + client一般一次连接一个server，而server一次却要处理很多的client访问
    + client and server are typically user processes, while the TCP and IP protocols are
      normally part of the protocol stack within the kernel.
+   + 我们首先来看一个简单的Daytime Client 如何编写
+     #+begin_src c
+       #include    "unp.h"
+       
+       int
+       main(int argc, char **argv)
+       {
+           int                 sockfd, n;
+           char                recvline[MAXLINE + 1];
+           struct sockaddr_in  servaddr;
+       
+           if (argc != 2)
+               err_quit("usage: a.out <IPaddress>");
+       
+           /* Create the socket*/
+           if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+               err_sys("socket error");
+       
+           bzero(&servaddr, sizeof(servaddr));
+           servaddr.sin_family = AF_INET;
+           servaddr.sin_port   = htons(13);    /* daytime server */
+           /* configure the server to the para #2 */
+           if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0)
+               err_quit("inet_pton error for %s", argv[1]);
+       
+           /* SA is short for struct address*/
+           if (connect(sockfd, (SA *) &servaddr, sizeof(servaddr)) < 0)
+               err_sys("connect error");
+       
+           /* 
+            * With a byte-stream protocol, these 26 bytes can be returned
+            * in numerous ways: a single TCP segment containing all 26
+            * bytes of data, in 26 TCP segments each containing 1 byte of
+            * data. Therefore, when reading from a TCP socket, we always
+            * need to code the read in a loop and terminate the loop when
+            * either return 0 or a value less than 0 (an error)
+           */
+           while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
+               recvline[n] = 0;    /* null terminate */
+               if (fputs(recvline, stdout) == EOF)
+                   err_sys("fputs error");
+           }
+           if (n < 0)
+               err_sys("read error");
+       
+           exit(0);
+       }
+       
+     #+end_src
