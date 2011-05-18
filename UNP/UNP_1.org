@@ -5,6 +5,7 @@
    + client一般一次连接一个server，而server一次却要处理很多的client访问
    + client and server are typically user processes, while the TCP and IP protocols are
      normally part of the protocol stack within the kernel.
+** A Simple Daytime Server
    + 我们首先来看一个简单的Daytime Client 如何编写
      #+begin_src c
        #include    "unp.h"
@@ -54,3 +55,142 @@
        }
        
      #+end_src
+** Protocol Independence
+   前面的例子，到处都是IPv4的身影，sockaddr_in, AF_INET等等，下面我们来看看如何创造在IPv6下面也能
+   运行的例子
+   #+begin_src c
+     #include "unp.h"
+     
+     int
+     main(int argc, char **argv)
+     {
+         int sockfd, n;
+         char recvline[MAXLINE + 1];
+         struct sockaddr_in6 servaddr;
+     
+         if (argc != 2)
+             err_quit("usage: a.out <IPAddress>");
+     
+         if ((sockfd = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
+             err_sys("socket error");
+     
+         bzero(&servaddr, sizeof(servaddr));
+         servaddr.sin6_family = AF_INET6;
+         servaddr.sin6_port = htons(13);
+         if (inet_pton(AF_INET6, argv[1], &servaddr.sin6_addr) <= 0)
+             err_quit("inet_pton error for %s", argv[1]);
+     
+         if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) < 0)
+             err_sys("connect error");
+     
+         while ((n = read(sockfd, recvline, MAXLINE)) > 0) {
+             recvline[n] = 0;
+             if (fputs(recvline, stdout) == EOF)
+                 err_sys("fputs error");
+         }
+         
+         if (n < 0)
+             err_sys("read error");
+        
+         exit(0); 
+     }
+   #+end_src
+
+** Error Handling: Wrapper Functions
+   + Since terminating on an error is the commaon case, we can shorten our
+     programs by defining a wrapper function, which performs the actual function
+     call, tests the return value, and terminates on an error
+     #+begin_src c
+       int
+       Socket(int family, int type, int protocol)
+       {
+           int n;
+           if ((n = socket(family, type, protocol)) < 0)
+               err_sys("socket error");
+           return (n);
+       }
+     #+end_src
+   + When we discuss threads, we will find that thread functions do not set the
+     standard Unix errno variable when an error occurs; instead the errno value
+     is the return value of the function.
+   + Every time we call one of the pthread_ functions, we must allocate a variable,
+     save the return value in that variable, and then set errno to this value before
+     calling err_sys. We will simplify the the code like this
+     #+begin_src c
+       int n;
+       if ((n = pthread_mutex_lock(&ndome_mutex)) != 0)
+           errno = n, err_sys("pthread_mutex_lock error");
+     #+end_src
+   + We can also defined some wrapper function for pthread
+     #+begin_src c
+       void
+       Pthread_mutex_lock(pthred_mutex_t *mptr)
+       {
+           int n;
+           
+           if ((n = pthread_mutex_lock(mptr)) == 0)
+               return;
+           errno = n;
+           err_sys("pthread_mutex_lock error ");
+       }
+     #+end_src
+   + When an error occurs in a Unix function, the global variable errno is set to a
+     positive value indicating the type of error and the function normally return -1
+   + Our err_sys function looks at the value of errno and prints the corresponding
+     error message string.
+   + The value of errno is set by a function only if an error occurs. They are often
+     all-uppercase names beginning with "E". They do not work with multiple threads
+     that share all global variables.
+** A simple Dayime Server
+   + Previous daytime client may need following server
+     #+begin_src c
+       #include "unp.h"
+       #include <time.h>
+       
+       int
+       main(int argc, char **agrv)
+       {
+           int listenfd, connfd;
+           struct sockaddr_in servaddr;
+           char  buff[MAXLINE];
+           time_t ticks;
+       
+           /* Creation of TCP socket is identical to the client code */
+           listenfd = Socket(AF_INET, SOCK_STREAM, 0);
+       
+           bzeros(&servaddr, sizeof(servaddr));
+           servaddr.sin_family = AF_INET;
+           /* 这一项是多加的，用来指定可以访问的IP地址*/
+           servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+           servaddr.sin_port = htons(13);
+       
+           /*依靠bind函数来联系我们建立的socket和数据结构*/
+           Bind(listenfd, (SA*)&servaddr, sizeof(servaddr));
+           
+           /*调用listen函数之后，这个socket就转化成listening socket了, 这样一来
+            *来自网络的访问就可以被kernel接受了, LISTENQ 是kernel接受queue的最大数量
+            */
+           Listen(listenfd, LISTENQ);
+       
+           for (; ;) {
+               /* accept 函数被调用后，server就等待client访问，完成三次握手后，这个函数才会
+                  返回，返回以后listenfd将不再使用了，因为我们现在是一个connected TCP连接
+                  了，所以connfd将正式取代listenfd的地位
+               */
+               connfd = Aceept(listenfd, (SA*)NULL, NULL);
+       
+               ticks = time(NULL);
+               snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks));
+               /* write will write the result to the client */
+               Write(connfd, buff, strlen(buff));
+       
+               /* close function close the connection by sending FIN */
+               Close(connfd);
+           }
+       }
+     #+end_src
+   + 这个函数显然只能一次接受一个client的访问，访问都了就得queue，后面我们会看到fork的版本。
+
+
+
+
