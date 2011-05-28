@@ -189,8 +189,7 @@
            }
        }
      #+end_src
-   + 这个函数显然只能一次接受一个client的访问，访问都了就得queue，后面我们会看到fork的版本。
-
+   + 这个函数显然只能一次接受一个client的访问，访问都了就得queue，后面我们会看到fork的版本。fork才是Unix-like OS的精髓
 
 
 
