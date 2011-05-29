@@ -1,0 +1,71 @@
+* Chapter 2 A Tour of C++
+** What is C++?
+   C ++ 是一个更看重系统编程的语言，并且有如下特点：
+   + is a better C,
+   + supports data abstraction
+   + supports object-oriented programming
+   + supports generic programming
+** Programming Paradigms
+   + OO programming 是说的一种编程典范，使用语某一类的问题的解决。
+   + 我们说cpp是支持oo编程的，不仅仅是指cpp在programming style上面的支持，同时也说明了在更细微的方面，比如compile-time/run-time
+     check against unintentional deviation from the paradigm.比如type check和ambiguity detection 和 run-time check就
+     这方面的典型代表
+   + 对于一个语言来说，拥有神马feature不重要，重要的是语言拥有的feature足够可以支持理想的programming style
+     1. All features must be cleanly and elegantly integrated into the language
+     2. It must be possible to use features in combination to achieve solutions that would otherwise
+        require extra, separate features
+     3. There should be as few spurisou and "special-purpos" features as possible
+     4. A feature's implementation should not impose significant overheads on programs that do
+        not require it.
+     5. A user should need to know only about the subset of the language explicitly used to write a progra
+   + 第一条关于美学的，后两条是如何能设计最小化的程序，不引入冗余，最后两项总结起来就是"what you don't know won't hurt you"
+** Procedural Programming
+   + 早期的编程范例是说: Decide which procedures you want; use the best algorithms you can find
+   + 一个典型的早期编程范例的例子是
+     #+begin_src c++
+       double sqrt(double arg)
+       {
+           // code for calculating a square root
+       }
+       
+       void f()
+       {
+           souble root2 = sqrt(2);
+       }
+     #+end_src
+   + 函数就是用来实现算法的。我们下面来看看C++ 在处理expressing computation方面的基本工具 
+   + 
+*** Variables and Arithmetic
+    A /declaration/ (声明）就是向程序中引入一个名字，它同时定义了这个名字的type
+*** Tests and Loops
+    Cpp同时提供了表示选择和循环的语句，例如if-else, while, switch
+*** Pointers and Arrays
+    老生常谈的东西了
+** Modular Programming
+   + 随着时间的推移，程序设计已经从design of procedures 演变到 organization of data.
+   + A set of related procedures with the data they manipulate is often called a /module/
+   + Programming paradigm 也变成了: Decide which modules you want; partition the program so that data is hidden within
+     modulses. (also known as the data-hiding principle)
+   + The most common example of a /module/ is the definition of a stack. The main problems that have to be solved are:
+     1. Provide a user interface for the stack
+     2. Ensure that the representation of the stack can be accessed only through this user interface
+     3. Ensure that the stack is initialized before its first use.
+   + C++可以提供以上所有的功能，如下：
+     #+begin_src c++
+       // Stack:: 表示了push(), pop()来自Stack namespace，这样可以避免冲突
+       namespace Stack{
+           void push(char);
+           char pop();
+       }
+       
+       void f()
+       {
+           Stack::push('c');
+           if (Stack::pop() != 'c') error("impossible");
+       }
+     #+end_src
+   + 声明在上，而实现，可以另外找一个地方如下：
+     #+begin_src c++
+     
+     #+end_src
+
