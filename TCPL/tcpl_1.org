@@ -151,4 +151,227 @@
       #+end_src
 ** Data Abstraction
 *** Modules Defining Types
-    
+    + Programming with modulse就要求我们要把所有的data纳入到type管理，比如我们如果需要一个stack manager来管理我们所有的stack
+      那么就有如下代码
+      #+begin_src c++
+        namespace Stack{
+            struct Rep;             //definition  of stack layout is elsewhere
+            typedef Rep& stack;
+        
+            stack create();         //make a new stack
+            void destroy(stack s);  // delete s
+        
+            void push(stack s, char c); //push c onto s
+            char pop(stack s);          // pop s
+        }
+        
+        struct Bad_pop {};
+        
+        void f()
+        {
+            Stack::stack s1 = Stack::create();   // make a new stack
+            Stack::stack s2 = Stack::create();   // make another new stack
+        
+            Stack::push(s1, 'c');
+            Stack::push(s2, 'k');
+        
+            if (Stack::pop(s1) != 'c') throw Bad_pop();
+            if (Stack::pop(s2) != 'k') throw Bad_pop();
+        
+            Stack::destroy(s1);
+            Stack::destroy(s2);
+        }
+      #+end_src
+    + 只要上面的接口不变，具体我们如何实现stack，那就不需要用户关心了。比如下面的实现方法：
+      #+begin_src c++
+        namespace Stack{
+            const int max_size = 200;
+        
+            struct Rep {
+                char v[max_size];
+                int top;
+            };
+        
+            const int max = 16;    // maximum number of stacks;
+        
+            Rep stacks[max];       // preallocated stack representations
+            bool used[max];        // used[i] is true if stacks[i] is in use
+        }
+        
+        void Stack::push(stack s, char c) {/* check s for overflow and push */}
+        void Stack::pop(stack s) {/* check s for underflow and pop */}
+        Stack::stack Stack::create()
+        {
+            //pick an unused Rep, mark it used, initialize it, and returen a reference to it
+        }
+        
+        void Stack::destroy(stack s) { /* mark s unused */}
+      #+end_src
+    + module type有不少的缺点，最明显的一个就是我们如何来实现底层的数据结构，会极大的影响用户看到的fake type
+    + 更重要的是，module type和build-in type的使用方法不一致，比如我们上面的例子就要先initialize再delete； int 和 double数据类型就从来不需要。
+*** User-Defined Type
+    + module-defined type 不能解决的问题，在cpp里面是用user-defined type也就是abstract data type来解决的。
+    + 这样一来，编程范例就变成了: Decide which type you want; provide a full set of operations for each type.
+    + complex number是一种非常好的范例：
+      #+begin_src c++
+        class complex{
+            double re, im;
+        public:
+            complex(double r, double i) {re = r; im = i;}
+            complex(double r) {re = r; im = 0;}
+            compllex() {re = im = 0;};
+        
+            friend complex operator+(complex, complex);
+            friend complex operator-(complex, complex);
+            friend complex operator+(complex);
+            friend complex operator*(complex, complex);
+            friend complex operator/(complex, complex);
+        
+            friend bool operator==(complex, complex);
+            friend bool operator!=(complex, complex);
+        };
+        
+        //Can be used as following
+        void f(complex z)
+        {
+            complex a = 2.3;
+            complex b = 1/a;
+            complex c = a + b * complex(1, 2.3);
+            //...
+            if (c != b) c = -(b / a) + 2 * b;
+        }
+      #+end_src
+*** Concrete Type
+    + User-defined type就可以满足很多情况下的需要了，我们再来看一个user-defined Stack的例子
+      #+begin_src c++
+        class Stack{
+            char* v;
+            int top;
+            int max_size;
+        public:
+            class Underflow {};     //used as exception
+            class Overflow {};      //used as exception
+            class Bad_size {};      //used as exception
+        
+            Stack(int s);           // ctor
+            ~Stack();               // dtor
+        
+            void push(char c);
+            char pop();
+        };
+      #+end_src
+    + ctor是用来创建class object的，用new来创建一块动态内存，dtor就是用 delete来释放掉动态内存
+      #+begin_src c++
+        Stack::Stack(int s)
+        {
+            top = 0;
+            if (10000 < s) throw Bad_size();
+            max_size = s;
+            v = new char[s];     // allocate elements on the free store (heap, dynamic store)
+        }
+        Stack::~Stack()          //destructor
+        {
+            delete[] v;          // free the elements for possible reuse of the space
+        }
+      #+end_src
+    + Stack type遵循了和built-in type（int,char)一样的规则在naming, scope, allocation, lifetime, copying等方面，
+      所以还需要下面的代码来完善.像complex和stack这样的type就被称作concrete types.
+      #+begin_src c++
+        Stack s_val1(10);
+        
+        void f(Stack& s_ref, int i)
+        {
+            Stack s_var2(i);
+            Stack* s_ptr = new Stack(20);
+        
+            s_var1.push('a');
+            s_var2.push('b');
+            s_ref.push('c');
+            s_ptr->push('d');
+            //...
+        }
+        // Naturally, the push() and pop() member functions must also be defined somewhere:
+        void Stack::push(char c)
+        {
+            if (top == max_size) throw Overfolow();
+            v[top] = c;
+            top = top + 1;
+        }
+        
+        char Stack::pop()
+        {
+            if (top == 0) throw Underflow();
+            top = top - 1;
+            return v[top];
+        }
+      #+end_src
+*** Abstract Types
+    + concrete type的优点就不说了，说个缺点。concrete的数据部分是private的，用户看不到，暴露给用户的是public的function，但是private的数据是有
+      可能更改的，一旦private的数据更改，那么，所有涉及到这些class的代码都要重新编译，而且这个类型的大小很难进行判断。
+    + 为了解决这个难题诞生了abstract type（也就是interface),他把interface和representation完全分开，并且放弃了local variable.
+      下面就是一个interface的例子
+      #+begin_src c++
+        class Stack{
+        public:
+            class Underflow {};            //used as exception
+            class Overflow {};             //used as exception
+        
+            // Class drived from Stack must define these functions
+            virtual void push(char c) = 0;
+            virtual char pop() = 0;
+        }
+      #+end_src
+    + Interface的特点就是完全隔离了实现细节，可以看下面的例子f()只需要知道，自己的parameter是Stack类型，具体怎么实现的，那可以是Array_stack，也可以是
+      List_stack，总之f()不关心
+      #+begin_src c++
+        void f(Stack& s_ref)
+        {
+            s_ref.push('c');
+            if (s_ref.pop() != 'c')
+            {
+                throw bad_stack();
+            }
+        }
+        // For Array_stack
+        class Array_stack:public Stack
+        {
+            char* p;
+            int max_size;
+            int top;
+        public:
+            Array_stack(int s);
+            ~Array_stack();
+        
+            void push (char c);
+            char pop();
+        };
+        
+        void g()
+        {
+            Array_stack as(200);
+            f(as);
+        }
+        // For List_stack
+        class List_stack :public Stack
+        {
+            list<char> lc;
+        public:
+            List_stack();
+        
+            void push(char c) { lc.push_front(c); }
+            char pop();
+        };
+        char List_stack::pop()
+        {
+            char x = lc.front();
+            lc.pop_front();
+            return x;
+        }
+        
+        void h()
+        {
+            List_stack ls;
+            f(ls);
+        }
+      #+end_src
+    + A class that provides the interface to a variety of other classes is often called a polymorphic type.
