@@ -27,14 +27,14 @@
        {
            // code for calculating a square root
        }
-       
+
        void f()
        {
            souble root2 = sqrt(2);
        }
      #+end_src
-   + 函数就是用来实现算法的。我们下面来看看C++ 在处理expressing computation方面的基本工具 
-   + 
+   + 函数就是用来实现算法的。我们下面来看看C++ 在处理expressing computation方面的基本工具
+   +
 *** Variables and Arithmetic
     A /declaration/ (声明）就是向程序中引入一个名字，它同时定义了这个名字的type
 *** Tests and Loops
@@ -57,7 +57,7 @@
            void push(char);
            char pop();
        }
-       
+
        void f()
        {
            Stack::push('c');
@@ -66,6 +66,89 @@
      #+end_src
    + 声明在上，而实现，可以另外找一个地方如下：
      #+begin_src c++
-     
-     #+end_src
+       namespace Stack{
+           const int max_size = 200;
+           char v[max_size];
+           int top = 0;
 
+           void push(char c) {/* check for overflow and push c*/}
+           void pop() {/* check for underflow and pop */}
+       }
+     #+end_src
+   + The key point about this Stack module is that the user code is insulated from the data representation of Stack by
+     the code implementing Stack::push() and Stack::pop(). The user doesn't need to know that the Stack is implemented
+     using an array, and the implementation can be changed without affecting user code.
+   + C++ allows any declaration to be placed in a namespace.
+
+*** Seperate Compilation
+    + 在Cpp里面，是继承了c里面的separate compilation的。这样做的好处是to organize a program into a set of semi-independent
+      fragments.
+    + 如下是三个文件的代码： user.c 和 stack.c shares the stack interface information presented in stack.h, but the two
+      files are otherwise independent and can be separately compiled.
+      #+begin_src c++
+        //stack.h
+        namespace Stack{
+            void push(char);
+            char pop();
+        }
+
+        //user.cpp
+        #include "stack.h"
+        void f()
+        {
+            Stack::push('c');
+            if (Stack::pop() != 'c') error("impossible");
+        }
+
+        //stack.cpp
+        #include "stack.h"
+
+        namespace Stack{
+            const int max_size = 200;
+            char v[max_size];
+            int top = 0;
+        }
+
+        void Stack::push(char c) {/* check for overflow and push c */}
+        char Stack::pop() {/*check for underflow and pop */}
+      #+end_src
+:                       +----------+
+:                       |  stack.h |
+:                       +----------+
+:                       /           \
+:                      /             \
+:            +--------/-+           +-\--------+
+:            | user.cpp |           |stack.cpp |
+:            +-- -------+           +----------+
+
+    + Strictly speaking, using separate compliation isn't a language issue; it is an issue of how best to take
+      advantage of a particular language implementation.
+*** Exception Handling
+    + 当程序当中有多个module的时候，error handling也要跟着这些已有的module来。
+    + 一般来说，发现exception的module一般都束手无策，但是他可以抛出一个异常，让未知的，未来的user来catch住，然后处理。
+      #+begin_src c++
+        namespace Stack{
+            void push(char);
+            char pop();
+        
+            class Overflow{}; // type representing overflow exceptions
+        }
+        
+        void Stack::push(char c)
+        {
+            if (top == max_size) throw Overflow();
+        }
+        
+        void f()
+        {
+            try { //execption here are handled by the handler defined below
+                while (true) Stack::push('c');
+            }
+            catch(Stack::Overflow) {
+                //oops: stack overflow; take appropriate action
+            }
+        }
+      #+end_src
+** Data Abstraction
+*** Modules Defining Types
+    
