@@ -34,7 +34,6 @@
        }
      #+end_src
    + 函数就是用来实现算法的。我们下面来看看C++ 在处理expressing computation方面的基本工具
-   +
 *** Variables and Arithmetic
     A /declaration/ (声明）就是向程序中引入一个名字，它同时定义了这个名字的type
 *** Tests and Loops
