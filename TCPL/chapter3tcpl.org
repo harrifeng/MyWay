@@ -1,0 +1,109 @@
+* Chapter 3 A Tour of the Standard Library
+** Introduction
+   每个系统都不可能是自己写完的，一定要有库的支持。这一章就是介绍跨平台的，每个c++编译器都实现的library: standard library
+** Hello, world
+   + 每个cpp都会有一个main的函数，返回一个int的返回值，告诉os自己程序完成的状态。
+   + 一个带有standard output的例子如下
+     #+begin_src c++
+       #include <iostream>
+       
+       int main()
+       {
+           std::cout << "Hello, world\n";
+       }
+     #+end_src
+** The Standard Library Namespace
+   + Standard Library 都是定义在一个叫做std的namespace里面的，通过using namespace可以避免重复书写std
+     #+begin_src c++
+       #include <string>
+       using namespace std;
+       
+       string s = "Ignorance is bliss!";        // OK, string is std::string
+     #+end_src
+   + 剩下的例子中都省略include 和 string
+** Output
+   一些output例子
+   #+begin_src c++
+     void f()
+     {
+         cout <<　10;
+     }
+     void g()
+     {
+         int i = 10;
+         cout << i;
+     }
+     void h(int i)
+     {
+         cout << "the value of i is ";
+         cout << i;
+         cout << '\n';
+     }
+     // h2 is equivalent to h()
+     void h2(int i)
+     {
+         cout << "the value of i is " << i << '\n';
+     }
+     void k()
+     {
+         cout << 'a';
+         cout << 'b';
+         cout << 'c';
+     }
+   #+end_src
+** String
+   + cpp提供了多种string的operation，比如连接字符串
+     #+begin_src c++
+       string s1 = "Hello";
+       string s2 = "world";
+       
+       void m1()
+       {
+           string s3 = s1 + "," + s2 + "!\n";
+           cout << s3;
+       }
+     #+end_src
+   + 在很多应用当中add something to the end of a string是最常用的操作，这个和+=operation是一样的
+     #+begin_src c++
+       void m2(string& s1, string& s2)
+       {
+           s1 = s1 + '\n';
+           s2 += '\n';
+       }
+     #+end_src
+   + string还可以用来比较
+     #+begin_src c++
+       string incantation;
+       
+       void respond(const string& answer)
+       {
+           if (answer == incantation)
+           {
+               //perform magic
+           }
+           else if (answer == "yes")
+           {
+               //...
+           }
+           //..
+       }
+     #+end_src
+   + 对子字符串的操作很常见
+     #+begin_src c++
+       string name = "Niels Stroustrup";
+       
+       void m3()
+       {
+           string s = name.substr(6, 10);     //s = "Stroustrup"
+           name.replace(0, 5, "Nicholas");    //name becomes "Nicholas Stroustrup"
+       }
+     #+end_src
+*** C-Style Strings
+    A C-style string就是一个以\0结尾的字符数组，如果一个function要以C-style string做参数，那么我们就可以使用
+    c_str()函数来转换。
+    #+begin_src c++
+      void f()
+      {
+          printf("name:%s\n", name.c_str());
+      }
+    #+end_src
