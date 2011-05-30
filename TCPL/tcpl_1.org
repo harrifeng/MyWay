@@ -375,3 +375,191 @@
         }
       #+end_src
     + A class that provides the interface to a variety of other classes is often called a polymorphic type.
+*** Virtual Functions
+    + 我们前面的设计，可以让编译器在运行以前，就知道类的大小,而且完全分离了类的实现，仅仅留下接口，仅仅当真正需要知道类真的是什么类型的时候再去判断
+    + 真正需要知道类类型的时候，就是run-time，这个时候c++是通过virtual table 来正确调用virtual function的
+    + 下图就是vtbl的实现，这种设计方式，可以让caller在不知道size of object and the layout of object's data的情况下，正确使用object。
+      这种设计方法的代价就是每个object多一个pointer，每个类多一个virtual table
+: Array_stack object             vtbl
+:       +-----------+          +--------+
+:       |   vptr    |--------->|        |------> Array_stack::push()
+:       |    p      |          |--------+
+:       |  max_size |          |        |------> Array_stack::pop()  
+:       |   top     |          +--------+
+:       +-----------+                
+: List_stack object:             vtbl
+:       +-----------+          +--------+
+:       |   vptr    +--------->+        |------> List_stack::push()
+:       |           |          |--------+
+:       |    lc     |          |        |------> List_stack::push()
+:       |           |          +--------+
+:       +-----------+
+** Object-Oriented Programming
+   Data abstraction是本书的主线，但是user-defined types是有很多不足的，我们下面会讲到，并且讲解如何利用class hierarchies来解决这个问题
+*** Problems with Concrete Types
+    + Concrete Type的最大问题就是，如果原来的代码想要扩展的话，我们每扩展一次都要接触一次原来的重要代码，这样很容易引入错误，为了增强感觉，我们引入如下的例子
+      #+begin_src c++
+        class Point { /* ... */ };
+        class Color { /* ... */ };
+        
+        enum Kind {circle, triangle, square};
+        
+        class Shape
+        {
+            Kind k;     //type field;
+            Point center;
+            Color col;
+            //...
+        
+        public:
+            Shape();
+            virtual ~Shape();
+            void draw();
+            void rotate(int);
+            //...
+        };
+        
+        void Shape::draw()
+        {
+            switch(k) {
+            case circle:
+                // draw a circle
+                break;
+            case triangle:
+                // draw a triangel
+                break;
+            case square:
+                // draw a square
+                break;
+            }
+        }
+      #+end_src
+    + 上述例子中, 像draw()这样的函数，必须知道所有的shape，在switch中辛苦的判断来决定下一步的操作。看起来好像问题不大，但是如果一旦我们要加新代码
+      那么就麻烦了，首先我们要能有权限接触源代码，其次源代码中很多地方都要改动。
+*** Class Hierarchies
+    + concrete type的一大问题在于它的实现方法没有区分两个概念1properties of every shape 2 properties of a specific kind of shape
+    + properties of every shape是指的每个shape，不管是circle也好， triangel也好，都是有颜色的，可以画的
+    + properties of a specific kind of shape是指的各个shape的特点，比如circle有半径，三角形有夹角...
+    + OO编程正是为了区分这两个概念，并利用这两个概念而设计的，下面是一个OO设计的例子
+      #+begin_src c++
+        class Shape
+        {
+            Point center;
+            Color col;
+            //...
+        public:
+            Point where() {return center;}
+            void move(Point to) { center = to; /* .... */ draw();}
+        
+            virtual void draw() = 0;
+            virtual void rotate(int angle) = 0;
+            //...
+            Shape();
+            virtual ~Shape();
+        };
+        void rotate_all(vector<Shape*>&v, int angle)
+        {
+            for (int i = 0; i < v.size(); ++i)
+            {
+                v[i]->rotate(angle);
+            }
+        }
+        
+        class Circle : public Shape
+        {
+            int radius;
+        public:
+            void draw() { /* ... */ }
+            void rotate(int) {}  // yes, the null function
+            Circle();
+            virtual ~Circle();
+        };
+      #+end_src
+    + Circle继承自Shape，Shape是基类，Circle是继承类。Shape也叫超类，Circle也叫子类
+    + 到现在编程典范变成了: Decide which classes you want; provide a full set of operations for each class; make commonality explicit
+      by using inheritance.
+    + 利用继承和virtual function提取出type的共性是一种很好提升oo设计的办法
+** Generic Programming
+   Generic Programming就是所谓的泛化编程，泛化parameter嘛，编程典范为:Decide which algorithms you want; parameterize them so that
+   they work for a variety of suitble types and data structures.
+*** Containers
+    + 下面来看一个stack-of-anything的例子
+      #+begin_src c++
+        template <class T> class Stack
+        {
+            T* v;
+            int max_size;
+            int top;
+        public:
+            class Underflow {};
+            class Overflow {};
+        
+            Stack(int s);
+            virtual ~Stack();
+        
+            void push(T);
+            T pop();
+        };      
+        template <class T> void Stack<T>::push(T c)
+        {
+            if (top == max_size) throw Overflow();
+            v[top] = c;
+            top = top + 1;
+        }
+        
+        template <class T> T Stack<T>::pop()
+        {
+            if (top == 0) throw Underflow();
+            top = top - 1;
+            return v[top];
+        }
+        //Usage of Stack
+        Stack<char> sc;       // stack of characters
+        Stack<complex> scplx; // stack of complex numbers
+        Stack<list<int>>sli;  // stack of list of integers
+        
+        void f()
+        {
+            sc.push('c');
+            if (sc.pop() != 'c') throw Bad_pop();
+        
+            scplx.push(complex(1,2));
+            if (scplx.pop() != complex(1,2)) throw Bad_pop();
+        }
+      #+end_src
+    + Templates是一种complie-time 机制，不会产生run-time overhead 
+*** Generic Algorithm
+    + 泛化了数据类型，得到各种容器之后，我们发现可以继续泛化，于是就泛化各种容器，得到generic algorithm
+    + 于是就有了如下的例子，所有的standard library containers都支持这种notion of iterators and sequences.
+      #+begin_src c++
+        template <class In, class out> void copy(In from, In too_far, Out to)
+        {
+            while (from != too_far) {
+                *to = *from;
+                ++to;
+                ++from;
+            }
+        }
+        //generic algorithm can be used in built-in, low-level array
+        char vcl[200]; // array of 200 characters;
+        char vcl[500]; // array of 500 characters;
+        
+        void f()
+        {
+            copy(&vcl1[0], &vcl[200], &vc2[0]);
+        }
+        
+        //Also can be used in standard container
+        complex ac[200];
+        
+        void g(vector<complex>& vc, list<complex>& lc)
+        {
+            copy(&ac[0], &ac[200], lc.begin());
+            copy(lc.begin(), lc.end(), vc.begin());
+        }
+      #+end_src
+** Postscript
+   + 没有一种语言是十全十美的,what is perfect for one task is often seriously flawed for another because
+     perfection in one area implies specialization.
+   + A single language feature in isolation is of little interest, only in the context provided by
+     techniques and by other features does the feature acauire meaning and interest.
