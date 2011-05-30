@@ -562,3 +562,7 @@
      perfection in one area implies specialization.
    + A single language feature in isolation is of little interest, only in the context provided by
      techniques and by other features does the feature acauire meaning and interest.
+** Advice
+   1) Don't panic! All will become clear in time 
+   2) You don't have to know every detail of C++ to write good programs
+   3) Focus on programming techniques, not on language features;
