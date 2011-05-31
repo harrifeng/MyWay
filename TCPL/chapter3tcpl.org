@@ -307,3 +307,34 @@
             phone_book.insert(i, e);      //add before the element 'i' refers to
         }
       #+end_src
+*** Map[tour2.map]
+    + 其实对于一个pair来说（name, number)，用list也不是最好的手段，因为线性查找的效率很低，有一些其他的数据结构，支持插入
+      删除和根据value来进行查找，比如map，在很多情况下，map也被称作associative array 或者dictionary
+    + map都是按照他第一个type来进行索引(叫做key),并且返回他的第二个type（叫做value）
+      #+begin_src c++
+        map<string, int> phone_book
+        
+        void print_entry(const string& s)
+        {
+            // if no match was found for the key s, a default value
+            // is returned from the phone_book
+            if (int i = phone_book[s])
+                cout << s << ' ' << i << '\n';
+        }
+      #+end_src
+*** Standard Containers[tou2.stdcontainer]
+    + map, list, vector 都可以用来存储phone book，各有优劣：申请vector很廉价，但是插入删除很耗时。list特点和vector相反
+      map大体和list相似，但是在通过key查找value上面，作了优化
+    + 下面就是所有的standard container，他们都有很多相似的特点，比如push_back()这种函数在很多容器中都可以使用
+        |--------------------+---------------------------------------------|
+        | vector<T>          | A variable-sized vector                     |
+        | list<T>            | A doubly-linked list                        |
+        | queue<T>           | A queue                                     |
+        | stack<T>           | A stack                                     |
+        | deque<T>           | A double-ended queue                        |
+        | priority_queue<T>  | A queue dorted by value                     |
+        | set<T>             | A set                                       |
+        | multiset<T>        | A set in which a value can occur many times |
+        | map<key, val>      | An associative array                        |
+        | multimap<key, val> | A map in which a key can occur many times   |
+*** 
