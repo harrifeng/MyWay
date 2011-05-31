@@ -107,3 +107,203 @@
           printf("name:%s\n", name.c_str());
       }
     #+end_src
+** Input
+   + 在cpp中，我们是通过>>符号来作为input operator,cin是stanard input stream
+     #+begin_src c++
+       void f()
+       {
+        int i;
+        cin >>　i; // read an integer into i;
+       
+        double d;
+        cin >> d; // read a double-precision, floating-point number into d
+       }
+     #+end_src
+   + 下面是一个英尺和厘米的换算程序，你可以从中体会到input的使用
+     #+begin_src c++
+       int main(int argc, char *argv[])
+       {
+           const float factor = 2.54;
+           float x, in, cm;
+           char ch = 0;
+       
+           cout << "enter length:";
+       
+           cin >> x;
+           cin >> ch;
+       
+           switch(ch) {
+           case 'i':
+               in = x;
+               cm = x*factor;
+               break;
+           case 'c':
+               in = x/factor;
+               cm = x;
+               break;
+           default:
+               in = cm = 0;
+               break;
+           }
+       
+           cout << in << "in = " << cm << "cm\n";
+           return 0;
+       }
+     #+end_src
+   + 我们如果要读入一个字符串的话（没有空格），我们可以利用string
+     #+begin_src c++
+       /* if you type in Eric, the response is Hello, Eric!
+        * if you type in Eric Bloodaxe, the response is still
+        * Hello, Eric!
+        */
+       int main(int argc, char *argv[])
+       {
+           string str;
+       
+           cout << "Please enter your name\n";
+           cin >> str;
+           cout << "Hello, " << str << "!\n";
+           return 0;
+       }
+     #+end_src
+   + 如果想要读入带空格的字符串的话，可以用getline  
+     #+begin_src c++
+        * if you type in Eric Bloodaxe, the response is 
+        * Hello, Eric Bloodaxe!
+        */
+       int main(int argc, char *argv[])
+       {
+           string str;
+       
+           cout << "Please enter your name\n";
+           getline(cin, str);
+           cout << "Hello, " << str << "!\n";
+           return 0;
+       }
+     #+end_src
+** Containers
+   A class with the main purpose of holding objects is commonly called a container.
+*** Vector
+    + 对于C 语言来说，对于一个pair来说struct数组是唯一的选择
+      #+begin_src c++
+        struct Entry
+        {
+            string name;
+            int number;
+        };
+        
+        Entry phone_book[10000];
+        
+        void print_entry(int i)
+        {
+            cout << phone_book[i].name << " " << phone_book[i].number << '\n';
+        }
+      #+end_src
+    + built-in 数组是有大小限制的，所以用vector能更好的进行扩展
+      #+begin_src c++
+        vector<Entry> phone_book(1000);
+        
+        void print_entry(int i) // simple use, exactly as for array
+        {
+            cout << phone_book[i].name << ' ' << phone_book[i].number << "\n";
+        }
+        
+        void add_entries(int n) // increase size by n
+        {
+            phone_book.resize(phone_book.size() + n);
+        }
+      #+end_src
+    + 我们可以看到,在vector声明的时候，我们使用了括号，而不是方括号，需要你区分下面两个概念
+      #+begin_src c++
+        vector<Entry> book(1000);    //vector of 1000 elements
+        vector<Entry> book[1000];    // 1000 empty vectors
+      #+end_src
+    + A Vector是一个单独的object,可以被赋值，比如
+      #+begin_src c++
+        void f(vector<Entry>& v)
+        {
+            vector<Entry> v2 = phone_book;
+            v = v2;
+            // ...
+        }
+      #+end_src
+    + 赋值在这里就意味着数据的赋值，如果f()里面的赋值发生以后，v和v2各自都有了一份数据。当vector含有过多数据的时候，上面
+      这种innocent-looking assignments and initialization can be /prohibitively expensive/, 当
+      拷贝不可取的时候，我们可以使用/指针或者引用/
+*** Range Checking
+    + standard library vector竟然是没有range check的，这样一来，我们就需要定义一个叫做Vec的有range-check的容器
+      #+begin_src c++
+        template <typename T> class Vec: public vector<T>{
+        public:
+            Vec():vector<T>(){}
+            Vec(int s):vector<T>(s){}
+            // at() operation is a vector subscript operation that throws an exception
+            // of type out_of_range if its argument is out of the vector's range
+            T& operator[] (int i) {return at(i);};              //range-checked
+            const T& operator[] (int i) const {return at(i);};  //range-checked
+        };
+      #+end_src
+    + 下面就是如何捕获这个exception的例子
+      #+begin_src c++
+        Vec<Entry> phone_book(1000);
+        
+        void print_entry(int i)
+        {
+            cout << phone_book[i].name << " " << phone_book[i].number << '\n';
+        }
+        
+        void f()
+        {
+            try {
+                for (int i = 0; i < 10000; ++i)
+                {
+                    print_entry(i);
+                }
+            }
+            catch (out_of_range) {
+                cout << "range error \n";
+            }
+        }
+        
+        // With default exception handlers
+        int main(int argc, char *argv[])
+        {
+            try {
+                // you code
+            }
+            catch (out_of_range) {
+                cerr << "range error \n";
+            }
+            catch (...) {
+                cerr << "unknow exception thrown\n";
+            }
+            return 0;
+        }
+      #+end_src
+*** List[tour2.list]
+    + 我们会在电话表中频繁的插入和删除，这样一来，list似乎是更好的数据结构，如果我们用了list，我们更多的是要进行搜索操作
+      #+begin_src c++
+        list<Entry> phone_book;
+        
+        void print_entry(const string& s)
+        {
+        
+            //When we don't need to modify an element of the
+            //container, const_iterator is the type we want
+            typedef list<Entry>::const_iterator LI;
+            for (LI i = phone_book.begin(); i != phone_book.end(); ++i)
+            {
+                Entry& e = *i;      //reference used as shorthand
+                if (s == e.name)
+                    cout << e.name << ' ' << e.number << '\n';
+            }
+        }
+        
+        //If we want to change the element, use plain iterator
+        void add_entry(Entry& e, list<Entry>::iterator i)
+        {
+            phone_book.push_front(e);     //add at beginning
+            phone_book.push_back(e);      //add at end
+            phone_book.insert(i, e);      //add before the element 'i' refers to
+        }
+      #+end_src
