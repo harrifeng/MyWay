@@ -337,4 +337,59 @@
         | multiset<T>        | A set in which a value can occur many times |
         | map<key, val>      | An associative array                        |
         | multimap<key, val> | A map in which a key can occur many times   |
-*** 
+** Algorithms
+    + 对于一个数据来说，仅仅存放是没有意义的，我们还要添加删除和搜索，比如下面的代码就是用来排序vector并且拷贝到list
+      #+begin_src c++
+        void f(vector<Entry>& ve, list<Entry>& le)
+        {
+            sort(ve.begin(), ve.end());
+            unique_copy(ve.begin(), ve.end(), le.begin());
+        }
+      #+end_src
+    + 上面的操作是会覆盖list里面的数据的，如果我们不想覆盖，而是在container后面添加排序好的数字，我们可以用back_inserter
+      #+begin_src c++
+        void f(vector<Entry>& ve, list<Entry>& le)
+        {
+            sort(ve.begin(), ve.end());
+            unique_copy(ve.begin(), ve.end(), back_inserter(le));
+        }
+      #+end_src
+    + 下面是back_inserter用法易出错的地方
+      #+begin_src c++
+        void f(vector<Entry>& ve, list<Entry>& le)
+        {
+            copy(ve.begin(), ve.end(), le);       //error: le not an iterator
+            copy(ve.begin(), ve.end(), le.end()); //bad:writes beyond the end
+            copy(ve.begin(), ve.end(), le.begin()); //overwrite elements
+        }
+      #+end_src
+*** Use of Iterator[tour2.iteruse]
+    + 当你遇到container的时候，一些iterator会适合你引用，比如begin() 和 end(), 很多的algorithm 会返回iterator的，比如
+      find，比如下面在一个字符串中寻找某个字符出现的次数.
+      #+begin_src c++
+        int count(const string& s, char c)
+        {
+            string::const_iterator i = find(s.begin(), s.end(), c);
+            int n = 0;
+            while (i != s.end()){
+                ++n;
+                i = find(i+1, s.end(), c);
+            }
+            return n;
+        }
+      #+end_src
+    + 同样我们可以写一个摸板的find函数如下
+      #+begin_src c++
+        template<class C, class T>int count(const C&v, T val)
+        {
+            typename C::const_iterator i = find(v.begin(), v.end(), val);
+            int n = 0;
+            while (i != v.end()){
+                ++n;
+                ++i;
+                i = find(i, v.end(), val);
+            }
+            return n;
+        }
+      #+end_src
+    + 
