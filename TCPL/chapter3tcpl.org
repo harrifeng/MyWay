@@ -391,5 +391,181 @@
             }
             return n;
         }
+        
+        //usage of this function
+        void f(list<complex>& lc, vector<string>& vc, string s)
+        {
+            int i1 = count(lc, complex(1, 3));
+            int i2 = count(vc, "Chrysippus");
+            int i3 = count(s, 'x');
+        }
       #+end_src
-    + 
+    + count这种函数在日常生活当中非常的常见，所以C++特地在standard library里面，加了一个count函数，这个函数是以sequence作为参数的，用法
+      如下
+      #+begin_src c++
+        void f(list<complex>& lc, vector<string>& vs, string s)
+        {
+            int i1 = count(lc.begin(), lc.end(), complex(1,3));
+            int i2 = count(vs.begin(), vs.end(), "Diogenes");
+            int i3 = count(s.begin(), s.end(), 'x');
+        }
+        
+        void g(char cs[], int sz)
+        {
+            int i1 = count(&cs[0], &cs[sz], 'z');    //'z' in array
+            int i2 = count(&cs[0], &cs[sz/2], 'z');  //'z' in first half of array
+        }
+      #+end_src
+*** Iterator Types[tour2.iter]
+    + 用户们不怎么需要知道每种itrator的type，每种容器都知道宅基地的iterator types，我们可以用list<Entry>::iterator的方式来使用iterator
+
+*** Iterator and I/O [tour2.ioiterators]
+    + 在容器当中，iterator很有用，但同时在input output stream当中，iterator也很常见,那么，我们就很容易
+      定义出两种iterator: ostream_iterator 和　istream_iterator,用法如下:
+      #+begin_src c++
+        #include <iostream>
+        #include <iterator>
+        #include <string>
+        using namespace std;
+        
+        int main(int argc, char *argv[])
+        {
+            ostream_iterator<string> oo(cout);
+            istream_iterator<string> eos;
+            
+            *oo = "Hello ";
+            ++oo;
+            *oo = "world\n";
+            
+            string s1 = *ii;
+            ++ ii;
+            string s2 = *ii;
+        
+            cout << s1 << ' ' << s2 << '\n';
+            return 0;
+        }
+      #+end_src
+    + istream_iterator 可以让用户把input stream看成是一个read-only container.
+    + ostream_iterator 就是把output stream看成是一个write-able container.
+    + 下面的例子利用这两种iterator来读取文件，把其中的word排序，然后去掉重复，并把结果写到另一个文件
+      #+begin_src c++
+        int main(int argc, char *argv[])
+        {
+            string from, to;
+            cin >> from >> to; //get source and target file name;
+        
+            ifstream is(from.c_str());             // input stream
+            istream_iterator<string> ii(is);       // input iterator for stream
+            istream_iterator<string> eos;          // input senitnel
+        
+            vector<string> b(ii, eos);             // b is a vector initialized from input
+            sort(b.begin(), b.end());              // sort the buffer
+        
+            ofstream os(to.c_str());               // output stream
+            ostream_iterator<string> oo(os, "\n"); // output iterator for stream
+        
+            unique_copy(b.begin(), b.end(), oo);   //copy buffer to output
+                                                   // discard replicated values;
+            return !is.eof() && !os;
+        }
+      #+end_src
+
+*** Traversals and Predicates[tour2.travers]
+    + 我们有时候，会对全体的成员进行一些操作, 如下, 其中的record和print函数，就是所谓的traversal
+      #+begin_src c++
+        //读取一组单词，看看每个出现了多少次
+        #include <iostream>
+        #include <iterator>
+        #include <string>
+        #include <map>
+        #include <algorithm>
+        
+        using namespace std;
+        
+        map<string, int> histogram;
+         
+        void record(const string& s)
+        {
+            histogram[s]++;          //record frequency of 's'
+        }
+        
+        void print(const pair<const string, int>& r)
+        {
+            cout << r.first << ' ' << r.second << '\n';
+        }
+        
+        int main(int argc, char *argv[])
+        {
+            istream_iterator<string> ii(cin);
+            istream_iterator<string> eos;
+        
+            for_each(ii, eos, record);
+            for_each(histogram.begin(), histogram.end(), print);
+            
+            return 0;
+        }
+      #+end_src
+    + Predicate呢，就是判断container中符合某种要求的成员, 返回值为bool类型
+      #+begin_src c++
+        bool gt_42(const pair<const string, int>& r)
+        {
+            return r.second > 42;
+        }
+        
+        void f(map<string, int>& m)
+        {
+            typedef map<string, int>::const_iterator MI;
+            //find the member, which is bigger than 42
+            MI i = find_if(m.begin(), m.end(), gt_42);
+            // ....
+        }
+      #+end_src
+*** Algorithm Using Member Functions[tour2.memp]
+    + 我们前面讲到了for_each（ii, eos, record)这个函数使用，就是对所有成员调用record函数，在C++当中
+      有很多的函数是member function，这种情况下我们要用到mem_fun
+      #+begin_src c++
+        void g(list<Shape*>& sh)
+        {
+            for_each(sh.begin(), sh.end(), mem_fun(&Shape::draw));
+        }
+      #+end_src
+*** Standard Library Algorithm[tour2.algolit] 
+    + 在C++的辞典当中，所谓函数，就是a set of templates operating on sequences of elements.
+      | Function Name | Function Description                                  |
+      |---------------+-------------------------------------------------------|
+      | for_each()    | Invoke function for each element                      |
+      | find()        | Find first occurrence of arguments                    |
+      | find_if()     | Find first match of predicate                         |
+      | count()       | Count occurrences of element                          |
+      | count_if()    | Count matches of predicate                            |
+      | replace()     | Replace element with new value                        |
+      | replace_if()  | Replace element that matches predicate with new value |
+      | copy()        | Copy elements                                         |
+      | unique_copy() | Copy elements that are not duplicates                 |
+      | sort()        | Sort elements                                         |
+      | equal_range() | Find all elements with equivalent values              |
+      | merge()       | Merge sorted sequences                                |
+
+** Math
+*** Complex Numbers[tour2.complex]
+    + 在C++当中complex数就是一个template
+      #+begin_src c++
+        template<class scalar>class complex {
+        public:
+            complex(scalar re, scalar im);
+            // ...
+        };
+      #+end_src
+*** Vector Arithmetic[tour2.valarray]
+    + 常规的vector出于对性能等的考虑，是不支持数学运算的，能够做数学运算的是一个非正规的vector，叫做
+      valarray.
+      #+begin_src c++
+        template<class T>class valarray {
+        public:
+            // ...
+            T& operator[] (size_t);
+            // ...
+        };
+      #+end_src
+*** Basic Numeric Support[tour2.basicnum]
+    + Standard Library 包含了一些常用的数学方程函数: log(), pow(), cos()
