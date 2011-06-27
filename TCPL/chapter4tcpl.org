@@ -1,0 +1,16 @@
+* Chapter 4 Types and Declarations
+  
+** Types[dcl.type]
+   + 在C++当中，每一个变量都是有类型的比如下面：
+     #+begin_src c++
+       float x;      // x is a floating-point variable
+       int y = 7;    // y is an integer variable with the initial value 7
+       float f(int); // f is a function taking an argument of type int and returing
+                     // a floating-point number
+     #+end_src
+*** Fundamental Type
+    C++有着非常多的数据类型，下面我们将一一介绍
+    
+** Booleans[dcl.bool]
+   + 布尔类型只有两个值true 或者false，对于非0的值来说，都是解释成true的
+   + 在算数和逻辑运算当中，bool类型都是转化成int类型的
