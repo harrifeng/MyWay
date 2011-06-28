@@ -14,3 +14,54 @@
 ** Booleans[dcl.bool]
    + 布尔类型只有两个值true 或者false，对于非0的值来说，都是解释成true的
    + 在算数和逻辑运算当中，bool类型都是转化成int类型的
+** Character Types[dcl.char]
+   + 一般来说，char类型的变量都是8bit，也就是能保存个256个字符
+   + 由于只有256个字符，所以char难以做到面面俱到，一下几种想法在char类型面前都是很危险的：
+     - 只有127个符号：很多系统提供了256个符号
+     - 除了英文没有其他文字：欧洲系统提供了其他字母
+     - alphabetic character是连续的：EBCDIC就把i和j分开了
+     - C++用到的符号都包含了：很多国家的语言里面，就没有{}和[]
+       #+begin_src c++
+         #include <iostream>
+         using namespace std;
+         int main()
+         {
+             char c;
+             std::cin>>c;
+             std::cout << "the value of '" << c << "' is " << int(c) << std::endl;
+             return 0;
+         }
+       #+end_src 
+   + 上面例子中int(c)就是可以得到char c的integer值。
+   + 在不同系统中char有些是有符号的，有些是没符号的，也就是说这个是implementation-defined的。
+     Cpp提供两种定义：signed char，integer value是-127到127. unsigned char， integer
+     value是0 到255.所幸大部分有意义的数字的ascii都在0到127之间.
+   + plain char默认是unsigned的
+   + 对于unicode，cpp提供了wchar_t.这个奇怪的名字来源于和c兼容。在c中wchar_t是一个typedef，
+     而不是build-in的
+*** Character Literals [dcl.char.lit]     
+    + 所谓的character literal就是常说的character constant。也就是用单引号括起来一个字符，
+      比如'c','0'等等。代码中这么写的好处是跨平台性更好
+    + Wide character literals经常使用的形式是L'ab'，前面有个L，单引号里面的字符的数量和如何
+      解释是因平台不同而不同的。
+** Integer Types[dcl.int]
+   + plain integer一般都是sigened,这点和plain char不一样.
+   + unsigend integer在处理bit array方面比较适合。但是想用unsigned来代表正整数往往起不到的
+     效果，因为补码这种奇怪的转换方法的存在。
+*** Integer Literal
+    + Integer有三种表现方式，以0开头加一个数字的是八进制，以0x开头的是十六进制，否则就是十进制
+      | decimal:      |   0 |   2 |   63 |   83 |
+      | octal:        |  00 |  02 |  077 | 0123 |
+      | hexadeciamal: | 0x0 | 0x2 | 0x3f | 0x53 |
+    + 其中十六进制代表数的情况很容易出现令人费解的情况（这也是由于补码的存在），比如0xffffffff
+      在32-bit系统当中代表int的时候，表示值为-1
+    + 在整数当中存在几种后缀U表示是unsigned的，L代表是long的
+    + 最好不要直接使用整数，因为无端出现一个数字在代码当中是很令人费解的（也就是常说的幻数,magic
+      number).这种情况想要使用const或者enumerator
+** Floating-Point Type [dcl.float]
+   + floating-point也分三种float, double, long double
+*** Floating-Point Literals [dcl.fp.lit]
+    + 一般来说，我们写一个浮点数，系统默认的会存成double格式，如果你想存成float格式，那么就加个
+      后缀f或者F，比如:3.1412323f 2.23234F
+    + 一般浮点数有直接表示和e表示两种:1.23 .23 0.12 1. 1.12e10 1.23e-15（注意中间不能有
+      空格）
