@@ -65,3 +65,70 @@
       后缀f或者F，比如:3.1412323f 2.23234F
     + 一般浮点数有直接表示和e表示两种:1.23 .23 0.12 1. 1.12e10 1.23e-15（注意中间不能有
       空格）
+** Sizes [dcl.size]
+   + int的size到底是多少，这个是平台决定的。如果想要写出能跨平台的代码那么就要尽量避免使用int的长度
+     或者采取方式减小他们的影响
+   + 我们之所以提供不止一种的integer，就是为了能够更好的利用硬件性能。如果你对机器的体系足够了解，那么
+     就能选择好数据类型，写出更高效的程序
+   + 我们可以通过<limits>的帮助，来更好的了解当前implementation的属性
+     #+begin_src c++
+       #include <limits>
+       #include <iostream>
+       using namespace std;
+       
+       int main()
+       {
+           cout << "largest float ==" << numeric_limits<float>::max()
+                << ", char is signed == " << numeric_limits<char>::is_signed << endl;
+       }
+       
+     #+end_src
+** Void [dcl.void]
+   + void主要就用在两个方面：
+     1) 没有确定类型的指针
+     2) 没有返回值的函数
+        
+** Enumerations [dcl.enum]
+   + Enum是一种为了让代码可读性更好(防止magic number)的方法，和C语言中的宏有类似的地方,常规的用法如下,
+     和宏不一样的地方是，这里重新定义了一个数据类型keyword，这样的话，编译器就能知道它的存在了。
+     #+begin_src c++
+       enum keyword {ASM, AUTO, BREAK}
+     #+end_src
+   + Enum比宏先进的地方是，它不仅仅可以让用户更好的看懂代码，也能让编译器知道它的存在，进而帮助用户发现
+     代码中的错误，比如如果有下面的代码，那么编译器就会报一个warning，因为keyword并没有被全部列举
+     #+begin_src c++
+       void f(keyword key)
+       {
+           switch (key) {
+           case ASM:
+               // do something
+               break;
+           case BREAK:
+               // do something
+               break;
+           }
+       }
+     #+end_src
+   + Enumation的成员叫做enumerator, Enum类型的range是由绝对值最大的enumerator来决定的，MAX通常是最接近这个绝对值
+     的2的幂减去一,MIN的话如果都是正数就是0，如果有复数，那么就是绝对值等于|MAX+1|的负数
+     #+begin_src c++
+       enum e1 {dark, light};                 //range 0:1
+       enum e2 {a = 3, b = 9};                //range 0:15
+       enum e3 {min = -10, max = 1000000};    //range -1048576:1048575 (1024 * 1024)
+     #+end_src
+   + 定义了range以后，在range里面的值对于enum来说，是defined，意义可定的，而超出range的数值，则行为未定  
+     #+begin_src c++
+       enum flag {x = 1, y = 2, z = 4, e = 8}; // range 0 : 15
+       
+       flag f1 = 5;            //type error: 5 is not type of flag
+       flag f2 = flag(5);      //ok: flag(5) is of type flag and within the range of flag
+       
+       flag f3 = flag(z|e);    //ok: flag(12) is of type flag and within the range of flag
+       flag f4 = flag(99);     //_undefined_ :99 is not within the rang of flag
+       
+     #+end_src
+   + enum的sizeof也是平台间不同的，一个enum的sizeof是能够保存他的range的大小，而不大于sizeof(int)，比如上例中的
+     sizeof(el)可能是1，也可能是4，但是绝对不可能是8
+   + 一般来说enum都是转化成为integer来进行算术运算的，用户可以自己为enum定义++ <<等操作符
+  
+   
