@@ -125,10 +125,119 @@
        
        flag f3 = flag(z|e);    //ok: flag(12) is of type flag and within the range of flag
        flag f4 = flag(99);     //_undefined_ :99 is not within the rang of flag
-       
      #+end_src
    + enum的sizeof也是平台间不同的，一个enum的sizeof是能够保存他的range的大小，而不大于sizeof(int)，比如上例中的
      sizeof(el)可能是1，也可能是4，但是绝对不可能是8
    + 一般来说enum都是转化成为integer来进行算术运算的，用户可以自己为enum定义++ <<等操作符
   
-   
+** Declarations [dcl.dcl]
+   + 在cpp中，一个变量要想使用，必须在之前进行“声明”，声明在很多很多时候，同时也是定义，比如下面的这些，都是声明，同时
+     也是定义（除了标注出来的三个以外）
+     #+begin_src c++
+       char ch;
+       string s;
+       int count = 1;
+       const double pi = 3.1415;
+       extern int error_number; //only declaration
+       
+       char* name = "Njal";
+       char* season[] = {"spring", "summer", "fall", "winter"};
+       
+       struct Date {int d, m, y;};
+       double sqrt(double);  //only declaration
+       
+       typedef complex<short>Point;
+       struct User; //only declaration
+       enum Beer {Carlsberg, Tuborg, Thor};
+       
+     #+end_src
+   + 上面提到的三个只是declaration的代码，可能在其他地方如下定义
+     #+begin_src c++
+       double sqrt(double d) {/*.....*/}
+       int error_number = 1;
+       struct User{/* ... */};
+     #+end_src
+   + 一个变量有且仅有一次定义的机会，但是可以被声明很多次，但是每次声明必须都保持一致，不能声明两种不同的type
+   + 对于templates, function, 和constants来说，定义赋予他们的value是无法改变的，而nonconstant data的变量
+     在定义时候给的value是可以在以后由用户更改的
+*** The Structure of a Declaration [dcl.parts]
+    + 一个 declaration包含四个部分 specifier, base type, declarator, initializer
+      | Specifier | Base Type | Declarator | Initializer                          |
+      | virtual   | char      | * king[]   | {"Antigonus", "Seleucus", "Ptolemy"} |
+      - Specifer 是最开始的keyword，除了virtual还有extern等，目的是定义些non-type attribute
+      - Declarator包含了一个name(king)和一些declarator operators,常见的declarator operator如下
+        | *      | pointer          | prefix  |
+        | *const | constant pointer | prefix  |
+        | &      | reference        | prefix  |
+        | []     | array            | postfix |
+        | ()     | function         | postfix |
+      - 如果只有prefix或者postfix的话，那就好用很了，可惜，两者会混用，混用的时候postfix的优先级要高，所以
+        *kings[]就是所谓的"vector of pointers", *kings()的话，就是"function return type is pointer"
+        如果想要一个"pointer 指向一个function"的话，我们就需要括号啦 (*kings)()
+    + 在原来的C++编译器中，如果没有指明类型，那么就默认为int类型，也就是所谓的"implicit int",已经在standard cpp中
+      取消了，因为他们会产生难以察觉的bug。现在只有unsigned 和 long在没有指明的情况下，默认为unsigned int 和 long int
+      #+begin_src c++
+        const c = 7;      //error no type
+        gt(int a, int b)  { return (a>b) ? a : b;} // error: no return type
+        
+        unsigned ui; // ok: 'unsigned' is the type 'unsigned int'
+        long li;     // ok: 'long' is the type 'long int'
+      #+end_src
+*** Declaring Multiple Names
+    + 我们可以在一句话里面声明几个变量
+      int x, y;
+    + 但是要注意下面的几种陷阱
+      #+begin_src c++
+        int* p, y;              //int*p; int y; NOT int* y;
+        int x, *q;              //int x; int* q;
+        int v[10], *pv;         //int v[10]; int* pv;
+      #+end_src
+*** Names [dcl.name]
+    + 命名规则很熟悉了啊，不能以数字开头，下划线开头的为系统保留属性，不要乱用
+    + 虽然C++编译器可以不限定变量长度，但是linker不再编译范畴，linker很可能会
+      限定长度。
+    + 命名规则要统一，清晰易懂
+*** Scope [dcl.scope]
+    + 变量都是有作用范围的，一般是最近的那个block{}.
+    + 全局变量全局都有效，因为他定义在任何一个block之外，所以可以认为是在程序开始和结束的
+      地方，各有一个block。
+    + 可以在局部写一个block，里面命名和全局变量一样的局部变量，这个时候局部变量会覆盖全局变量。这
+      就是我们常说的Hiding name.这种情况少见而且难以察觉，应该尽量避免，避免的方法比如全局
+      变量切不可取x, i这种名字
+    + 极端情况下，我们可以用::来访问全局变量，hidden local name就没有啥办法精确指定了
+      #+begin_src c++
+        int x;
+        
+        void f2()
+        {
+            int x = 1; //hide global x;
+            ::x = 2;   //assign to global x
+            x = 2;     //assigne to local x
+        }
+        
+      #+end_src
+*** Initialization [dcl.init]
+    + global, namespace, local static object 会被初始化为0，如果没有特别指明初始化值的话
+    + Local variable的话，就会保持未初始化状态，什么值都有可能
+*** Objects and Lvalues
+    + Lvalue的来源就是 "something that can be on the left-hand side fo an
+      assignment"，但是不是所有的lvalue都能放到赋值式的左边，比如const的变量
+    + 除非用户声明，那么在function里面声明的变量都是automatic的，会自动在当前block结束前销毁
+    + 在全局和scope里面定义的变量是从定义起到程序结束都有效的
+    + 处在两者之间的，就是用new delete在heap上创建的变量了，它的lifetime可以有你自己定
+*** Typedef [dcl.typedef]
+    + typedef就是个type起了个新名字，而不是新创建一个type
+    + 有时候类型太长，我们可以用typedef来取别名
+      #+begin_src c++
+        typdef unsigned char uchar
+      #+end_src
+    + typdef还有一个妙用就是限制直接使用某个类型
+      #+begin_src c++
+        //At firest we defined following
+        typedef int int32;
+        typedef short int16;
+        
+        //Porting program to a machine on which sizeof(int) is 2
+        typedef long int32;
+      #+end_src
+
