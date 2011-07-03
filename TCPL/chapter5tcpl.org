@@ -96,3 +96,198 @@
       #+end_src
     + 字符串前面加个L，比如L"angst"是string of wide characterss，数组类型为const
       wchar_t[].
+** Pointers into Arrays [ptr.into]
+   + 在cpp中，数组和指针关系密切。数组的名字，也可以当做一个指向他第一个成员的指针来用。
+   + 在很多平台实现上，数组都是在address boundary上分配的。所以"one before the initial
+     element"的说法，是没意义的
+   + 把数组转化为自己第一个成员的指针，这种操作经常被使用，这里面蕴含着从数组到指针的
+     implicit conversion. 幸运的是，从指针到数组的赋值被禁止了，也就无从谈implicit
+     conversion了
+     #+begin_src c++
+       void f()
+       {
+           char v[] = "Annemarie";
+           char* p = v;             //implicit conversiont of char[] to char*
+           strlen(p);
+           strlen(v);               //implicit conversiont of char[] to char*
+           v = p;                   //error: can not assigne to array
+       }
+     #+end_src
+*** Navigating Arrays [ptr.navigate]
+    + cpp中和c中一样，可以使用[]或者指针的方式来访问成员，因为现代编译器的强大，两种代码最终
+      都会编译成一样的字节码，所以速度没有差别
+    + pointer加一个1，地址一加N，N一般是指针类型决定的
+    + 如果两个指针指向同一个array，是可以相减的，结果是两者之间的成员个数。无论如何两个指针
+      不能够相加
+** Constants [ptr.const]
+   + 常量是非常有用的，比如：
+     - 一些变量初始化后就再也不改变
+     - 有名字的常量更容易阅读
+     - 一些指针一直被读取，从未被写入
+     - 一些function parameter可以被读，但是无法写入
+   + 常量必须在使用之前初始化，因为它无法被赋值。
+   + const限定的是type，也就是说const规定了一个object如何使用，而没有规定const修饰后，放在
+     哪里存储（static恰恰相反, 下例中可以从地址看出)
+     #+begin_src c++
+       int fhr;
+       const fhr2;
+       static int fhr3;
+       
+       cout << "fhr address " << &fhr << endl;
+       cout << "fhr2 address " << &fhr2 << endl;
+       cout << "fhr3 address " << &fhr3 << endl;
+     #+end_src
+   + 如果常量的初始化值是个constant expression，也就是在compile time 可知，并且编译器知道
+     所有这个常量使用的地方。那么没有必要为这个常量分配space，直接把数写到代码里面就可以了。当然
+     了，如果代码中其他地方要reference这个常量，还是要分配的
+     #+begin_src c++
+       const int c1 = 1;
+       const int c2 = 2;
+       const int c3 = my_f(3); //do not know the value of c3 at complie time
+       extern const int c4;    //do not know the value of c3 at complie time
+       const int* p = &c2;     //need to allocate space for c2
+     #+end_src
+   + Const一大用处和宏差不多，就是把幻数（magic number）替换可读性好的标记.
+*** Pointers and Constants
+    + 很绕的const和pointer，可以试着从右往左读 
+     #+begin_src c++
+       char *const cp;        //const pinter to char
+       char const* pc;        //pointer to const char
+       const char* pc2;       //pointer to const char
+     #+end_src
+    + 一个pointer to const int的指针，也可以指向一个非const 的int。（在函数参数中很重要）
+    + 但是，一个普通的int指针，无法指向一个const的int。
+    + 换句话说，本来比较随便的一个变量，我决定严格要求他（通过const指针
+      调用）,那没什么问题。但是一个本来很严格的变量，你想通过换换指针就想改变他，那是行不通的。
+     #+begin_src c++
+       void f4()
+       {
+           int a = 1;
+           const int c = 2;
+           const int* p1 = &c;  //ok
+           const int* p2 = &a;  //ok
+           int* p3 = &c;        //error: initialization of int* with const int*
+           *p3 = 7;             //try to change the value of c
+       }
+     #+end_src
+    + 变量的const 属性是可以通过explicit type conversion来去除的.后面会讲到.
+** References [ptr.ref]
+   + Reference是Cpp中的新概念，为了去除c中指针的一些劣根性引入的。一个reference就是一个变量的
+     别名，一旦被初始化就永远无法更改
+     #+begin_src c++
+       int i = 1;
+       int& r1 = i;         //ok:r1 initialized
+       int& r2;             //error: initializer missing
+       extern int& r3;      //ok:r3 initialized elsewhere
+     #+end_src
+   + reference的用法，在其initializer是一个lvalue的时候，很有讲究.如果是普通T& ref= lv的话
+     lv必须为T类型的。
+   + 但是，如果是const T& ref = lv的话，lv可以是任意类型，甚至可以不是类型，比如是变量！因为：
+     1) implicit type conversion to T is aplied if necessary.
+     2) then, the resultingt value is placed in a temporary variable of Type T
+     3) and finally, this temporary variable is used as the value of the
+        initializer.
+        #+begin_src c++
+          double& dr = 1;         //error:lvaue need
+          const double& cdr = 1;  //ok! see below
+          //----complier does following-----
+          double temp = double(1); //first crate a temp with right value
+          const double& cdr = temp; //the use the temp as the initializer
+        #+end_src
+   + const &T 和&T之所以不同，是因为，引入一个temporary的变量，如果是const的话，那么就没有什
+     么出错的机会。
+   + 我们也可以用reference来做函数参数，但是如果是不加const的那种的话，很不好，因为参数的值有
+     可能会改变。而函数本身很难提供参数改变的提示。如果函数参数不改变，那么用const T&比较合适
+     否则，返回值来标示参数改变，或者传入地址来标示改变更合理
+     #+begin_src c++
+       void increment(int& aa) {aa++;}
+       
+       int next(int p) {return p + 1;}
+       
+       void incr(int *p) {(*p)++; }
+       
+       void g()
+       {
+           int x = 1;
+           increment(x); //bad function type
+           x = next(x);  //good function type
+           incr(&x);     //good function type
+       }
+     #+end_src
+   + Ref还有一个重要的用途就是定义既可以用作lef-hand又可以用作right-hand的function（后面的
+     operator函数，有些就属于这个范畴）
+     #+begin_src c++
+       #include <iostream>
+       #include <vector>
+       #include <string>
+       using namespace std;
+       
+       struct  Pair {
+            string name;
+            double val;
+       };
+       
+       std::vector<Pair> pairs;
+       
+       double& value(const string& s)
+       {
+           for (int i = 0; i < pairs.size(); i++) {
+               if (s == pairs[i].name) {
+                   return pairs[i].val;
+               }
+           }
+       
+           Pair p = { s, 0};
+           pairs.push_back(p); //add Pair at end
+       
+           return pairs[pairs.size() - 1].val;
+       }
+       
+       int main(int argc, const char *argv[])
+       {
+           string buf;
+       
+           while (cin >> buf) {
+               value(buf)++;  //return of func value can use "++"
+           }
+       
+           for (vector<Pair>::const_iterator p = pairs.begin(); p != pairs.end(); p++) {
+               cout << p->name << ":" << p->val << endl;
+           }
+           return 0;
+       }
+       
+     #+end_src
+** Pointer to Void [ptr.ptrtovoid]
+   + void pointer 可以和被赋予任何类型的pointer，但是如果要使用void pointer，一定赢要显式的指
+     出其指针类型
+     #+begin_src c++
+       void f(int* pi)
+       {
+           void* pv = pi;  //ok implicit conversion of int* to void
+           *pv;            //error: can't dereference void*
+           pv++;            //error: can't increment void*
+                           //the size of the object pointed to is unknown
+           int* pi2 = static_cast<int*>(pv); //explicit conversion
+       
+           double* pd1 = pv;   //error
+           double* pd2 = pi;   //error
+           double* pd3 = static_cast<double*> (pv); //unsafe
+       }        
+     #+end_src
+   + Pointer to functions and pointers to members cannot be assigned to void*s
+   + 底层代码中常常出现void*，在high-level代码中出现void*是非常令人怀疑的
+** Structures [ptr.struct]
+   + Structure说白了就是a simple form of a class
+   + structure的内存布局是有讲究的，为了更好的提高效率，变量总是要align的排放，所以先放sizeof
+     大的变量，会使得structure的sizeof变小。但是，我们一般都是要按照代码易读的顺序来排放
+   + struct一个类型是可以和一个非struct的变量在同一个scope里面出现的。只是为了向前兼容，不推荐
+     这么做。keywords class, union, enum也一样，都不推荐仅仅靠这些关键字来区分名字
+     #+begin_src c++
+       struct stat {/*....*/};
+       struct stat(char* name);  // not recommended
+     #+end_src
+*** Type Equivalence [ptr.equiv]
+    + 即便structure 的成员一样，他俩也不相等
+    + structure也和普通的type不相等
+    + Every struct must have a unique definition in a program
