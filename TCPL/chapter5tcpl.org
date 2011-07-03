@@ -1,0 +1,98 @@
+* Chapter 5 Pointers, Arrays, and Structures
+
+** Pointers [ptr.ptr]
+   + 指针就是能够指向某个类型地址的类型，指针本身定义很简单，但是有很多变态的指针
+     #+begin_src c++
+       int* pi;          //pointer to int
+       char** ppc;       //pointer to pionter to char
+       int* ap[15];      //array of 15 pointers to ints
+       int (*fp)(char*); //pointer to function taking a char* argument; returns an int
+       int* f(char*);    //function taking a char* argument; returns a pointer to int
+     #+end_src
+   + 指针最常见的操作就是dereferencing（解引用），符号是* 
+     #+begin_src c++
+       char c = 'a';
+       char* p = &c;
+       char c2 = *p;
+     #+end_src
+   + 在cpp中，最小能够利用的单位就是byte。如果想使用bit，那么就利用logical operations或者
+     bit fields in structures
+     
+*** Zero [ptr.zero]
+    + 0可以用来作为所有整数，浮点数，指针的const
+    + 没有object可以被放在address 0, 其实如果一个pointer的地址为零，我们就认为这个pointer没
+      有指向任何的object
+** Arrays [ptr.array]
+   + 数组就是一列相同数据结构的成员
+   + 数组的大小，也就是array bound必须是constant expression,如果你想用变长的数组，那么就请
+     使用vector
+     #+begin_src c++
+       void f(int i)
+       {
+           int vl[i];         //error: array size ont a constant expression
+           vector<int> v2(i); //OK
+       }
+     #+end_src
+   + 多维数组是那种你最好避免使用的代码风格
+     
+*** Array Initializers [ptr.array.init]
+    + 对于数组来说，如果不知名数组大小，那么编译器就自己动数initializer list里面的数字个数
+    + 如果指明了大小，但是niitializer list里面数目不够，那就后面补零
+      #+begin_src c++
+        int v5[8] = {1, 2, 3, 4};
+        //is equivalent to 
+        int v5[8] = {1, 2, 3, 4, 0, 0, 0, 0};
+      #+end_src
+*** String Literals [ptr.string.literal]
+    + String Literal我们翻译成“字符串”，和字符数组_有很大不同_
+    + The type of a string listeral is "array of the appropriate number of
+      const characters"。这样一来"Bohr" 的类型就是const char[5]
+    + 因为在之前的c++和c代码当中, string literal 的类型是 char*,为了能够让数以百万计的代码
+      能够兼容，在c++中允许把string literal赋给char*
+    + 虽然能够赋给char*，但是通过赋给char*,然后通过指针来更改数据的行为是错误的
+      #+begin_src c++
+        void f()
+        {
+            char* p = "Plato";
+            p[4] = 'e' ;         //error:assignment to const; result is undefined
+        }
+      #+end_src
+    + 这种问题一般知道运行时才会发现，运行结果未定义，我的实验是会导致程序崩溃
+    + 我们使用string literal的很大原因是因为它从某种意义上是一种static&const的，很容易进行
+      优化
+    + 如果你很像更改字符串，那么你就要先把字符串拷贝到一个字符数组里面，然后更改这个字符数组。注意
+      字符数组就不是static的了，它是automatic的，在stack上分配的
+      #+begin_src c++
+        void f()
+        {
+            char p[] = "Zeno"; // p is automatic array of 5 char
+            p[0] = 'R';
+        }
+      #+end_src
+    + 因为string literal是statical分配的，所以在function里面返回一个string literal是非常
+      安全的
+      #+begin_src c++
+        const char* error_message(int i)
+        {
+            //...
+            return "range error";
+        }
+      #+end_src
+    + 两个长得一样的字符串一般编译器会优化后指标一份，那么两个lvalue的地址也就一样了，但是这个是
+      一般做法，具体每个平台如何定义，未知。
+      #+begin_src c++
+        const char* p = "Heraclitus";
+        const char* q = "Heraclitus";
+        
+        void g()
+        {
+            if (p == q) cout << "one\n";  //result is implementation-defined
+        }
+      #+end_src
+    + 如果字符串过长，我们可以如下书写
+      #+begin_src c++
+        char alpha[] = "abcdefghijklmnopqrstuvwxyz"
+                       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      #+end_src
+    + 字符串前面加个L，比如L"angst"是string of wide characterss，数组类型为const
+      wchar_t[].

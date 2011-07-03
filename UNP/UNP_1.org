@@ -56,7 +56,7 @@
        
      #+end_src
 ** Protocol Independence
-   前面的例子，到处都是IPv4的身影，sockaddr_in, AF_INET等等，下面我们来看看如何创造在IPv6下面也能
+   前面的例子，到处都是IPv4的身影，sockaddr_in, AF_INET 等等，下面我们来看看如何创造在IPv6下面也能
    运行的例子
    #+begin_src c
      #include "unp.h"
