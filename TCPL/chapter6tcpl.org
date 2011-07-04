@@ -1,0 +1,173 @@
+* Chapter 6 Expressions and Statements
+  + 这一章主要通过一个例子来讲解
+** A Desk Calculator [expr.calculator]
+   + 我们所说的calculator包含了四个部分:parser, input function, symbol table, driver
+*** The Parser [expr.parser]
+    + 一个程序就是由一系列的expression组成的，而expression是有数字，名字还有符号组成的
+    + parser 使用 get_token()来得到input，最近得到的value被存放在global variable
+      curr_tok里面， curr_token是一个enumeration Token_value
+      #+begin_src c++
+        enum Token_value { 
+            NAME,          NUMBER,       END,
+            PLUS = '+',    MINUS = '-',  MUL = '*',  DIV = '/',
+            PRINT = ';',   ASSIGN = '=', LP = '(',   RP = ')'
+        };
+        Token_value  curr_token = PRINT;
+      #+end_src
+    + 每个parser function都是以bool类型作为参数，表示是否需要get下一个token 
+    + expr() 处理加法和减法，它包含一个single loop来寻找要加减的term
+      #+begin_src c++
+        double expr(bool get)
+        {
+            double left = term(get);
+        
+            for (; ;)
+                switch (curr_tok) {
+                case PLUS:
+                    left += term(true);
+                    break;
+                case MINUS:
+                    left -= term(true);
+                    break;
+                default:
+                    return left;
+                }
+        }
+      #+end_src
+    + term() 处理乘法和除法，其方式和expr()有异曲同工之妙
+      #+begin_src c++
+        double term（bool get)
+        {
+            double left = prim(get);
+        
+            for (; ;)
+                switch (curr_toke) {
+                case MUL:
+                    letf *= prim(true);
+                    break;
+                case DIV:
+                    if (double d = prim(true)) {
+                        left /= d;
+                        break;
+                    }
+                    return error("divide by 0");
+                default:
+                    return left;
+                }
+        }
+      #+end_src
+    + prim()处理 primary的方式和expr(), term()很像，只是我们更接近底层了，并且不需要无线
+      循环了
+      #+begin_src c++
+        double number_value;
+        string string_value;
+        
+        double prim(bool get)
+        {
+            if (get)
+                get_token();
+        
+            switch (curr_tok) {
+            case NUMBER:
+            {
+                double v = number_value;
+                get_token();
+                return v;
+            }
+            case NAME:
+            {
+                double v = table[string_value];
+                if (get_token() == ASSIGN) v = expr(true);
+                rturn v;
+            }
+            case MINUS:
+                return -prim(true);
+            case LP:
+            {
+                double e = expr(true);
+                if (curr_tok != RP) return error(") expected");
+                get_token();          //eat ')'
+                return e;
+            }
+            default:
+                return error("primary expected");
+            }
+        }
+      #+end_src
+    + 我们用map来存放变量和其对应的值: map<string, double> table;
+*** The Input Function [expr.input]
+    + 读取input的过程，非常繁琐，主要是利用switch来进行判断，putback函数的作用是把字符再放回
+      到字符流里面去
+      #+begin_src c++
+        Token_value get_token()
+        {
+            char ch = 0; 
+            cin >> ch;
+            switch (ch) {
+                case 0:
+                    return curr_tok = END;
+                case ';':
+                case '*':
+                case '/':
+                case '+':
+                case '-':
+                case '(':
+                case ')':
+                case '=':
+                    return curr_tok = Token_value(ch);
+                case '0': case '1': case '2': case '3': case '4':
+                case '5': case '6': case '7': case '8': case '9':
+                case '.':
+                    cin.putback(ch);
+                    cin >> number_value;
+                    return curr_tok = NUMBER;
+                default:
+                    if (isalpha(ch)) {
+                        cin.putback(ch);
+                        cin >> string_value;
+                        return curr_tok = NAME;
+                    }
+                    error("bad token");
+                    return curr_tok = PRINT;
+            }
+        }
+      #+end_src
+*** Low-level Input [expr.low]
+*** Error Handling [expr.error]
+    + 因为这个问题不是特别的复杂，所以error handling也不是特别的难，主要是个形式
+      #+begin_src c++
+        int no_of_errors;
+        
+        double error(const string& s)
+        {
+            no_of_errors++;
+            ceer << "error: " << s << '\n';
+            return 1;
+        }
+      #+end_src
+    + 更加先进的错误处理可以依靠exception，这里我们只是简单的处理
+*** The Driver [expr.driver]
+    + 我们用一个主程序来代表driver
+      #+begin_src c++
+        int main()
+        {
+            table["pi"] = 3.1415926535;
+            table["e"] = 2.71828182845;
+        
+            while (cin) {
+                get_token();
+                if (curr_tok == END) break;
+                if (curr_tok == PRINT) continue;
+                cout << expr(false) << endl;
+            }
+            return no_of_errors;
+        }
+      #+end_src
+*** Headers [expr.headers]
+    + 我们需要<iostream> <string> <map> <cctype>等等头文件
+*** Command-Line Arguments [expr.command]
+    + 这个我们很熟悉了main(int argc, char* argv[])中argc代表参数数量，argv是参数字符数组
+*** A Note on Style [expr.style]
+    + 尽量使用standard library
+** Operator Summary [expr.operators]
+
