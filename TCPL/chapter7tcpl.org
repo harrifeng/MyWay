@@ -1,26 +1,26 @@
 *  Chapter 7 Functions
 ** Function Declarations
-   + ÈÎºÎfunctionÔÚÊ¹ÓÃÒÔÇ°¶¼±ØÐë½øÐÐÉùÃ÷
-   + functionµÄÉùÃ÷¿ÉÒÔÓÐ²ÎÊý±äÁ¿£¬µ«ÊÇ±àÒëÆ÷²»»áÈ¥¿´µÄ
+   + ä»»ä½•functionåœ¨ä½¿ç”¨ä»¥å‰éƒ½å¿…é¡»è¿›è¡Œå£°æ˜Ž
+   + functionçš„å£°æ˜Žå¯ä»¥æœ‰å‚æ•°å˜é‡ï¼Œä½†æ˜¯ç¼–è¯‘å™¨ä¸ä¼šåŽ»çœ‹çš„
 *** Function Definitions
-    + ³ÌÐòÔÚÊ¹ÓÃÖ®Ç°±ØÐëÒª¶¨Òå£¬µ«ÊÇºÜ¶àÊ±ºò£¬ÎÒÃÇ»á·¢ÏÖÓÐÐ©²ÎÊýÃ»ÓÐÓÃµ½£¬ÕâÍ¨³£ÊÇÎªÁËÒÔºóµÄÉý¼¶À©Õ¹
+    + ç¨‹åºåœ¨ä½¿ç”¨ä¹‹å‰å¿…é¡»è¦å®šä¹‰ï¼Œä½†æ˜¯å¾ˆå¤šæ—¶å€™ï¼Œæˆ‘ä»¬ä¼šå‘çŽ°æœ‰äº›å‚æ•°æ²¡æœ‰ç”¨åˆ°ï¼Œè¿™é€šå¸¸æ˜¯ä¸ºäº†ä»¥åŽçš„å‡çº§æ‰©å±•
        #+begin_src c++
          void search(tabe*t, const char* key, const char*)
          {
              // no use of the third argument
          }
        #+end_src
-    + º¯Êý¿ÉÒÔ±»¶¨ÒåÎªinlineµÄ£¬±ãÓÚ±àÒëÆ÷½øÐÐÓÅ»¯¡£
-    + inline¹Ø¼ü×Ö²»Ó°Ïìsemantics of a functio.Ò»¸öinline functionÒ»ÑùÓµÓÐunique address
+    + å‡½æ•°å¯ä»¥è¢«å®šä¹‰ä¸ºinlineçš„ï¼Œä¾¿äºŽç¼–è¯‘å™¨è¿›è¡Œä¼˜åŒ–ã€‚
+    + inlineå…³é”®å­—ä¸å½±å“semantics of a functio.ä¸€ä¸ªinline functionä¸€æ ·æ‹¥æœ‰unique address
 *** Static Variables
-    + Ò»°ãµÄ±äÁ¿¶¼ÊÇÔÚ³ÌÐòµ½´ïµÄÊ±ºò½øÐÐÒ»´Î³õÊ¼»¯£¬Ò»¸öfunctionÀïÃæÈç¹ûÓÐÆÕÍ¨±äÁ¿µÄ»°£¬Ã¿´Îµ÷ÓÃÕâ¸öfunction
-       ±äÁ¿¾Í»á³õÊ¼»¯Ò»´Î£¬È»ºóËæ¼´º¯ÊýÍËÕ»£¬±äÁ¿Ïú»Ù
-    + static ±äÁ¿¾Í²»Ò»ÑùÁË£¬ÒòÎªËû´æ´¢µÄµØ·½¾ÍÊÇÔÙ¾²Ì¬Çø£¬µÚÒ»´Îµ÷ÓÃfunctionµÄÊ±ºò£¬static±äÁ¿³õÊ¼»¯£¬functionÍËÕ»
-       Ò²²»»áÓ°Ïìµ½static±äÁ¿
+    + ä¸€èˆ¬çš„å˜é‡éƒ½æ˜¯åœ¨ç¨‹åºåˆ°è¾¾çš„æ—¶å€™è¿›è¡Œä¸€æ¬¡åˆå§‹åŒ–ï¼Œä¸€ä¸ªfunctioné‡Œé¢å¦‚æžœæœ‰æ™®é€šå˜é‡çš„è¯ï¼Œæ¯æ¬¡è°ƒç”¨è¿™ä¸ªfunction
+       å˜é‡å°±ä¼šåˆå§‹åŒ–ä¸€æ¬¡ï¼Œç„¶åŽéšå³å‡½æ•°é€€æ ˆï¼Œå˜é‡é”€æ¯
+    + static å˜é‡å°±ä¸ä¸€æ ·äº†ï¼Œå› ä¸ºä»–å­˜å‚¨çš„åœ°æ–¹å°±æ˜¯å†é™æ€åŒºï¼Œç¬¬ä¸€æ¬¡è°ƒç”¨functionçš„æ—¶å€™ï¼Œstaticå˜é‡åˆå§‹åŒ–ï¼Œfunctioné€€æ ˆ
+       ä¹Ÿä¸ä¼šå½±å“åˆ°staticå˜é‡
 ** Argument Passing
-   + º¯Êý´«µÝ¾Í·Ö³ÉÁËÖµ´«µÝºÍÒýÓÃ´«µÝ£¬Ò²¾ÍÊÇcall-by-value, call-by-reference.Ò»°ãÀ´Ëµcall-by-referenceÖ±½Óµ÷ÓÃÊÇ_ÓÐ¿ÉÄÜ_
-      ¸Ä±ä²ÎÊýÖµµÄ£¬ËùÒÔÈç¹û²»Ïë¸Ä±ä¾Í¼ÓconstÒýÓÃ£¬Èç¹ûÒª¸Ä±ä£¬Òª¼Ó×¢ÊÍ
-       #+begin_src c++
+   + å‡½æ•°ä¼ é€’å°±åˆ†æˆäº†å€¼ä¼ é€’å’Œå¼•ç”¨ä¼ é€’ï¼Œä¹Ÿå°±æ˜¯call-by-value, call-by-reference.ä¸€èˆ¬æ¥è¯´call-by-referenceç›´æŽ¥è°ƒç”¨æ˜¯_æœ‰å¯èƒ½_
+      æ”¹å˜å‚æ•°å€¼çš„ï¼Œæ‰€ä»¥å¦‚æžœä¸æƒ³æ”¹å˜å°±åŠ constå¼•ç”¨ï¼Œå¦‚æžœè¦æ”¹å˜ï¼Œè¦åŠ æ³¨é‡Š
+       #+begin_src c++ 
          void f(const Large& arg)
          {
              // the value of "arg" cannot be changed without explict use of type conversion
@@ -28,8 +28,8 @@
          
          void g(Large& arg); // assume that g() modifies arg
        #+end_src
-   +  ÔÚ´«²Î¹ý³Ìµ±ÖÐÓÐtype conversionÔÚconst T&ÕâÖÖÐÎÊ½ÖÐÊÇÔÊÐíµÄ£¬¶ø·´Ö®Ôò²»ÔÊÐí¡£ÕâÖÖÇé¿öÎÒÃÇ¼ûµ½ºÜ¶à´ÎÁË£¬ÆäÖÐ
-       Ô­Òò´óÌå½²¼´ÊÇconst¿ÉÒÔ±£Ö¤²ÎÊý²»±ä£¬¼´±ãÒýÈëtemp variableÒ²²»»áÓÐÎÊÌâ¡£
+   +  åœ¨ä¼ å‚è¿‡ç¨‹å½“ä¸­æœ‰type conversionåœ¨const T&è¿™ç§å½¢å¼ä¸­æ˜¯å…è®¸çš„ï¼Œè€Œåä¹‹åˆ™ä¸å…è®¸ã€‚è¿™ç§æƒ…å†µæˆ‘ä»¬è§åˆ°å¾ˆå¤šæ¬¡äº†ï¼Œå…¶ä¸­
+       åŽŸå› å¤§ä½“è®²å³æ˜¯constå¯ä»¥ä¿è¯å‚æ•°ä¸å˜ï¼Œå³ä¾¿å¼•å…¥temp variableä¹Ÿä¸ä¼šæœ‰é—®é¢˜ã€‚
        #+begin_src c++
          float fsqrt(const float&); // Fortran-style sqrt taking a reference argument
          
@@ -50,10 +50,10 @@
          }
        #+end_src
 *** Array Arguments
-    + Èç¹ûÊý×é×÷Îªº¯Êý²ÎÊýµÄ»°£¬ a pionter to its initial element±»´«µÝ¡£ÒòÎª´«µÝµÄÊÇT*µÄÐÎÊ½£¬Ò²¾ÍÒâÎ¶×ÅÊý×é³ÉÔ±¿ÉÒÔ±»
-       ¸Ä±ä¡£
-    + Êý×éµÄ´óÐ¡Ò»°ãÊÇ¶à¼ÓÒ»¸ö²ÎÊýÀ´´«µÝµÄ¡£¶ø×Ö·ûÊý×éÒòÎªÊÇ0½áÎ²£¬¿ÉÒÔ²»´«¡£
-    + ÎÒÃÇÇ°ÃæËµ¹ý£¬¶àÎ¬Êý×éºÜÈÝÒ×³öÎÊÌâ£¬µ«ÊÇÍ¨³£Çé¿öÏÂÈç¹ûÐèÒªÓÃµÄ»°£¬ÎÒÃÇ¿ÉÒÔÓÃarragy of pointerÀ´Ìæ´ú±ÈÈç
+    + å¦‚æžœæ•°ç»„ä½œä¸ºå‡½æ•°å‚æ•°çš„è¯ï¼Œ a pionter to its initial elementè¢«ä¼ é€’ã€‚å› ä¸ºä¼ é€’çš„æ˜¯T*çš„å½¢å¼ï¼Œä¹Ÿå°±æ„å‘³ç€æ•°ç»„æˆå‘˜å¯ä»¥è¢«
+       æ”¹å˜ã€‚
+    + æ•°ç»„çš„å¤§å°ä¸€èˆ¬æ˜¯å¤šåŠ ä¸€ä¸ªå‚æ•°æ¥ä¼ é€’çš„ã€‚è€Œå­—ç¬¦æ•°ç»„å› ä¸ºæ˜¯0ç»“å°¾ï¼Œå¯ä»¥ä¸ä¼ ã€‚
+    + æˆ‘ä»¬å‰é¢è¯´è¿‡ï¼Œå¤šç»´æ•°ç»„å¾ˆå®¹æ˜“å‡ºé—®é¢˜ï¼Œä½†æ˜¯é€šå¸¸æƒ…å†µä¸‹å¦‚æžœéœ€è¦ç”¨çš„è¯ï¼Œæˆ‘ä»¬å¯ä»¥ç”¨arragy of pointeræ¥æ›¿ä»£æ¯”å¦‚
        #+begin_src c++
          char* day[] = {"mon", "tue", "wed", "thu", "fri", "sta", "sun"};
        #+end_src
