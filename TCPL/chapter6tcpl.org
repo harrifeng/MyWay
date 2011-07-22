@@ -1,11 +1,11 @@
 * Chapter 6 Expressions and Statements
-  + ÕâÒ»ÕÂÖ÷ÒªÍ¨¹ıÒ»¸öÀı×ÓÀ´½²½â
+  + è¿™ä¸€ç« ä¸»è¦é€šè¿‡ä¸€ä¸ªä¾‹å­æ¥è®²è§£
 ** A Desk Calculator [expr.calculator]
-   + ÎÒÃÇËùËµµÄcalculator°üº¬ÁËËÄ¸ö²¿·Ö:parser, input function, symbol table, driver
+   + æˆ‘ä»¬æ‰€è¯´çš„calculatoråŒ…å«äº†å››ä¸ªéƒ¨åˆ†:parser, input function, symbol table, driver
 *** The Parser [expr.parser]
-    + Ò»¸ö³ÌĞò¾ÍÊÇÓÉÒ»ÏµÁĞµÄexpression×é³ÉµÄ£¬¶øexpressionÊÇÓĞÊı×Ö£¬Ãû×Ö»¹ÓĞ·ûºÅ×é³ÉµÄ
-    + parser Ê¹ÓÃ get_token()À´µÃµ½input£¬×î½üµÃµ½µÄvalue±»´æ·ÅÔÚglobal variable
-      curr_tokÀïÃæ£¬ curr_tokenÊÇÒ»¸öenumeration Token_value
+    + ä¸€ä¸ªç¨‹åºå°±æ˜¯ç”±ä¸€ç³»åˆ—çš„expressionç»„æˆçš„ï¼Œè€Œexpressionæ˜¯æœ‰æ•°å­—ï¼Œåå­—è¿˜æœ‰ç¬¦å·ç»„æˆçš„
+    + parser ä½¿ç”¨ get_token()æ¥å¾—åˆ°inputï¼Œæœ€è¿‘å¾—åˆ°çš„valueè¢«å­˜æ”¾åœ¨global variable
+      curr_toké‡Œé¢ï¼Œ curr_tokenæ˜¯ä¸€ä¸ªenumeration Token_value
       #+begin_src c++
         enum Token_value { 
             NAME,          NUMBER,       END,
@@ -14,8 +14,8 @@
         };
         Token_value  curr_token = PRINT;
       #+end_src
-    + Ã¿¸öparser function¶¼ÊÇÒÔboolÀàĞÍ×÷Îª²ÎÊı£¬±íÊ¾ÊÇ·ñĞèÒªgetÏÂÒ»¸ötoken 
-    + expr() ´¦Àí¼Ó·¨ºÍ¼õ·¨£¬Ëü°üº¬Ò»¸ösingle loopÀ´Ñ°ÕÒÒª¼Ó¼õµÄterm
+    + æ¯ä¸ªparser functionéƒ½æ˜¯ä»¥boolç±»å‹ä½œä¸ºå‚æ•°ï¼Œè¡¨ç¤ºæ˜¯å¦éœ€è¦getä¸‹ä¸€ä¸ªtoken 
+    + expr() å¤„ç†åŠ æ³•å’Œå‡æ³•ï¼Œå®ƒåŒ…å«ä¸€ä¸ªsingle loopæ¥å¯»æ‰¾è¦åŠ å‡çš„term
       #+begin_src c++
         double expr(bool get)
         {
@@ -34,9 +34,9 @@
                 }
         }
       #+end_src
-    + term() ´¦Àí³Ë·¨ºÍ³ı·¨£¬Æä·½Ê½ºÍexpr()ÓĞÒìÇúÍ¬¹¤Ö®Ãî
+    + term() å¤„ç†ä¹˜æ³•å’Œé™¤æ³•ï¼Œå…¶æ–¹å¼å’Œexpr()æœ‰å¼‚æ›²åŒå·¥ä¹‹å¦™
       #+begin_src c++
-        double term£¨bool get)
+        double termï¼ˆbool get)
         {
             double left = prim(get);
         
@@ -56,8 +56,8 @@
                 }
         }
       #+end_src
-    + prim()´¦Àí primaryµÄ·½Ê½ºÍexpr(), term()ºÜÏñ£¬Ö»ÊÇÎÒÃÇ¸ü½Ó½üµ×²ãÁË£¬²¢ÇÒ²»ĞèÒªÎŞÏß
-      Ñ­»·ÁË
+    + prim()å¤„ç† primaryçš„æ–¹å¼å’Œexpr(), term()å¾ˆåƒï¼Œåªæ˜¯æˆ‘ä»¬æ›´æ¥è¿‘åº•å±‚äº†ï¼Œå¹¶ä¸”ä¸éœ€è¦æ— çº¿
+      å¾ªç¯äº†
       #+begin_src c++
         double number_value;
         string string_value;
@@ -94,10 +94,10 @@
             }
         }
       #+end_src
-    + ÎÒÃÇÓÃmapÀ´´æ·Å±äÁ¿ºÍÆä¶ÔÓ¦µÄÖµ: map<string, double> table;
+    + æˆ‘ä»¬ç”¨mapæ¥å­˜æ”¾å˜é‡å’Œå…¶å¯¹åº”çš„å€¼: map<string, double> table;
 *** The Input Function [expr.input]
-    + ¶ÁÈ¡inputµÄ¹ı³Ì£¬·Ç³£·±Ëö£¬Ö÷ÒªÊÇÀûÓÃswitchÀ´½øĞĞÅĞ¶Ï£¬putbackº¯ÊıµÄ×÷ÓÃÊÇ°Ñ×Ö·ûÔÙ·Å»Ø
-      µ½×Ö·ûÁ÷ÀïÃæÈ¥
+    + è¯»å–inputçš„è¿‡ç¨‹ï¼Œéå¸¸ç¹çï¼Œä¸»è¦æ˜¯åˆ©ç”¨switchæ¥è¿›è¡Œåˆ¤æ–­ï¼Œputbackå‡½æ•°çš„ä½œç”¨æ˜¯æŠŠå­—ç¬¦å†æ”¾å›
+      åˆ°å­—ç¬¦æµé‡Œé¢å»
       #+begin_src c++
         Token_value get_token()
         {
@@ -134,7 +134,7 @@
       #+end_src
 *** Low-level Input [expr.low]
 *** Error Handling [expr.error]
-    + ÒòÎªÕâ¸öÎÊÌâ²»ÊÇÌØ±ğµÄ¸´ÔÓ£¬ËùÒÔerror handlingÒ²²»ÊÇÌØ±ğµÄÄÑ£¬Ö÷ÒªÊÇ¸öĞÎÊ½
+    + å› ä¸ºè¿™ä¸ªé—®é¢˜ä¸æ˜¯ç‰¹åˆ«çš„å¤æ‚ï¼Œæ‰€ä»¥error handlingä¹Ÿä¸æ˜¯ç‰¹åˆ«çš„éš¾ï¼Œä¸»è¦æ˜¯ä¸ªå½¢å¼
       #+begin_src c++
         int no_of_errors;
         
@@ -145,9 +145,9 @@
             return 1;
         }
       #+end_src
-    + ¸ü¼ÓÏÈ½øµÄ´íÎó´¦Àí¿ÉÒÔÒÀ¿¿exception£¬ÕâÀïÎÒÃÇÖ»ÊÇ¼òµ¥µÄ´¦Àí
+    + æ›´åŠ å…ˆè¿›çš„é”™è¯¯å¤„ç†å¯ä»¥ä¾é exceptionï¼Œè¿™é‡Œæˆ‘ä»¬åªæ˜¯ç®€å•çš„å¤„ç†
 *** The Driver [expr.driver]
-    + ÎÒÃÇÓÃÒ»¸öÖ÷³ÌĞòÀ´´ú±ídriver
+    + æˆ‘ä»¬ç”¨ä¸€ä¸ªä¸»ç¨‹åºæ¥ä»£è¡¨driver
       #+begin_src c++
         int main()
         {
@@ -164,10 +164,10 @@
         }
       #+end_src
 *** Headers [expr.headers]
-    + ÎÒÃÇĞèÒª<iostream> <string> <map> <cctype>µÈµÈÍ·ÎÄ¼ş
+    + æˆ‘ä»¬éœ€è¦<iostream> <string> <map> <cctype>ç­‰ç­‰å¤´æ–‡ä»¶
 *** Command-Line Arguments [expr.command]
-    + Õâ¸öÎÒÃÇºÜÊìÏ¤ÁËmain(int argc, char* argv[])ÖĞargc´ú±í²ÎÊıÊıÁ¿£¬argvÊÇ²ÎÊı×Ö·ûÊı×é
+    + è¿™ä¸ªæˆ‘ä»¬å¾ˆç†Ÿæ‚‰äº†main(int argc, char* argv[])ä¸­argcä»£è¡¨å‚æ•°æ•°é‡ï¼Œargvæ˜¯å‚æ•°å­—ç¬¦æ•°ç»„
 *** A Note on Style [expr.style]
-    + ¾¡Á¿Ê¹ÓÃstandard library
+    + å°½é‡ä½¿ç”¨standard library
 ** Operator Summary [expr.operators]
 
