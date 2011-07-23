@@ -57,4 +57,98 @@
        #+begin_src c++
          char* day[] = {"mon", "tue", "wed", "thu", "fri", "sta", "sun"};
        #+end_src
-    + 
+** Value Return
+   + 一切非void的函数都要有返回值，而且返回值也是all standard and user-defined type conversions are performed.
+   + 我们知道，一旦函数返回，栈退出，里面的automatic的内存就会被收回了，所以返回pointer to a local variable的情况是被
+      禁止的
+   + void类型虽然不能返回value，但是可以返回void
+      #+begin_src c++
+        void g(int* p);
+        void h(int* p) { /* .... */ return g(p); }  // ok: return of "no value"
+      #+end_src
+** Overloaded Function Names
+   + Using the same name for operations on different types is called overloading.
+   + 区分两个函数的方法主要是看参数的不同了。在参数转换的时候，safe promotion比unsafe conversion更受欢迎
+*** Overloading and Return Type
+    + Return Type没有作为区别两个函数的参数，所以返回值不同的同名函数不能重载
+*** Overloading and Scopes
+    + 在不同namespace的同名函数，也 不可能进行重载
+*** Manual Ambiguity Resolution
+    + overload过多或者过少的函数，都是不正确的
+*** Resolution for Multiple Arguments
+    + 正确使用overload会使得代码简洁
+** Default Arguments
+   + 一般来说，函数调用的时候，有时候不需要那么多信息，我们可以把某些参数做成default的
+      #+begin_src c++
+        void print(int value, int base = 10);        //default base is 10
+        void f()
+        {
+            print(31);
+            print(31, 10);
+            print(31, 16);
+            print(31, 2);
+        }
+        //might produce this output: 31, 31, 1f, 11111
+      #+end_src
+** Unspecified Number of Arguments
+   + 为了兼容c语言的不定参数列表，c++也要支持，这种不定参数的书写很麻烦
+      #+begin_src c++
+        #include <iostream>
+        #include <cstdarg>
+        using namespace std;
+        
+        void errorFhr(int severity ...)
+        {
+            va_list ap;
+            va_start(ap, severity);    /*arg startup*/
+        
+            for (;;) {
+                char* p = va_arg(ap, char*);
+                if (p == 0) break;
+                cout << p << ' ';
+            }
+            va_end(ap);
+            
+        }
+        
+        const char* Null_cp = 0;
+        int main(int argc, char const* argv[])
+        {
+            errorFhr(0, "hello world", Null_cp);
+            return 0;
+        }
+      #+end_src
+** Pointer to Function
+   + 对一个函数来说，除了调用他以外，我们能做的就是取他的地址了
+      #+begin_src c++
+        void error(string s) { /*..... */}
+        
+        void (*efct)(string);             // pointer to function
+        
+        void f()
+        {
+            efct = &error;            //efct points to error
+            efct("error");             // call error throught efct
+        }
+      #+end_src
+   + 指向函数的指针要求参数和返回值都一样，这样难免麻烦，所以我们会使用一些typedef来简化
+   + array of pointers to function是非常有用的
+      #+begin_src c++
+        typedef void (*PF) ();
+        
+        PF edit_ops[] = {          //edit operations
+            &cut, &paste, &copy, &search
+        };
+      #+end_src
+** Macros
+   + 对Macros来说，就一句话，能不用，就不用。特别Cpp中有const的话，用macros更不合适
+*** Conditional Compilation
+    + 有一种情况macros的使用不可避免比如
+      #+begin_src c++
+        int f(int a
+              #ifdef arg_two
+              , int b
+              #endif
+            );
+      #+end_src
+    + #ifdef定义的macros要精心选择 ，尽量避免和常规的identifier冲突。 arg_two就很容易冲突
