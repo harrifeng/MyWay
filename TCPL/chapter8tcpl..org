@@ -1,0 +1,20 @@
+*  Chapter 8 Namespaces and Exceptions
+** Modularization and Interfaces
+   + 当我们自己设计大型程序的时候，程序的模块性很重要，模块间的联系要尽可能的少
+   + 通常来说，error handling会破坏模块间的架构(因为所有的部分都会依赖到error handling)，所以为了保持模块间的独立性
+      Cpp提供了exception
+   + 把一个系统分成小的模块不难，难的是如何提供安全，快捷，有效的模块间的通信方式
+** Namespaces
+   + 如果一些声明在逻辑上有相关性，那么可以放在同一个namespace里面，比如
+      #+begin_src c++
+        namespace Parser {
+            double expr(bool);
+            double prim(bool get);
+            double term(bool get);
+            double expr(bool get);
+        }
+        double Parser::prim(bool get) { /*... */}
+        double Parser::term(bool get) { /*... */}
+        double Parser::expr(bool get) { /*... */}
+      #+end_src
+   + 我们也可以看到a member  can be declared within a namespace definition and defined later using "::"  
