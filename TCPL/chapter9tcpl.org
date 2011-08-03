@@ -1,0 +1,142 @@
+*  Chapter 9 Source Files and Programes
+** Seperate Compilation
+   + 出于多种原因的考虑，把所有源代码放到一个文件当中进行发布是不可能的。所以我们要有seperate compilation.
+   + Compiler 首先 preprocess source file，在这一步中#include的部分首先被展开，preprocess的结果叫做translation unit
+   + Linker是把separately compiled parts给bind together的一个程序。Link可以在程序运行前完成，还可以在以后进行加载
+     新的部分(dynamically linked)
+   +我们说完物理上将程序分成多个文件了，如何分文件，就要看这些文件间的逻辑关系了。
+** Linkage
+   + 函数，类，模板的命名规则等等，在多个文件当中要保持一致
+   + 程序员要保证使用前声明，以及声明的连续性。
+   + 在全局和namespace scope中定义的变量, 如果会按照default来创建.当然局部变量不行了
+   + inline function必须在每次用到它的translation unit里面都要重复定义一边，而且每次要一致，虽然即便不一致，也很难
+     被发现
+      #+begin_src c++
+        //file1.c
+        inline int f(int i) {return i;}
+        //file2.c: the difference in two translation unit of inline function
+        // can be hard to find
+        inline int f(int i) {return i+1;}
+        
+        //file1.c
+        extern inline int g(int i);
+        int h(int i) {return g(i);}  //error: g() undefiend in this translation unit
+        //file2.c
+        extern inline int g(int i) { return i+1;}
+      #+end_src
+   + 默认情况下, const 和 typedef都是internal linkage的，也就是说下面的情况两个文件是可以联合编译通过的，就是看起来有点
+      费解
+      #+begin_src c++
+        //file1.c
+        typedef int T;
+        const int x = 7;
+        //file2.c
+        typedef void T;
+        const int x = 8;
+      #+end_src
+   + 一个全局变量local to a single compilation unit是非常容易引起误解的，为了保证程序的可读性，global const & global inline的部分
+      一定要放到header file里面
+   + const可以通过explicit declaration来添加external linkage属性
+     #+begin_src c++
+       //file1.c
+       extern const int a = 77;
+       //file2.c
+       extern const int a;
+       
+       void g()
+       {
+           cout << a <<'\n';
+       }
+       // g() will print 77
+     #+end_src
+   + unnamed namespace可以使得一个name变成local to a compilation unit. The effec of an unnamed namespace is very similar to that
+     of internal linkage.
+     #+begin_src c++
+       //file1.c
+       namespace {
+           class X {/* .... */};
+           void f();
+           int i;
+           //....
+       }
+       //file2.c
+       class X{ /*.... */};
+       void f();
+       int i;
+       //....
+     #+end_src
+   + file1.c中的f()和file2.c中的f()显然不是一个function，这种把一个函数（不小心）弄成local to a compilation unit然后再其他compilation
+     unit 中调用的情况是最容易产生错误的
+   + 在c和older c++中, static的用法是'use internal linkage',所以除非再function中，或者是在class里面，不要使用static关键字
+*** Header Files
+    + 在一个大的程序中，不同文件中的function,class,object的定义必须相符合，一个不完美但是可以保证这种consistent的方法就是在source file
+      中定义，而在header file中声明。同时在不同的translation unit中都调用 header file
+    + 在一个header file中，一般会包含以下的部分
+      - Nmaed namespaces
+      - Type definitions
+      - Template declarations or Template definitions
+      - Function declarations
+      - Inline function definitions
+      - Data declarations
+      - Constant definitions
+      - Enumerations
+      - Name declarations
+      - Include directives
+      - Macro definitions
+      - Conditional compilation directives
+      - Comments
+    + 一个header file当中，也不应该包括
+      - Ordinary function definition
+      - Data definitions
+      - Aggregate definitions
+      - Unnamed namespaces
+      - Exported template definitions (export template<class T> f(T t) {/*....*/}
+*** Standard Library Headers
+    + 调用standard library的时候，不需要加.h,并且对于任意一个<x.h>(c中的standard-library header) 都有一个c++的<cx>对应，一个stdio.h一般如下:
+      #+begin_src c++
+        ifdef __cplusplus
+        namespace std {
+            extern "C"{
+        #endif
+        
+                //...
+                int printf(const char* ...);
+                //..
+        #ifdef __cplusplus
+            }
+        }
+        using namespace std;
+        #endif
+      #+end_src
+*** The One-Definition Rule
+    + A given class, enumeration, and template, etc. must be defined exactly once in a program.
+    + 如果我们要满足上面的苛刻规定，只在一个地方写class等的定义，显然是不现实的，所以有了叫做One-Definition Rule的条例(ODR)，也就是说，你写两次
+      类的定义没问题，只要每次都保证
+      1) They appear in different translation units
+      2) They are token-for-token identical
+      3) The meaning of those tokens are the same in both translation units
+    + 当然你在file1.c和file2.c里面重复的copy一遍一个类的定义是可以的，但是保不齐哪天如果更改了其中一个里面的定义就麻烦了
+    + 所以，最明显的解决办法就是，把函数声明放到头文件里面！
+    + 但是，由于typedef的存在，include函数声明的办法并不能屏蔽所有的ODR问题！比如如下
+      #+begin_src c++
+        //s.h
+        struct S {Point a; char b;};
+        //file1.c
+        #define Point int
+        #include "s.h"
+        //...
+        //file2.c
+        class Point {/*...*/};
+        #include "s.h"
+        //...
+      #+end_src
+    + 想要解决这种问题，没有彻底的办法，只能让header file尽可能的self-contained,比如上例中Point 如果定义在header里面，那么，错误就比较容易发现
+    + 一个template definition可以被include到很多translation unit里面，另外如果家里exported关键字，其他translation unit可以只需要声明就使用了
+      #+begin_src c++
+        //file1.c
+        export template<class T>T twice(T t) {return t+t;}
+        //file2.c
+        template<class T>T twice(T t);
+        int g(int i) {return twice(i);}
+      #+end_src
+*** Linkaage to Non-C++ Code
