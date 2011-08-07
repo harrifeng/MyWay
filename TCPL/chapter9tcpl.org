@@ -140,3 +140,116 @@
         int g(int i) {return twice(i);}
       #+end_src
 *** Linkaage to Non-C++ Code
+    + 交叉编译是非常麻烦的，原因主要有:
+      - 寄存器的使用不同
+      - layout of arguments put on a stack
+      - layout of built-in types such as strings and integers
+      - the form of names passed by the compiler to the linker
+    + 为了能够更好的交叉编译，我们可以指定linkage convention, 这个linkage convention主要针对于extern declaration.
+      #+begin_src c++
+        //Specifies C linkage convention
+        extern "C" char* strcpy(char*, const char*);
+        //do not define linkage convention
+        extern char* strcpy(char*, const char*);
+      #+end_src
+    + extern "C" 只指定linkage convention, 不会影响semantics of calls to the function. 并且依然遵循c++ type checking 和 argument conversion rules.
+    + extern "C" 和 conditional compilation 在创建c cpp header的时候很管用
+      #+begin_src c++
+        #ifdef __cplusplus
+        extern "C" {
+        #endif
+            char* strcpy(char*, const  char*);
+            int strcmp(const char*, const char*);
+            //...
+        #ifdef __cplusplus
+        }
+        #endif
+      #+end_src
+*** Linkage and Pointers to Functions
+    + 这里作者其实是想说c c++ linkage 不同的pointer to function不能混，但是我做实验的情况是，可以混，代码如下
+      #+begin_src c++
+        #include <iostream>
+        using namespace std;
+        
+        extern "C" {
+            // c linkage
+            typedef int (*CFT)(const void*, const void*);
+            void qsort(void* p, size_t n, size_t sz, CFT cmp);
+            int ccmp(const void*, const void*);
+        }
+        
+        int compare(const void*, const void*); //c++ linkage
+        
+        void f(char* v, int sz)
+        {
+            qsort(v, sz, 1, &compare); //error
+            qsort(v, sz, 1, &ccmp);    //ok
+        }
+        
+        int main(int argc, const char *argv[])
+        {
+            f("hello", 2);
+            return 0;
+        }
+        
+        int ccmp(const void*, const void*)
+        {
+            return 0;
+        }
+        
+        int compare(const void*, const void*)
+        {
+            return 0;
+        }
+      #+end_src
+** Using Header Files
+*** Single Header File
+*** Multiple Header Files
+**** Other Calculator Modules
+**** Use of Headers
+*** Include Guards
+    + 我们经常会include一个header两次，我们前面说过，如果这两个内容是byte to byte 级别的相同的话,是可以在代码
+      中出现两次的。
+    + 但是在大型项目中，这种redundancy毕竟是潜伏着危险的，所以我们需要include guards.
+      #+begin_src c++
+        //error.h
+        
+        #ifndef CALC_ERROR_H
+        #define CALC_ERROR_H
+        
+        namespace Error {
+            //...
+        }
+        #endif //CALC_ERROR_H
+      #+end_src
+    + 这种做法效果明显，但是这个include guard的名字要取得够长够丑。第一次include error.h的时候，没define
+      CALC_ERROR_H, 可以加入endif以前的代码。第二次再遇到error.h的时候，就可以不加入了。
+    + 即便有了include guard也不能随便乱加include file，用到时再加，否则会延长编译时间
+** Programs
+*** Initialization of Nonlocal Variables
+    + 所有不在任何function里面的变量就是nonlocal variable
+    + 在一个translation unit里面，按前后顺序初始化变量。但是在不同translation unit里面，初始化顺序无法保证，
+      而且dynamically linked libraries do not coexist happily with global variables that have complicated
+      dependencies.
+**** Program Termination
+     + 一个program可以以以下方式结束:
+       - By returning from main()
+       - By calling exit()
+       - By calling abort()
+       - By throwing an uncaught exception
+     + 如果以exit()结束dtor for constructed static object are called, 如果调用abort()，那么那些dtor就不会调用。
+     + atexit() offers the possibility to have code executed at program termination:
+       #+begin_src c++
+         void my_cleanup();
+         
+         void somewhere()
+         {
+             if (atexit(&my_cleanup) == 0) {
+                 // my_cleanup will be called at normal termination
+             }
+             else {
+                 // oops: too many atexit functions
+             }
+         }
+       #+end_src
+     + exit(), abort(), atexit()都定义在<cstdlib>
