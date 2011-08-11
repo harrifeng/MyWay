@@ -1,0 +1,168 @@
+*  Chapter 10: Classes
+** Introduction
+   + A class is a user-defined type.
+** Classes
+*** Member Functions
+    + Functions declared within a class definition are called member functions
+*** Access Control
+    + A struct is simply a class whose members are public by default
+*** Constructors
+    + Ctors boey the same overloading rules as do other functions. As long as the ctor
+      differ sufficiently in their argument types, the compiler can select the correct
+      one for each use.
+    + 一种减少无谓ctor的方法就是default argument
+      #+begin_src c++
+        class Date {
+            int d, m, y;
+        public:
+            Date (int dd = 0; int mm = 0; int yy = 0);
+            //...
+        };
+      #+end_src
+*** Static Members
+    + static member是一种 part of a class, yet is not part of an object of that class.
+    + There is exactly one copy of a static member instead of one copy per object.因为static变量
+      是存在静态区的
+    + Similary, a function that needs access to members of a class, yet does not need to be invoked
+      for a particular object, is called a static member function.
+    + 正因为static的部分是class的，而不是object的，所以他们可以直接用class名调用，而且必须在ctor
+      以外的其他地方进行定义
+      #+begin_src c++
+        class Date{
+            int d, m, y;
+            static Date default_value;
+        public:
+            Date(int dd = 0, int mm = 0, int yy = 0);
+            //...
+            static void set_default(int, int, int);
+        };
+        
+        Date::Date(int dd, int mm, int yy)
+        {
+            d = dd ? dd : default_value.d;
+            m = mm ? mm : default_value.m;
+            y = yy ? yy : default_value.y;
+        
+            //check that the Date is valid
+        }
+        
+        Date Date::default_value(16, 12, 1770);
+        
+        void Date::set_default(int d, int m, int y)
+        {
+            Date::default_value = Date(d, m, y);
+        }
+        
+        //Static Member Function can be used without object
+        void f()
+        {
+            Date::set_default(4, 5, 1945);
+        }
+        
+      #+end_src
+*** Copying Class Objects
+    + 对Object的拷贝有两种形式，第一就是所谓的initialized copy.这种copy是copy of each member. 如果copy of each
+      member不是用户所想要的结果，那么要自己提供一个copy ctor
+      #+begin_src c++
+        Date d = today; //initialization by copy
+      #+end_src
+    + 另一种拷贝就是assignment copy. 也是 copy of each member.
+      #+begin_src c++
+        void f(Date& d)
+        {
+            d = today;
+        }
+      #+end_src
+*** Constant Member Function
+    + 所谓const member function就是说此函数声明，他不会更改class的state
+      #+begin_src c++
+        inline int Date::year() const
+        {
+            return y++; //error: attempt to change member value in const function
+        }
+      #+end_src
+    + 如果一个const member function在class外定义，那么const suffix是必须的
+    + 一个const的member function可以被 const或者非const的object对象调用
+    + 一个non-const的member function则只可以被non-const object调用 （很好理解const object必须保证，啥改变class
+      的事情都不能做嘛)
+*** Self-Reference
+    + 有些没有返回值的函数，比如add_year(), add_month(), add_day(),我们可以把他们的返回值设计成 return a
+      reference to the updated object.这样一来，很多操作就可以chained.
+      #+begin_src c++
+        void f(Date& d)
+        {
+            //...
+            d.add_day(1).add_month(1).add_year(1);
+            //...
+        }
+        
+        Date& Date::add_year(int n)
+        {
+            if (d == 29 && m == 2 && !leapyear(y+n)) {
+                d = 1;
+                m = 3;
+            }
+            y += n;
+            retrun *this;
+        }
+      #+end_src
+**** Physical and Logical Constness
+     + 有时候一个member function是logical const的，但是他还是会在用户无法察觉的地方更改了一些地方，这种情况叫做
+       logical constness
+       #+begin_src c++
+         class Date {
+             bool cache_valid;
+             string cache;
+             void compute_cache_value(); //file cache
+             //...
+         public:
+             string string_rep() const; //string representation
+         };
+         
+         string Date::string_rep() const
+         {
+             if (cache_valid == false) {
+                 //从这里我们也可以看到所谓const member function 无法
+                 //更改member，其原理就是这个function的参数是 const this
+                 Date* th = const_cast<Date*> (this);  //cast away const
+                 th->compute_cache_value();
+                 th->cache_valid = true;
+             }
+             return cache;
+         }
+         
+         Date d1;
+         const Date d2;
+         
+         string s1 = d1.string_rep();
+         string s2 = d2.string_rep();  //undefined behavior
+       #+end_src
+       
+**** Mutable
+     + 解决这个问题的办法，就是storage specifier mutable.这个关键字的意思就是“被修饰的变量，永远都不可能为
+       const”
+       #+begin_src c++
+         class Date {
+             mutable bool cache_valid;
+             mutable string cache;
+             void compute_cache_value() const; //fill (mutable) cache
+         public:
+             //...
+             string string_rep() const;        //string representation
+         };
+         
+         string Date::string_rep() const
+         {
+             if (!cache_valid) {
+                 compute_cache_value();
+                 cache_valid = true;
+             }
+         
+             return cache;
+         }
+         
+         Date d3;
+         const Date d4;
+         string s3 = d3.string_rep();
+         string s4 = d4.string_rep();   //ok!
+       #+end_src
