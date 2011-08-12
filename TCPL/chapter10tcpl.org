@@ -166,3 +166,140 @@
          string s3 = d3.string_rep();
          string s4 = d4.string_rep();   //ok!
        #+end_src
+*** Structures and Classes
+    + structure 就是一个 全部为public 的class
+    + private和public可以多次使用，但是最好不要，看起来很奇怪
+*** In-Class Function Definitions
+    + 如果一个function是defined within the class definition的话，它会被编译成inline的。也就是说，最好那种短小精悍
+      经常被使用的函数才defined inside class
+    + 前面说过，先写函数，再写变量是很好的格式，但是如果函数上来就在函数体部分暴露了private数据，没看到后面数据
+      的用户会很迷惑。所以我们可以显式的声明inline函数
+    #+begin_src c++
+      class Date {
+      public:
+          int day() const;
+          //....
+      private:
+          int d, m, y;
+      };
+      inline int Date::day() const {return d;}
+    #+end_src
+** Efficient User-Defined Types
+   + 总之就是告诉你，他设计的c++有多么的好，要用他的那一套类实现的方式
+     #+begin_src c++
+       class Date {
+       public:
+           enum Moth {jan =1, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec};
+       
+           class Bad_date{}; //exception class
+       
+           Date(int dd = 0; Month mm = Month(0), int yy = 0);
+       
+           //functions for examining the Date:
+           int day() const;
+           Month month() const;
+           int year() const;
+           string string_rep() const;
+           void char_rep(char s[]) const;
+       
+           static void set_default(int, Month, int);
+       
+           //functions for changing the Date:
+           Date& add_year(int n);      // add n years
+           Date& add_month(int n);     // add n months
+           Date& add_day(int n);       // add n days
+       private:
+           int d, m, y;
+           static Date default_date;
+       };
+     #+end_src
+*** Member Functions
+    + 一般来说, implementation for each member function必须在其他地方实现
+      #+begin_src c++
+        Date::Date(int dd, Month mm, int yy)
+        {
+            if (yy == 0) yy = default_date.year();
+            if (mm == 0) mm = default_date.month();
+            if (dd == 0) dd = default_date.day();
+        
+            int max;
+        
+            switch (mm) {
+            case feb:
+                max = 28 + leapyear(yy);
+                break;
+            case apr:case jun:case sep: case nov:
+                max = 30;
+                break;
+            case jan:case mar:case may:case jul:case aug:case oct:case dec:
+                max = 31;jbreak;
+            default:
+                throw Bad_date(); // someone cheated
+            }
+            if (dd < 1|| max < dd) throw Bad_date();
+        
+            y = yy;
+            m = mm;
+            d = dd;
+        }
+      #+end_src
+    + ctor看起来很麻烦，但是ctor的设置给class了一种invariant,也就是说Date一旦建立，就不需要
+      further check了。
+    + 比起创建那种data validation function, 我更倾向于exception
+      #+begin_src c++
+        void fill(vector<Date>& aa)
+        {
+            while (cin) {
+                Date d;
+                try {
+                    cin >> d;
+                }
+        
+                catch (Date::Bad_date) {
+                    //my error handling
+                    continue;
+                }
+                aa.push_back(d);
+            }
+        }
+      #+end_src
+*** Helper Function
+    + 通常来说，类还有很多的帮助function，不属于这个类的。但是类却要时常用到。怎么办呢，如何把这种
+      helper function和类联系起来呢？答案就是namespace
+      #+begin_src c++
+        namespace Chrono { //facilities for dealing with time
+            class Date {/* ... */};
+            int diff(Date a, Date b);
+            bool leapyear(int y);
+            Date next_weekday(Date d);
+            Date next_saturday(Date d);
+            //...
+        }
+      #+end_src
+*** Overloaded Operators
+    + 重载某些操作符在某些入complex number, vector类里面，几乎是必须的
+*** The significance of Concrete Classes
+    + 我们把上面的这种simple user-defined type叫做concrete type， 以来区别 abstract class 和 class hierachies
+    + concrete type的使用很不一样，它几乎和int一样，是当做一个type来使用的，因为结构简单，大小在编译期间
+      已知， layout of each object也已知。
+** Objects
+*** Destructors
+    + 我们前面讲到过ctor，对应的，对象在离开scope的时候，需要调用dtor来释放资源。
+*** Default Constructors
+    + 所谓default ctor就是不需要提供参数的ctor
+    + 如果用户没有提供default ctor，编译器会自己提供一个。A compiler-generated default ctor implicityl calls
+      the default ctor for a class's member of clas type and bases.
+      #+begin_src c++
+        struct Tables {
+            int i;
+            int vi[10];
+            Table t1;
+            Table vt[10];
+        };
+        
+        Tables tt;
+        //这里 vt t1,都会调用 tt的default ctor来创建。但是tt.i tt.vi却是uninitialized的状态
+        //这是为了和c兼容
+      #+end_src
+    + 因为 const或者reference 类型必须被initialized.所以一个包含class or reference的class如果没有给他写一个
+      default ctor，那么他无法default-construct成功
