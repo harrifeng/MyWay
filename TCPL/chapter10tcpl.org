@@ -303,3 +303,98 @@
       #+end_src
     + 因为 const或者reference 类型必须被initialized.所以一个包含class or reference的class如果没有给他写一个
       default ctor，那么他无法default-construct成功
+      #+begin_src c++
+        class X {
+        private:
+            const int a;
+            const int& r;
+        };
+        
+        int main(int argc, const char *argv[])
+        {
+            X xx; //error:uninilized const part
+            return 0;
+        }
+      #+end_src
+*** Construction and Destruction
+*** Local Variables
+    + 如果类作为一个local variable，那么每次声明 local variable的时候都会调用ctor,每次离开 scope.
+    + Dtor variable的顺序是和ctor的顺序相反的
+**** Copying Objects
+     + Table, t2 = t1 这种情况下，默认会做的就是memberwise copy of t1 into t2, 这种情况下如果class中含有
+       pointer啥的，通常是非常危险的。因为会有多个指针指向同一个区域，删除的时候，也会删除多次！
+     + 解决办法就是copy ctor & copy assignment
+       #+begin_src c++
+         Table::Table(const Table& t) //copy ctor
+         {
+             p = new Name[sz=t.sz];
+             for (int i = 0; i < sz; i++)
+                 p[i] = i.p[i];
+         }
+         Table& Table::operator=(const Table& t) //copy assignment
+         {
+             if (this != &t) {  //beware of self-assignment
+                 delete[] p;
+                 p = new Name[sz=t.sz];
+                 for (int i = 0; i <sz; i++)
+                     p[i] = t.p[i];
+             }
+         
+             return *this;
+         }
+       #+end_src
+*** Free Store
+    + 如果是在heap上创建的对象，当new的时候ctor，delete的时候dtor
+*** Class Object as Member
+    + 如果class里面还有class，那么我们就要在初始化的时候，提供一个initializer list,初始化会从左往右按顺序
+      初始化，析构的时候是按照_相反_的顺序析构
+      #+begin_src c++
+        Club::Club(const string& n, Date fd)
+        :name(n), members(), officers(), founded(fd)
+        {
+            //........
+        }
+      #+end_src
+**** Necessary Member Initialization
+     + Member initialization绝不仅仅是为了提供一个初始化顺序而存在的，当某些情况下initialization 不等同于
+       assignment(在ctor内部只能assignment，而不能initialization)的时候，只能依靠member initialization了，这种
+       情况其实很多见，比如没有default ctor, reference
+       #+begin_src c++
+         class X {
+             const int i;
+             Club c;
+             Club& pc;
+             //...
+             X(int ii, const string& n, Date d, Club& c):i(ii), c(n, d), pc(c) {}
+         };
+       #+end_src
+     + 除了reference这种无法assignment的情况外，还有些情况是initialization明显比assigment效率高的，比如const
+       #+begin_src c++
+         class Person {
+             string name;
+             string address;
+             //...
+             Person(const Person&);
+             Person(const string& n, const string& a);
+         };
+         Person::Person(const string& n, const string& a):name(n)
+         {
+             //Here, n is initialize with copy of n
+             //while address is first initialized to the empty
+             //string and then a copy of a is assigned.
+             address = a;
+         }
+       #+end_src
+**** Member Constants
+     + 我们前面说过static的成员变量，必须在类外面另外的地方进行定义，但是如果是static同时const，那么就可以在
+       class里面声明的时候定义了
+       #+begin_src c++
+         class Curious {
+         public:
+             static const int c1 = 7;   //ok, but remeber definition
+             static int c2 = 11;        //error, no const
+             const int c3 = 13;         //error, no static
+             int c4 = 23;               //error, ISO C++ forbids in-class initialization of non-const static member
+         };
+       #+end_src
+**** Copying Members
