@@ -398,3 +398,79 @@
          };
        #+end_src
 **** Copying Members
+     + default copy ctor和default copy assignment需要把这个类所有的element进行拷贝。如果这些copy不能完全进行的话，需要把这两个
+       函数改成private的，以阻止拷贝
+       #+begin_src c++
+         class Unique_handle{
+         private:
+             Unique_handle(const Unique_handle&);
+             Unique_handle& operator=(const Unique_handle&);
+         public:
+             //...
+         };
+         
+         struct Y {
+             //...
+             Unique_handle a;
+         };
+       #+end_src
+     + 我们知道reference，const等类型只能"初始化"而无法"赋值",所以在nonstatic member是reference, const的情况下，default copy assignment
+       是不能够自动生成的。
+     + 这种情况下default copy ctor是可以自动生成的，但是behavior是不对的，比如reference memeber就会refer to the same object in both
+       the original and the copied object
+*** Arrays
+    + 如果一个object可以不明确提供initializer的情况下初始化，那么，他就可以申请数组。
+    + 数组大家很熟悉了，唯一要注意的是在delete的时候，数组要delete[]
+*** Local Static Store
+    + The ctor for a local static object is called first time the thread of control passes through the object's definition.
+*** Nonlocal Store
+    + 在所有function外申请的那种变量(global, namespace, class static variables)是在main之前就initialize,在main退出后，才dtor
+    + 在一个translation unit里面ctor for nonlocal object的执行顺序就是他们definition出现的顺序，不同translation unit里面的ctor
+      调用顺序是不同平台不同的
+*** Temporary Objects
+    + 这里作者主要提到的是temp objec会在end of expression的时候消失，所以要注意这种情况，我自己实验的结果是编译器应该有优化，这种情况
+      通常能够工作，当然了，是运气好。尽量还是不要这么用
+      #+begin_src c++
+        #include <iostream>
+        #include <string>
+        using namespace std;
+        
+        int main(int argc, const char *argv[])
+        {
+            static int temp = 23;
+            string s1 = "hello";
+            string s3 = "hello";
+            string s2 = "can";
+            // (s1 + s2)'s temporary object is deleted.
+            const char* cs = (s1 + s2).c_str();
+            printf("tp address is %#X\n", &temp); 
+            printf("cs address is %#X\n", cs); 
+            cs = (s3 + s2).c_str();
+            int i = 23;
+            int j = 23;
+            printf("cs address is %#X\n", cs); 
+            printf("ii address is %#X\n", &i); 
+            printf("jj address is %#X\n", &j); 
+            printf("s1 address is %#X\n", &s1); 
+            printf("s2 address is %#X\n", &s2); 
+        
+            return 0;
+        }
+      #+end_src
+**** Placement of Objects
+     + 在指定地址new 以个新的object就叫placement new
+       #+begin_src c++
+         //explicit placement pointer 
+         //operator new takes a size as its first argumment and that
+         //the size of the object allocated is implicitly supplied.
+         void* operator new(size_t, void* p);
+         
+         void* buf = reinterpret_cast<void*>(0xF00F);
+         //construct an X at 'buf', invokes: operator new(sizeof(X), buf);
+         X* p2 = new(buf)X; 
+       #+end_src
+*** Unions
+    + A named union is defined as struct, where every number has the same address.
+    + A union can have member functions but not static members.
+    + A compiler cannot know what type of the object stored in a union.
+    + Unions are best used in low-level code.
