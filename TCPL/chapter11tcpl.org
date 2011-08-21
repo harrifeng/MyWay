@@ -1,1 +1,86 @@
 *  Chapter 11: Operator Overloading 
+** Introduction
+   + 为class提供算数运算的方法，更简洁的版本就是operator overload
+     #+begin_src c++
+       //simple version
+       class complex {
+           double re, im;
+       public:
+           complex(double r, double i):re(r), im(i) { }
+           complex operator+(complex);
+           complex operator*(complex);
+       }
+     #+end_src
+** Operator Function
+   + 如下operator无法被用户定义(因为他们的参数是name，而不是value):
+     1) :: (scope resolution)
+     2) .  (member selection)
+     3) ->*(member selection through pointer to member)
+*** Binary and Unary Opration
+    + 如果是binary operator那么可以是nonstatic member function taking one argument，
+      或者是a nonmember function taking two arguments
+      #+begin_src c++
+        class X{
+        public:
+            void operator+ (int);
+            X(int);
+        };
+        
+        void operator+(X, X);
+        void operator+(X, double);
+        
+        void f(X, a)
+        {
+            a + 1;   // a.operator+(1)
+            1 + a;   // ::operator+(X(1), a)
+            a + 1.0; //::operator+(a, 1.0)
+        }
+      #+end_src 
+    + 如果是unary operator那么可以是nonstatic member function taking no arguments,
+      或者是a nonmember function taking one argument.
+    + unary operator还牵涉到一个prefix和postfix的问题:
+      - prefix: @aa 可以通过aa.operator@() 或者operator@(aa)来实现
+      - postfix: aa@ 可以通过aa.operator@(int) 或者operator@(aa, int)来实现(这个int就是单单用来区分post,pre的)
+*** Predefined Meanings for Operators
+    + 用户定义的operator并不一定和build-in的type是一样的，比如++a等同于a=a+1，但是最好等同于
+    + 也有一些约定是用户定义的operator必须遵循的，比如operator=, operator[], operator(), operator->必须是nonstatic
+      member function, this ensures that their first operans will be lvalues.
+    + 由于历史原因，operator=(assignment)， &(address of)，,(sequencing) 对于class object来说，有特殊意义，我们可以
+      把这些符号通过private变成inaccessible
+*** Operators and User-Defined Types
+    + operator function必须要有一个user-define type的参数(要么显式的写出来，要么通过this指针)。
+    + 看aa+2可以定义成member function，但是2+aa就不能，因为compiler不知道两者是可互换的，而且不存在2.operator+()这种
+      member function。这种function只能定义成nonmember function
+    + Enum是user-defined types,我们可以为他们重载operator
+*** Operators in Namespaces
+    + 就像function可以通过自己parameter的type来判断该调用哪个重载的函数一样，operator可以通过判断自己的operan来确定该
+      使用哪个operator重载函数
+      #+begin_src c++
+        namespace std {
+            calss ostream {
+                //...
+                // c-style string p will use this function
+                ostream& operator<< (const char*);
+             };
+        
+            extern ostream cout;
+        
+            class string {
+                //...
+            };
+            //std::cout << s is equal to operator<<(std::cout, s)
+            ostream& operator<< (ostream&, const string&);
+        }
+        
+        int main()
+        {
+            char* p = "Hello";
+            std::string s = "world";
+            std:cout << p << ", " << s << "!\n";
+        }
+      #+end_src
+    + 上面所说的overload operator lookup 没有给予member function以高于non-member的待遇，这是为了能够让用户自己增加
+      新类型的operator function。比如我们可以定义<< 来输出user-defined type，而不需要更改class  ostream
+
+
+
