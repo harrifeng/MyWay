@@ -81,6 +81,100 @@
       #+end_src
     + 上面所说的overload operator lookup 没有给予member function以高于non-member的待遇，这是为了能够让用户自己增加
       新类型的operator function。比如我们可以定义<< 来输出user-defined type，而不需要更改class  ostream
-
+** A Complex Number Type
+*** Member and Nonmember Operators
+    + 在创建operator的时候，我们只在class内部实现那些改变了first argument的operator function，其他的function在class
+      外，通过内部的这些operator function来实现
+      #+begin_src c++
+        class complex {
+            double re, im;
+        public:
+            complex& operator+=(complex a);  //needs access to representation
+            //...
+        };
+        
+        complex operator+(complex a, complex b)
+        {
+            complex r = a;
+            return r+=b;    //access representation through += 
+        }
+      #+end_src
+    + 有时候，first argument不是用户定义类型,比如complex d = 2 + d这种情况，我们要使用如下处理办法
+      #+begin_src c++
+        class complex {
+            double re, im;
+        public:
+            complex& operator+=(complex a) {
+                re += a.re;
+                im +=a.im;
+                return *this;
+            }
+            complex& operator+=(double a) {
+                re += a;
+                return *this;
+            }
+            //...
+        };
+        complex operator+(complex a, complex b)
+        {
+            complex r = a;
+            return r+=b; //calls complex::operator+=(complex)
+        }
+        
+        complex operator+(complex a, double b)
+        {
+            complex r = a;
+            return r+=b; //calls complex::operator+=(double)
+        }
+        
+        complex operator+(double a, complex b)
+        {
+            complex r = b;
+            return r+=a; //calls complex::operator+=(double)
+        }           class complex {
+            double re, im;
+        public:
+            complex& operator+=(complex a) {
+                re += a.re;
+                im +=a.im;
+                return *this;
+            }
+            complex& operator+=(double a) {
+                re += a;
+                return *this;
+            }
+            //...
+        };
+        complex operator+(complex a, complex b)
+        {
+            complex r = a;
+            return r+=b; //calls complex::operator+=(complex)
+        }
+        
+        complex operator+(complex a, double b)
+        {
+            complex r = a;
+            return r+=b; //calls complex::operator+=(double)
+        }
+        
+        complex operator+(double a, complex b)
+        {
+            complex r = b;
+            return r+=a; //calls complex::operator+=(double)
+        }       
+      #+end_src
+*** Initialization
+    + 一个complex的类在创建的时候，需要用到ctor，而且不同参数的都要制定，这个时候default
+      parameter比较管用
+      #+begin_src c++
+        class complex {
+            double re, im;
+        public:
+            complex(double r = 0, double i = 0): re(r)， im(i) {}
+            //...
+        };
+      #+end_src
+*** Copying
+ 
 
 
