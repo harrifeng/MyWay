@@ -40,7 +40,7 @@
       requires that the programmer be able to pretend that two things can happen at once.(并发保证一个没做完
       另外一个也可以做，间或就可以，没一定要同时发生）
 *** Thread safety and reentrancy
-    + Thread-safe means that the code can be clled from umltiple threads without destructive result.
+    + Thread-safe means that the code can be clled from multiple threads without destructive result.
     + 这里只提到safe，并没有提到效率，其实如果真的想保证function的thread-safe，可以用mutex锁，这样一来其实只有一个
       thread在用function, 那肯定没有问题。
     + 更好的办法是把function内部分成小的不同的critical sections.这样不同的critical section可以被不同的thread来调用
@@ -115,7 +115,7 @@
                 */
                if (sscanf(line, "%d %64[^\n]", &seconds, message) < 2){
                    fprintf(stderr, "Bad command\n");
-               } else {
+                   } else {
                    sleep(seconds);
                    printf("(%d) %s\n", seconds, message);
                }
@@ -126,7 +126,6 @@
    + We will use alarm_fork.c to make the program asynchronous: you can enter commands at any time, and they will be carried
      out independently.
      #+begin_src c
-
        #include <sys/types.h>
        #include <wait.h>
        #include "errors.h"
@@ -169,6 +168,12 @@
                         * that have already terminated.
                         */
                        do {
+                           /* WNOHANG makes the waitpid function immediately reap
+                            * one child process if any have terminated, or will
+                            * immediately return with a process ID of 0. If parent
+                            * does not catch child this time, it will loop back to
+                            * line 13 to read, eventually, the child will be catch
+                            */
                            pid = waitpid((pid_t)-1, NULL, WNOHANG);
                            if (pid == (pid_t)-1)
                                errno_abort("Wait for child");
