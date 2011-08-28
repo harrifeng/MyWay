@@ -115,7 +115,7 @@
                 */
                if (sscanf(line, "%d %64[^\n]", &seconds, message) < 2){
                    fprintf(stderr, "Bad command\n");
-                   } else {
+               } else {
                    sleep(seconds);
                    printf("(%d) %s\n", seconds, message);
                }
