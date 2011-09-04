@@ -1,0 +1,67 @@
+* Chapter 1: Accustoming Yourself to C++
+** Item 1: View C++ as a federation of languages
+   + C++发展到今天，其实就是你看到的如下几个部分
+     1) 纯C:C++完全包括了C的内容
+     2) Object-Oriented C++: C with classes
+     3) Template C++: generic programming
+     4) STL
+   + 正是因为有如此多的不同,所以怎样使用c++更有效是要看使用领域的，比如:
+     - 在纯c领域里面pass-by-value更高效，因为纯c领域里面只有build-in type
+     - 在Object-Oriented C++里面，更高效的就是pass reference-to-const了
+     - 在STL领域，由于很多iterator就是纯c的pointer的包装，pass-by-value又变得
+       更高效了.
+** Item 2: Prefer consts, enums, and inlines to #define
+   + #define带来的麻烦
+     1) 如果你如下定义了一个宏，会遇到很多问题，比如，由于预编译的问题，ASPECT_RATIO
+        直接就没有进入symbol table,如果这个变量定义在头文件(不是你写的),那么出现和
+        1.653相关的编译错误是很令人费解的。解决办法就是用const替代
+        #+begin_src c++
+          #define ASPEC_RATIO 1.653
+          // should be change to following
+          const double AspectRatio = 1.653;
+        #+end_src
+     2) 对于浮点数来说，const的方法更高效，因为写入了symbol table.所以只需要一份就可
+        以，而define的1.653却可能出现多次
+     3) define并不重视作用域，所以，它无法定义在类里面。但是const却可以
+        #+begin_src c++
+          class GamePlayer{
+          private:
+              //class-specific constants that are static and of integral type
+              //可以只提供declaration，而不需要definition,像下面一样(虽然有=5，但是因为
+              //是在class内部，其实还是declaration，而definition在下面)
+              static const int NumTurns = 5;
+              int scores[NumTurns];
+              //...
+          };
+          
+          //如果需要对NumTurn进行取地址操作，那么必须要有内存地址，所以必须进行定义，如下
+          const int GamePlayer::NumTurns; //注意不再有static
+          
+          //除了上面的方式以外，g++还接受如下定义方式(此处用float，int也会接受)
+          class GamePlayer{
+          private:
+              static const float FloatNum;
+          };
+          
+          const double GamePlayer::FloatNum = 23.4;
+        #+end_src
+     4) define存在着很多"经典错误", 在c++中，我们可以用inline template来替代#define
+        #+begin_src c++
+          //call f with the maximu of a and b
+          #define CALL_WITH_MAX(a, b) f((a) > (b) ? (a) : (b))
+          
+          int a = 5, b = 0;
+          CALL_WITH_MAX(++a, b);       // a is incremented twice
+          CALL_WITH_MAX(a, b + 10);    // a is incrremented once
+          
+          //For function-like macros, prefer inline functin to #define
+          template<typename T>
+          inline void callWithMax(const T& a, const T& b)
+          {
+              tof(a > b ? a : b);
+          }
+        #+end_src
+* Item 3: Use const whenever possible
+
+
+
