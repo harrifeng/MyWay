@@ -61,7 +61,21 @@
               tof(a > b ? a : b);
           }
         #+end_src
-* Item 3: Use const whenever possible
+** Item 3: Use const whenever possible
+   + const 最经常用到的地方就是和指针一起，只要记住const出现在*之前就是修饰数据
+     而出现在*之后就是修饰指针就可以了
+   + STL中的iterator其实就是T* 所以iterator const肯定是修饰指针的，但是const
+     iterator却不是修饰数据的，因为没有*出现，两者难以分辨，所以两者是一回事，都是
+     修饰pointer的。新发明了一个const_iterator是来修饰数据的
+   + const起最大作用的就是在function:
+     - parameter:为了防止pass-by-reference的数据被更改，加个const是非常职业的
+       做法
+     - return type:给返回值加上一个const可以避免很多隐藏的错误，比如operator*
+       重载的时候，return type加个const，那么if (a * b = c)这种错误就很容易
+       现行了
+     - member function:给一个member function加上const，就意味着传给这个函数
+       的this指针是const的，那么就可以保证这个function不会更改object的数据，至
+       少不会直接更改
 
 
 
