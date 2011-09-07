@@ -165,4 +165,104 @@
        }
      #+end_src
    + dtor也是一样，dtor是先调用base的dtor，那个时候，编译器认为当前是一个base的dtor
-
+** Item 10: Have assignment oprators return a reference to *this
+   + 我们知道类最好具有build-in type的特性，比如传递性 x = y  = z = 7这种赋值方法
+     #+begin_src c++
+       class Widget {
+       public:
+           Widget& operator+= (const Widget& rhs)
+           {
+               //...
+               return *this;
+           }
+           Widget& operator= (int rhs)
+           {
+               //...
+               return *this;
+           }
+       };
+     #+end_src
+** Item 11: Handle assignment to self in operator=
+   + 下面一个operator=的实现是不安全的。
+     1) 如果rhs和pb是一回事，那么this指针就被删除了
+     2) 如果在new Bitmap的时候抛出了异常，那么新的bitmap没有建立
+        成功，原来老的pb也被删除了
+     #+begin_src c++
+       class Bitmap {....};
+       class Widget {
+       ...
+       private:
+           Bitmap *pb;    //ptr to heap-allocated object
+       };
+       
+       Widget& Widget::operator= (const Widget& rhs)
+       {
+           delete pb;
+           pb = new Bitmap(*rhs.pb);
+           return *this;
+       }
+     #+end_src
+   + 经过更改空指针的情况不存在了，但是还是不是exception-safe的
+     #+begin_src c++
+       Widget& Widget::operator= (const Widget& rhs)
+       {
+           if (this == &rhs) 
+               return *this;
+           delete pb;
+           pb = new Bitmap(*rhs.pb);
+           return *this;
+       }
+     #+end_src
+   + 下面是指针和exception都safe的版本
+     #+begin_src c++
+       Widget& Widget::operator= (const Widget& rhs)
+       {
+           Bitmap *pOrg = pb;
+           pb = new Bitmap(*rhs.pb);
+           delete pOrg;
+           return *this;
+       }
+     #+end_src
+   + 我们还可以使用copy and swap的技术来达到exception safe
+     #+begin_src c++
+       //copy and swap (exception-safe)
+       //为你打算修改的对象做一个副本，然后在那个副本上做一切必要
+       //的修改。若有任何修改动作抛出异常，原对象不受影响。如果
+       //所有改变都成功，再将副本和原对象进行swap
+       class Widget {
+           //...
+           void swap(Widget &rhs);
+           //...
+       };
+       Widget& Widget::operator=(const Widget& rhs)
+       {
+           Widget temp(this);
+           swap(temp);
+           return *this;
+       }
+     #+end_src
+** Item 12: Copy all parts of an objects
+   + 自己书写copy ctor会有局限性，因为人并不是机器，有时候会发现忘记初始化一些成员变量
+     #+begin_src c++
+       class base {
+       public:
+           base (int aa = 11, int bb = 22):m_aa(aa), m_bb(bb) {}
+           // forget one member variable initialization
+           base (const base &rhs) : m_aa(aa) {}
+       private:
+           int m_aa;
+           int m_bb;
+       };
+     #+end_src
+   + 在继承中书写copy ctor的方法如下
+     #+begin_src c++
+       class derived {
+       public:
+           derived(const derived &rhs):base(rhs), m_cc(rhs.m_cc) {}
+       private:
+           int m_cc;
+       };
+     #+end_src
+   + 不要试图从copy ctor中调用copy assignment，或者copy assignment中调用copy ctor
+     如果不想repeat yourself的话，写一个公共的init()函数然后让copy assignment和copy
+     ctor调用。
