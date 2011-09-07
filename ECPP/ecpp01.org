@@ -92,7 +92,7 @@
            mutable bool lengthIsValid;        //always be modified, even in 
        };                                     //const member functions
      #+end_src
-** Make sure that objects are initialized before they're used.
+** Item 4: Make sure that objects are initialized before they're used.
    + 在使用变量以前，进行initialized,要区分initialized和assignment的不同，推荐使用
      member initialization list.
    + 还有写情况下必须使用member initialization list，比如const 和 reference变量

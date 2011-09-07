@@ -1,0 +1,168 @@
+* Chapter 2: Constructors, Destructors, and Assignment Operators 
+** Item 5: Know what functions C++ silently writes and calls 
+   + 如果你一个空的class，那么编译器会为你生成default ctor, copy ctor,
+     copy assignment operator, dtor.
+   + 如果你一旦生成了哪怕一个ctor，无论copy cotr，还是default ctor，或者
+     带参数的ctor，那么default ctor都不会再帮你生成了。
+   + 其他三个copy ctor, copy assignment, dtor都是要你自己写了一个编译器
+     才不会帮你生成
+   + 生成的dtor是不带virtual的
+   + 生成的copy cotr和copy assignment并不是一直都能用，只在成员变量比较
+     大路边的时候，才能起作用。如果成员变量是const，refence等，就无法起作用了
+     #+begin_src c++
+       class NameObject {
+       private:
+           std::string& nameValue;
+           const int objectValue;
+       };     
+       
+       NameObject a, b;
+       // Following code is illegal
+       a = b;
+     #+end_src
+** Item 6: Explicityl disallow the use of compilergenerated functions you do not want
+   + 有些类是独一无二的，是无法复制的。好比球王马拉多纳如果他是球员这个类创建的
+     object，他是无法复制的.没有两个一模一样的球员。
+   + 为了避免一些类被复制，我们有如下两种方法:
+     1) 把这个类的copy ctor 和 copy assignment都声明为private，而且不要去
+        定义他们，那么外人就无法调用
+     2) 设置一个base类，设置他的copy ctor 和 copy assignment为private，
+        然后让其他类继承(private继承就可以)
+        #+begin_src c++
+          class Uncopyable {
+          protected:
+              Uncopyable() {}
+              ~Uncopyable() {}
+          private:
+              Uncopyable(const Uncopyable&);
+              Uncopyable& operator=(const Uncopyable&);
+          };
+          
+          class HomteForSale: private Uncopyable {
+          //...
+          };
+        #+end_src
+** Item 7: Declare destructors virtual in polymorphic base classes
+   + 如果一个类中至少有一个virtual function(有virtual function就意味着要使用多态),
+     那么就一定要声明virtual dtor
+     #+begin_src c++
+       class TimeKeeper {
+       public:
+           TimeKeeper();
+           //If no this virtual, there will be 
+           //"partially destroyed" problems.
+           virtual ~TimeKeeper();
+           //...
+       };
+       class AtomicClock : public TimeKeepr{...};
+       
+       TimeKeeper* ptk = new AtomicClock;
+     #+end_src
+   + 如果一个类里面没有virtual function，说明人家不想做base class，不想利用多态，
+     这种情况下，就不要使用virtual dtor。(比如上面的Uncopyable)，如果再使用virtual
+     dtor只会图图增加内存空间
+   + STL的container type都没有virtual dtor，对他们的继承都隐藏着错误。
+   + 对于virtual dtor，有一个常用的方法，就是给一个class声明一个pure virutal dtor，
+     pure virtual dtor意味着不能initialize，要做基类。而且有virtual dtor，不担心
+     partially destroyed的问题，是非常理想的基类(使用多态)人选
+     #+begin_src c++
+       class AWOV {
+       public:
+           // pure virtual dtor;
+           virtual ~AWOV() = 0;
+       };     
+       //IMPORTANT: must provide definition, which will
+       //be called by the derived class
+       AWOV::~AWOV() = 0;
+     #+end_src
+** Item 8: Prevent exceptions from leaving destructors.
+   + 为了防止忘记关闭数据库，在数据库的类中，常常有在dtor中关闭数据库的代码，如下
+     #+begin_src c++
+       class DBConn {
+       public:
+           //...
+           ~DBConn()
+           {
+               db.close()；
+           }
+       private:
+           DBConnection db;
+       };
+     #+end_src
+   + 这个设计看似不错，但是如果close失败了抛出异常就不好了，我们要考虑到，于是代码
+     更改如下
+     #+begin_src c++
+       class DBConn {
+       public:
+           //...
+           ~DBConn()
+           {
+               try { db.close() } 
+               catch (...) {
+                   //make log or abort
+               }
+           }
+       private:
+           DBConnection db;
+       };
+     #+end_src
+   + 这个设计还是不够人性化，因为具体是abort啊，还是ignore exception啊，最好交给
+     用户去实现，也就是下面的方法，给用户一个接口去关，如果用户忘了关再去在dtor里面
+     去处理。因为在dtor里面处理exception是下下策，给用户一个机会，他就不会抱怨了。
+     #+begin_src c++
+       class DBConn {
+       public:
+           //...
+           void close()
+           {
+               db.close();
+               close = true;
+           }
+           ~DBConn()
+           {
+               if (!closed) {
+                   try {
+                       db.close();
+                   }
+                   catch (...) {
+                       //make log or abort
+                   }
+               }
+           }
+       private:
+           DBConnection db;
+           bool closed;
+       };
+     #+end_src
+** Item 9: Never call virtual functions during ctor or dtor
+   + 下面一个例子没有按照预期输出结果，因为derived class的ctor是先调用base class
+     的ctor，在调用base class的ctor的时候，它的类型就是base，而不是derived，所以
+     调用virtual function是调用base的，不会去derived的virtual table里面找的
+     #+begin_src c++
+       class base{
+           public:
+           base(){
+               display();
+           }
+           virtual void display(){
+               cout << "display" << endl;
+           }
+           virtual ~base() {}
+       };
+       
+       class derived:public base
+       {
+           public:
+           virtual void display(){
+               cout << "display's son "<< endl;
+           }
+       };
+       int main(int argc, const char *argv[])
+       {
+           derived dd;
+           dd.display();
+           return 0;
+       }
+     #+end_src
+   + dtor也是一样，dtor是先调用base的dtor，那个时候，编译器认为当前是一个base的dtor
+
