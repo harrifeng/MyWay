@@ -75,7 +75,30 @@
        现行了
      - member function:给一个member function加上const，就意味着传给这个函数
        的this指针是const的，那么就可以保证这个function不会更改object的数据，至
-       少不会直接更改
-
+       少不会直接更改(比如成员变量有指针的情况下，我们能保证指针不被修改，但是指针
+       指向的内容，我们无法保证)
+   + 两个函数只有const不同，也是可以进行重载的，这些函数虽然名字不同，但是可以根据
+     object是否是const来进行选择调用。
+   + 有些情况下，我们申请了const object，但是我们依然希望更改某些成员变量。这种情况
+     下，我们就用到了mutable关键字。某种程度上，mutable和friend关键字很相似，都是
+     对某种规定的妥协
+     #+begin_src c++
+       class CTextBook{
+       public:
+           std::size_t length() const;
+       private:
+           char *pText;
+           mutable std::size_t textLength;    //these data members may
+           mutable bool lengthIsValid;        //always be modified, even in 
+       };                                     //const member functions
+     #+end_src
+** Make sure that objects are initialized before they're used.
+   + 在使用变量以前，进行initialized,要区分initialized和assignment的不同，推荐使用
+     member initialization list.
+   + 还有写情况下必须使用member initialization list，比如const 和 reference变量
+     因为他们只能被初始化，不能被赋值
+   + 如果有两个不同的tranlation unit, 在其中一个中初始化non-local static variable的
+     时候，用到了其他tranlation unit的另外的non-local static variable，那么c++无法
+     保证对方是不是在你之前已经初始化了。
 
 
