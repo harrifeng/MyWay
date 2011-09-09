@@ -59,3 +59,52 @@
      #+end_src
    + 无论是auto_ptr还是shared_ptr，在删除的时候，都是使用delete，而非delete[],所以
      智能指针和动态分配的数组配合是不正确而且非常危险的。
+** Item 14:Think carefully about copying behavior in resource-managing classes
+   + Item 13 介绍了auto_ptr和shared_ptr，它们是系统提供的resource-manage class, 但是
+     它们只能对付dynamic allocated 的指针。如果遇到非dynamic allocated指针的情况下，要
+     自己动手写resource-managing class, Item14介绍的就是resource在离开作用域的时候，不
+     是delete resource，而是unlock resource。
+   + 比如我们实现一个Lock的resource-managing类，在类的ctor里面调用lock(),在类的dtor里面
+     调用unlock()
+     #+begin_src c++
+       class Lock {
+       public:
+           explicit Lock(Mutex *pm) : mutexPtr(pm) {
+               lock(mutexPtr);      //acquire resource
+           }
+       
+           ~Lock() {
+           unlock(mutexPtr);        //release resource
+           }
+       private:
+           Mutex *mutexPtr; 
+       };
+     #+end_src
+   + 如果不涉及到copy，那么resource-managing class并不难写，但如果要copy object呢，我们
+     通常有如下的几种处理方法
+     - 禁止复制:比如我们可以private 继承 Uncopyable类
+     - 实实在在的复制一份:这种复制是一种"深拷贝":不仅仅拷贝指针，还要拷贝对应的内存。When a
+       string object is copied, a copy is mad of both the pointer and the memory
+       it points to.
+     - 改变resource的所有权:也就是auto_ptr所采用的，拷贝就转移所有权的方法,只能有一个指针同
+       时指向同一个resource
+     - 对resource引用进行计数:也就是shared_ptr所采用的方法，一般来说，只要让自己的data
+       member设计成shared_ptr的形式就行了，这个mutex的例子比较特殊，我们退出作用域的时候
+       并不是销毁指针，而是unlock，这个时候，就要在shared_ptr初始化的时候，加上一个deleter
+       的函数指针变量，来告诉编译器，当离开作用域的时候如何处理resource
+       #+begin_src c++
+         void lock(Mutex *pm); // lock mutex pointed to by pm
+         void unlock(Mutex *pm); // unlock the mutex
+         
+         class Lock {
+         public:
+             //mutexPtr is given two para when initialized
+             //second is function pointer for deleter
+             explicit Lock(Mutex *pm) : mutexPtr(pm, unlock) {
+                 lock(mutexPtr.get());
+             }
+         private:
+             std::tr1::shared_ptr<Mutex> mutexPtr;
+         };
+       #+end_src
+** Item 15: Provide access to raw resources in resource-managing classes
