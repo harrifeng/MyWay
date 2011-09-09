@@ -1,0 +1,61 @@
+* Chapter 3: Resource Management
+  + Resource是申请了需要归还系统的，最常见的就是dynamically allocated memory,其他还有
+    比如file descriptor, mutex lock,database connection, network socket等
+** Item 13: Use objects to manage resources
+   + 我们知道要获取resource，就一定要对它进行释放，传统的方法是在函数开始申请，在函数结束
+     的地方进行释放
+     #+begin_src c++
+       void f()
+       {
+           Investment *pInv = createInvestment(); // call factory
+           //....  use pInv
+           delete pInv;                           // release object
+       }
+     #+end_src
+   + 上述方法的缺点是在"use pInv"的代码当中可能包含return，或其他特殊情况，导致最终不能
+     到达"delete pInv"那一行。
+   + 为了保证pInv一定会被释放掉，我们要把resource放到一个object里面，这个object退出作
+     用域的时候，会自动在dtor里面释放资源,这种使用方法被称作Resrouce Acquisition Is
+     Initialization(RAII).因为获取resource和初始化resource-managing object通常是
+     一行代码而得名.
+   + 在c++中，可以利用auto_ptr来完成自动释放资源的工作，在离开作用域的时候，auto_ptr里
+     面的指针会被自动释放掉
+     #+begin_src c++
+       void f()
+       {
+           std::auto_ptr<Investment> pInv(createInvestment());
+           // use as before;
+       }   // automatically delete via auto_ptr's dtor
+     #+end_src
+   + auto_ptr的一大缺点，就是复制的时候，和正常的复制行为是不同的:复制一个auto_ptr的话
+     就把它设置成Null了:产生这种奇怪behavior的原因是auto_ptr是自动调用delete，所以为
+     了防止野指针的产生，不得已只能有一个指针指向同一个object
+     #+begin_src c++
+       //pInv1 points to the object returned from
+       //createInvestment
+       std::auto_ptr<Investment> pInv1(createInvestment());
+       
+       //pInv2 now points to the object,
+       //pInv1 is now null
+       std::auto_ptr<Investment> pInv2(pInv1);
+       
+       //now pInv1 points to the object,
+       //pInv2 is null
+       pInv1 = pInv2;
+     #+end_src
+   + 能够有正常复制behavior的智能指针是shared_ptr
+     #+begin_src c++
+       void f()
+       {
+           //pInv1 points to the object
+           std::tr1::shared_ptr<Investment>
+           pInv1(createInvestment());
+       
+           //both pInv1 and pInv2 point to the same object
+           std::tr1::shared_ptr<Investment> pInv2(pInv1H);
+       
+           pInv1 = pIv2;
+       } // both pInv1 and pInv2 are released.
+     #+end_src
+   + 无论是auto_ptr还是shared_ptr，在删除的时候，都是使用delete，而非delete[],所以
+     智能指针和动态分配的数组配合是不正确而且非常危险的。
