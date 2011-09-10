@@ -199,9 +199,3 @@
      1) Execute "new Widget"
      2) Call priority()
      3) Call the tr1::shared_ptr ctor
-   + 解决方法就是专门用一句代码来创建Widget，并保存在class里面
-     #+begin_src c++
-       std::tr1::shared_ptr<Widget> pwd(new Widget);
-       
-       processWidget(pw, priority());
-     #+end_src
