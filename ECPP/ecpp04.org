@@ -37,4 +37,172 @@
        };
        Date d(Month:Mar(), Day(30), Year(1995));
      #+end_src
-** Item 19:
+** Item 19: Treat class design as type design
+   + class design 就是 type desing,要考虑非常多的东西:
+   + 新的类型如何被创建和销毁:ctor, dtor, memory allocation
+   + 如何区别initialization和assignment:就是ctor和assignment operator的区别
+   + 新类型pass by value代表着什么:copy ctor定义了pass by value
+   + 哪些数据对于新类型来说是合法的:涉及到data member的error check，function的
+     exception抛出，setter设置
+   + 是否是一个继承序列里面的:设计到virtual还是non-virtual function等等
+   + 允许什么样的type conversion: 如果是explict conversion，那么要设计一个函数
+     接口，否则就是operator T()这种assignment来完成对T类型的implicit conversion
+   + 新类型又哪些操作和函数:成员函数的定义
+   + 哪些函数不允许使用:把这些函数定义成private
+   + 新类型的访问权限如何:哪些成员定义成public，哪些protected，哪些private
+   + 新类型的undeclared interface如何:涉及到新类型的exception safety, resource
+     usage等等
+   + 新类型的通用性如何
+   + 你是否真的需要一个新的类型
+** Item 20: Prefer pass-by-reference-to-const to pass-by-value
+   + 具体说来应该是，除了build-in type, STL iterator, function object types以外
+     的情况下，我们要选择pass-by-reference-to-const
+   + build-in type等选择pass-by-value更有效的原因是，他们体积固定，更容易被编译器拿
+     来选择进行优化。
+   + 先来看看pass-by-reference-to-const在效率方面强过pass-by-value的情况
+     #+begin_src c++
+       class Person {
+       public:
+           Person();
+           virtual ~Person();
+           //...
+       private:
+           std::string name;
+           std::string address;
+       };
+       
+       class Student: public Person {
+       public:
+           Student();
+           ~Student();
+           //...
+       private:
+           std:string schoolName;
+           std:string schoolAddress;
+       };
+       //Following example contains one ctor&dtor for Student
+       // two ctor&dtor for std::string
+       bool validateStudent(Student s);
+       Student plato;
+       
+       bool platoIsOK = validateStudent(plato);
+       
+       //Change the para of validateStudent(), will
+       //call no ctor&dtor at all
+       bool validateStudent(const Student& s);
+     #+end_src
+   + 不仅仅效率上pass-by-reference-to-const更高，在某些情况下，函数要用到多态的特性
+     这个时候就不得不用到reference(其实内部就是pointer的实现),那就不能选择pass-by-value
+     #+begin_src c++
+       class Window {
+       public:
+           std::string name() const;
+           virtual void display() const;
+       };
+       
+       class WindowWithScrollBars:public Window {
+       public:
+           virtual void display() const;
+       };
+       
+       //Following example is incorrect, will be sliced
+       //As w is newly created Windows Object, if para
+       //is passed with a derived class.It will act as
+       //if it was a base class
+       void printNameAndDisplay(Window w) {
+           std::cout << w.name();
+           w.display();
+       }
+       //Change the para's type will solve the problem
+       void printNameAndDisplay(const Window& w);
+     #+end_src
+** Item 21: Don't try to return a reference when you must return an object
+   + return 是一个大学问，我们先看下面的例子: 这个是return正确的用法:返回一个值，如果是
+     32-bit的，那就放到寄存器里面，放不下的话，编译器再想办法，总之返回值"值传递"是正确的
+     用法
+     #+begin_src c++
+       int foo() {
+           int temp = 123;
+           return temp;
+       }
+       
+       Widget foo2() {
+           Widget wt;
+           return wt;
+       }
+     #+end_src
+   + 如果是返回一个地址或者引用的话，就不能像前面一样创建一个local variable，然后返回
+     它的地址(如果是引用的话，可能返回local variable就是返回地址,因为返回值里面就暗藏
+     一个&)
+     #+begin_src c++
+       //Wrong, local variable is deleted when leaving scope
+       //address of these local variable is meanless afterwards
+       int* foo() {
+           int temp = 123;
+           return &temp;
+       }
+       
+       int& foo2() {
+           int temp = 123;
+           return temp;
+       }
+       
+       Widget& foo3() {
+           Widget wt;
+           return wt;
+       }
+     #+end_src
+   + 当我们理解了return的用法之后就知道，我们最好不要返回reference to local variable
+     而应该直接返回object
+** Item 22: Declare data members private
+   + 不能声明为public，因为，如果数据为public，那么用户就不会利用member function，而是
+     直接去取用数据了，如果一旦数据有改动，那么所有涉及到数据的地方都要改动。那将非常麻烦。
+     如果都用member function，那么数据的改动其实对于用户来说，是完全感受不到的
+   + 声明为protected的话，其实和public没区别，protected只不过是部分public，遇到数据改
+     变，还是要去改public的部分，依然没意义
+   + 综上，只能用private了
+** Item 23: Prefer non-member non-friend functions to member functions
+   + 这个item让我们理解封装的评判标准，一般来说，c++代码封装性越高越好，封装性是指的private
+     的data member被越少的function访问越好。
+   + 下面的例子可以看到member function是可以访问private data member的，而non-member
+     non-friend function是无法访问data member的，所以non-member non-friend提供了
+     更高的封装性。虽然member function看起来好像让数据和函数结合的更紧密
+     #+begin_src c++
+       class WebBrowser {
+       public:
+           //...
+           void clearCache();
+           void clearHistory();
+           void removeCookies();
+           //member function, call clearCache,
+           //clearHistory, removeCookies
+           void clearEverything(); 
+       };
+       
+       //non-member non-friend function
+       void clearBrowser(WebBrowser& wb)
+       {
+           wb.clearCache();
+           wb.clearHistory();
+           wb.removeCookies();
+       }
+     #+end_src
+   + 例子当中的clearBrowser函数虽然提供了更好的封装性，但是好像看起来和WebBrowser的联系
+     不是那么紧密，在c++中，是依靠在同一个namespace中的方法来增加这种联系性的。多个header
+     file，同一个namespace，是c++的惯用方法，STL就是这样写出来的
+     #+begin_src c++
+       //header webbrowser.h
+       namespace WebBrowserStuff {
+           class WbBrower {...};
+       }
+       
+       //header webbrowserbookmarks.h
+       namespace WbeBrowserStuff {
+       //bookmark-related functions
+       }
+       
+       //header webbrowsercookies.h
+       namespace WebBrowserStuff {
+       //cookie-related functions
+       }
+     #+end_src
