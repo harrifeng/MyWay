@@ -1,0 +1,40 @@
+* Chapter 4: Designs and Declaraions
+** Item 18: Make interfaces easy to use correctly and hard to use incorrectly
+   + 好的接口设计应该是这个样子:如果用户使用方法正确，那么就会成功编译。否则，程序根本无法
+     成功编译
+   + 比如一个简单的Date类定义如下
+     #+begin_src c++
+       class Date {
+       public:
+           Date(int month, int day, int year);
+           //...
+       };
+     #+end_src
+   + 常见的错误情况如下 
+     #+begin_src c++
+       Date d(30, 3, 1995)；// Oops ! should be 3, 30, 1995
+     #+end_src
+   + 我们可以为每种参数制作一个类，对于月份来说，enum是一个选择，但不是最好，在type-safe
+     方面还是有缺陷
+     #+begin_src c++
+       struct Day {
+           explicit Day(int d) : val(d) {}
+           int val;
+       };
+       struct Year {
+           explicit Year(int y) : val(y) {}
+           int val;
+       };
+       
+       class Month {
+       public:
+           static Month Jan() { return Month(1); }
+           static Month Feb() { return Month(2); }
+           //...
+           static Month Dec() { return Month(12);}
+       private:
+           explicit Month(int m);
+       };
+       Date d(Month:Mar(), Day(30), Year(1995));
+     #+end_src
+** Item 19:
