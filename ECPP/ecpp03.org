@@ -108,3 +108,63 @@
          };
        #+end_src
 ** Item 15: Provide access to raw resources in resource-managing classes
+   + 在使用resource-managing class的时候，有时候需要暴露内部的raw pointer 给外界，这
+     个时候智能指针通常有个get()函数，返回内部指针
+     #+begin_src c++
+       std::tr1::shared_ptr<Investment> pInv(createInVestment());
+       
+       int daysHeld(const Investment *pi);
+       
+       int days = daysHeld(pInv); //error ! can not convert from shared_ptr
+       
+       //should use in following way
+       int days = daysHeld(pInv.get());
+     #+end_src
+   + 智能指针同时也重载了operator->和operator*，可以通过他们像普通指针一样取得resource
+     内容
+     #+begin_src c++
+       std::tr1::shared_ptr<Investment> pi1(createInVestment());
+       bool taxable1 = !(pi1 -> isTaxFree());
+       
+       std::tr1::shared_ptr<Investment> pi2(createInVestment());
+       bool taxable2 = !((*pi2).isTaxFree());
+     #+end_src
+   + 如果我们自己实现resource-managing类，那么如果要暴露内部raw 指针的话，我们也有两者
+     方法:
+     - 像智能指针一样设计一个get()函数，这个是推荐用法，缺点是不直观
+       #+begin_src c++
+         class Font {
+         public:
+             explicit Font(FontHandle fh) : f(fh) {}
+             ~Font() { releaseFont(f); }
+             
+             //explicit conversion function
+             FontHandle get() const {
+                 return f;
+             }
+         private:
+             FontHandle f;
+         };
+         Font f(getFont());
+         int newFontSize;
+         changeFontSize(f.get(), newFontSize);
+       #+end_src
+     - 进行implicit 转换，缺点是容易出问题，不推荐
+       #+begin_src c++
+         class Font {
+         public:
+             operator FontHandle() const {
+                 retrn f;
+             }
+             //....
+         };
+         Font f(getFont());
+         int newFontSize;
+         changeFontSize(f, newFontSize);
+         
+         Font f1(getFont());
+         //error! f1 convert to underlying 
+         //resource and assign to f2, when 
+         //f1 is released, f1 will dangle.
+         FontHandle f2 = f1;
+       #+end_src
