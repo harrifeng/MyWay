@@ -23,6 +23,7 @@
      #+begin_src c++
        void f()
        {
+           // can only inilization here, can not assignment
            std::auto_ptr<Investment> pInv(createInvestment());
            // use as before;
        }   // automatically delete via auto_ptr's dtor
@@ -168,3 +169,39 @@
          //f1 is released, f1 will dangle.
          FontHandle f2 = f1;
        #+end_src
+** Item 16: Use the same form in corresponding uses of new and delete
+   + 主要是注意一定要new 和 delete对应 new [] 和 delete []对应。
+   + 特别要注意的是typedef可能隐藏new的真实数据结构
+     #+begin_src c++
+       typedef std::string AddressLines[4]; 
+       std::string *pal = new AddressLines;
+       delete pal;    //undefined
+       delete [] pal; //fine !
+     #+end_src
+** Item 17: Store newed objects in smart pointers in standalone statements
+   + 首先我们要知道智能指针的ctor都是explict的，所以对于智能指针只能initialization，
+     而不能assignment
+     #+begin_src c++
+       int priority();
+       void processWidget(std::tr1::shared_ptr<Widget> pw, int pri);
+       
+       //will not compile
+       processWidget(new Widget, priority());
+     #+end_src
+   + 于是我们要做如下的改进，但是下面的改进却蕴含着危险 
+     #+begin_src c++
+       processWidget(std::tr1::shared_ptr<Widget>(new Widget), priority());
+     #+end_src
+   + 蕴含危险的原因是因为c++ compiler比起java，c#来说，更为灵活，上面代码中 new Widget
+     一定在shared_ptr赋值之前，但是priority()可以在他们之前，之后，之中调用，如果是之中
+     那么就是如下顺序。如果priority在使用的时候，抛出异常，New 出来的Widget就没有正确的
+     放入shared_ptr里面，memory leak就产生了
+     1) Execute "new Widget"
+     2) Call priority()
+     3) Call the tr1::shared_ptr ctor
+   + 解决方法就是专门用一句代码来创建Widget，并保存在class里面
+     #+begin_src c++
+       std::tr1::shared_ptr<Widget> pwd(new Widget);
+       
+       processWidget(pw, priority());
+     #+end_src
