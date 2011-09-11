@@ -329,3 +329,5 @@
      - c++ 只允许对class template进行偏特化，而不允许对function temple进行偏
        特化
      - 可以对std中的template进行全特化，但是不能加入新的template
+   + 定义exception-safte版本swap的方法就是只处理build-in type，只有这样能保证不
+     产生exception 

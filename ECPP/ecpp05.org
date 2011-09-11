@@ -1,0 +1,130 @@
+* Chapter 5: Implementations
+** Item 26: Postpone variable definitions as long as possible
+   + c++和c不同的地方在于c++鼓励尽可能精确的在需要这个变量的时候在申请，下面是
+     一个范例，encrypted的定义太早了，如果中间代码抛出异常，那么这变量的定义就
+     浪费了
+     #+begin_src c++
+       std::string encyptPassword() {
+           using namespace std;
+           string encypted;
+           if (password.length() < MinimumPasswodLength) {
+               throw logic_error ("Password is too short !");
+           }
+       
+           return encypted;
+       }
+     #+end_src
+   + 定义变量一定要将其初始化，而且最好不要先default ctor，然后operator=
+     #+begin_src c++
+       //first default ctor, then oprator=
+       std::string encrypted;
+       encrypted = password;
+       
+       //only one ctor
+       std::string encrypted(password);
+     #+end_src
+   + 循环中定义变量有如下两者情况:
+     #+begin_src c++
+       //Plan A: 1 ctor + 1 dtor + n assignment
+       Widget w;
+       for (int i = 0; i < n; ++i) {
+           w = some_value ;
+       }
+       
+       //Plan B :n ctor + n dtor 
+       for (int i = 0; i < n; ++i) {
+           Widget w(some_value);
+       }
+     #+end_src
+     - 因为n个赋值 < n个(ctor+dtor),所以plan A效率更高
+     - 但是plan B的清晰度更好，更容易理解，如果清晰度更重要，那就使用plan B
+** Item 27: Minimize casting
+   + 比起Java或者C#，c++中的转型要危险的多，所以不到万不得已，不要转型
+   + 传统c代码中的转型不容易被察觉，在c++中引入了更容易让人察觉的转型方式
+     #+begin_src c++
+       class Widget {
+       public:
+           //only time to use an old-style cast is when you
+           //want to call an explicit ctor to pass an object
+           //to a function
+           explicit Widget(int size);
+           //...
+       };
+       
+       void doSomeWork(const Widget& w);
+       doSomeWork(Widget(15));      //old-style casting
+       doSomeWork(static_cast<Widget>(15)); //new-style casting
+     #+end_src
+   + static_cast 是最初等，最常用的转换，而且相互转换类型之间有很强关联性
+   + reinterpret_cast用在指针，以及int类型(和指针长度相互)之间任意的转换
+   + const_cast是除去对象的常量性
+     #+begin_src c++
+       const int i = 56;
+       const int *ptr = &i;
+       int *ptr2 = const_cast<int*>(ptr);
+       /* old-style cast would be
+        * ptr2 = (int*)(ptr);
+        */
+       cout << *ptr << endl;
+       ,*ptr2 = 34;
+       cout << *ptr << endl;
+     #+end_src
+   + 前面说的三种转换，都是new-style和old-style都有的，只有dynamic_cast
+     是c++新加的，因为它和c++的多态机制有很大关系
+     #+begin_src c++
+       //para is set to base class, determine real class
+       //at last.
+       void doSomething (Base *obj) {
+           Derived objD = dynamic_cast<Derived *> (obj);
+           if (objD) {
+               // use obj as derived class
+           }
+           else {
+               // if obj is not derived class, work normally.
+           }
+       }
+     #+end_src
+   + 值得注意的是，dynamic_cast的效率非常差，不到万不得已，不要使用。
+** Item 28: Avoid returning "handles" to object internals
+   + 其实前面有个item涉及到这个内容，就是return的使用，我们不要返回对类内部数据的
+     取地址和引用.下面例子就蕴含着private数据被更改的危险
+     #+begin_src c++
+       class Point {
+       public:
+           Point(int x, int y);
+           void setX(int newVal);
+           void setY(int newVal);
+       };
+       struct RectData {
+           Point ulhc;     //upper left-hand corner
+           Point lrhc;     //lower right-hand corner
+       };
+       class Rectangle {
+       public:
+           Point& upperLeft() const {return pData->ulhc;}
+           Point& lowerRight() const {return pData->lrhc;}
+       private:
+           std::tr1:shared_ptr<RectData> pData;
+       };
+       
+       const Rectangle rec(coord1, coord2);
+       rec.upperLeft().setX(50); //Oops! const function changed the private value 
+     #+end_src
+   + 可能的解决办法如下
+     #+begin_src c++
+       const Point& upperLeft() const {return pData->ulhc;}
+       const Point& lowerRight() const {return pData->lrhc;}
+     #+end_src
+   + 上面的解决办法依然不完美，尽管返回值设置成了const，还是存在这破坏封装性的危险, 下面例子
+     中，boundingBox返回的是一个temp object，这个object在返回以后就被销毁了(重新在当前
+     stack 申请一个变量放置),但是你却返回了这个temp的地址(通过upperLeft)
+     #+begin_src c++
+       class GUIObject {...};
+       const Rectangele boundingBox(const GUIObject& obj); //return value const
+       GUIObject *pgo;
+       const Point* pUpperLeft = &(boundingBox(*pgo).upperLeft());
+     #+end_src
+   + 总而言之，放弃return handles to object internals是最好的解决办法
+** Item 29: Strive for exception-safe 
+** Item 30: Understand the ins and outs of inlining
+** Item 31: Minimize compilation dependencies between files.
