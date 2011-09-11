@@ -206,7 +206,7 @@
        //cookie-related functions
        }
      #+end_src
-** Item 25: Declare non-member functions when type conversions shuold apply to all parameters
+** Item 24: Declare non-member functions when type conversions shuold apply to all parameters
    + 我们先来看一个有理数类的例子
      #+begin_src c++
        class Rational {
@@ -258,4 +258,74 @@
        
        result = 2 * oneHalf;           //error again!
      #+end_src
-     
+** Item 25: Consider support for a non-throwing swap
+   + swap函数最早是在STL中引入的，后来在exception-safe programming和防止自我赋值
+     (operator=)中都有广泛应用，常规版本的swap在std中实现如下
+     #+begin_src c++
+       namespace std {
+           template<typename T>
+           void swap(T& a, T&b) {
+               T temp(a);
+               a = b;
+               b = temp;
+           }
+       }
+     #+end_src
+   + 如果这个版本就是你想要的，那么好办，如果是某些情况下你想定制swap怎么办的，比如下面
+     的例子. 其实swap起来非常简单，我们只要交换两个object的指针就可以了，但是default
+     swap不知道这些，它会去调用operator=来进行很多复制工作，非常没效率。
+     #+begin_src c++
+       class WidgetImpl {
+       public:
+           //...
+       private:
+           int a, b, c; //possibly lots of data
+           std::vector<double> v; //expensive to copy.
+           //...
+       };
+       
+       class Widget {
+       public:
+           Widget(const Widget& rhs);
+       
+           //to copy a Widget, copy its WidgetImpl object.
+           //default swap will call this operator= to do
+           //lots of inefficient work
+           Widget& operator=(const Widget& rhs) {
+               //...
+               *pImpl = *(rhs.pImpl);
+           }
+       };
+     #+end_src
+   + 下面是对一个非template的class如何申请一个自己的swap，需要做两步:
+     1) 提供public member swap function
+     2) 在std namespace里面提供对default swap函数的全特化版本
+   + 代码实现如下，其实就是一旦调用swap，就会调用std里面的全特化版本的
+     swap，全特化版本的swap其实就是调用Widget的member function，在
+     这个member function中，调用了default swap来简单对换指针
+     #+begin_src c++
+       class Widget {
+       public:
+           //...
+           void swap(Widget& other) {
+               //will find the best option, here
+               //it would be default swap()
+               using std::swap;  
+           
+               //to swap Widget, swap their pImple pointer
+               //default swap here is used!
+               swap(pImpl, other.pImpl);
+       };
+       
+       namespace std {
+           template<>
+           void swap<Widget>(Widget& a, Widget& b) {
+               // call Widget swap member function
+               a.swap(b);
+           }
+       };
+     #+end_src
+   + 如果Widget本身就是一个template的类，那么自定义的swap版本就会更麻烦一点。因为
+     - c++ 只允许对class template进行偏特化，而不允许对function temple进行偏
+       特化
+     - 可以对std中的template进行全特化，但是不能加入新的template
