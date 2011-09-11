@@ -206,3 +206,56 @@
        //cookie-related functions
        }
      #+end_src
+** Item 25: Declare non-member functions when type conversions shuold apply to all parameters
+   + 我们先来看一个有理数类的例子
+     #+begin_src c++
+       class Rational {
+       public:
+           //ctor is deliberately not explicit;
+           //allows implicit int-to-Rational conversion
+           Rational(int numerator = 0, int denominator = 1);
+           int numerator() const;
+           int denominator() const;
+       private:
+           ...
+       };
+     #+end_src
+   + 如果把operator*定义成member function的话 2 * oneHalf这种形式是编译不通过的
+     #+begin_src c++
+       class Rational {
+       public:
+           const Rational operator*(const Rational& rhs) const;
+       };
+       
+       Rational oneHalf(1, 2);        
+       
+       Rational result = oneHalf * 2;  //fine
+       
+       result = 2 * oneHalf;           //error
+     #+end_src
+   + member function版本的operator*其实是暗藏如下的两种implicit conversion
+   + 第二种implicit无法成功的原因是，它没有符合implicit conversion的最基本要求:
+     _parameters are eligible for implicit type conversion only if they
+     are listed in the parameter list_· member function operator*里面第一
+     个参数是this指针，第二个是Rational类，所以numeric数在第二位的情况下可以进行
+     implicit转换。如果想让numeric在第一位的时候也转换，non-member的函数是个很
+     好的选择
+     #+begin_src c++
+       class Rational {
+       //...
+       };
+       const Rational operator*(const Rational& lhs, const Rational& rhs)
+       {
+           return Rational(lhs.numerator() * rhs.numerator(),
+                           lhs.denominator() * rhs.denominator());
+       }
+     #+end_src
+   + 这里我们不需要把函数声明成friend，因为我们依靠现有公开的函数已经能完成功能，而
+     且friend会降低函数的封装性，所以无论何时你可以避免使用friend函数，那就避免使用
+   + 最后需要注意的是，如果ctor定义成explicit的，那么下面两种乘法都不成立 
+     #+begin_src c++
+       result = oneHalf * 2;           //error!
+       
+       result = 2 * oneHalf;           //error again!
+     #+end_src
+     
