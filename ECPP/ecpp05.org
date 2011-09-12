@@ -126,5 +126,93 @@
      #+end_src
    + 总而言之，放弃return handles to object internals是最好的解决办法
 ** Item 29: Strive for exception-safe 
+   + 在解释什么是exception-safe之前，我们先看个反例
+     #+begin_src c++
+       class PrettyMenu {
+       public:
+           void changeBackground(std::istream& imgSrc);
+           //...
+       private:
+           Mutex mutex;      //mutex for this object
+       
+           Image *bgImage;
+           int imageChanges;   //how many times image has been changed
+       };
+       
+       void PrettyMenu::changeBackground(std::istream& imgSrc) {
+           lock(&mutext);     // acquire mutex
+       
+           delete bgImage;
+           ++imageChanges;
+           bgImage = new Image(imgSrc);
+       
+           unlock(&mutex);
+       }
+     #+end_src
+   + 上面的例子违反了exception-safe function的两个基本要求 
+     - Leak no resource: 如果上面的new Image代码抛出异常，那么unlock(&mutex)永远
+       都不会得到执行，mutex这个resource就leak了
+     - Don't allow data structures to become corrupted: 如果new Image抛出了异常
+       那么bgImage将会指向deleted object, imageChanges也错误增加了(因为实际并没有增加
+       新的background image 成功)
+   + Leak resouce的问题可以通过利用resource-managing class来解决。data corrupted
+     可以通过调整变量顺序，设置临时变量，或者shared_ptr来解决
+     #+begin_src c++
+       Image *temp = bgImage;
+       bgImage = new Image(imgSrc);
+       ++imageChanges;
+       delete temp;
+     #+end_src
+   + exception-safe 提供三种层次的保证
+     - basic guarantee : 如果异常被抛出，程序内部不会混乱，比如出现异常的话，background
+       可以选择保留原来的背景，或者使用default的背景。
+     - strong guarantee : 如果抛出异常，那就回到原来的状态，一点不受影响。
+     - nothrow guarantee : 完全不抛出异常
+   + copy and swap
+     #+begin_src c++
+       struct PMImpl {
+           std::tr1::shared_ptr<Image> bgImage;
+           int imageChanges;
+       };
+       
+       class PrettyMenu {
+       private:
+           Mutex mutex;
+           std::tr1::shared_ptr<PMImpl> pimpl;
+       };
+       
+       void PrettyMenu::changeBackground(std::istream& imgSrc) {
+           using std::swap;
+           Lock ml(&mutex);
+           //find a temp variable
+           std::tr1::shared_ptr<PMImpl> pNew(new PMImpl(*pImpl));
+           pNew->bgImage.reset(new Image(imgSrc));
+           ++pNew->imageChanges;
+       
+           //copy and swap, exception-safe with basic guarantee
+           swap(pImpl, pNew); 
+       }
+     #+end_src
 ** Item 30: Understand the ins and outs of inlining
+   + Inline函数看起来像函数，动作像函数，比macro好很多，可以像function一样调用，又不用
+     承担函数调用的代价
+   + 但是inline的实现方法其实就是将"对这个函数的每一次调用"都以"inline函数本体"替换之，
+     那么很可能增加object code的大小，object code变大可能会导致增加page，减小cache
+     hit概率
+   + function template 并不一定就是inline的。inline和function template通常都放到
+     头文件，但是这样放置的原因是:大部分编译器都是在编译阶段进行inline和template的具现化
+   + inline是对compier的一种request，而不是command，compiler自己决定是否真的对某个
+     函数inline化
+   + inline一个函数，除了显式的加上inline关键字以外，还可以把函数实现放到class definition
+     里面
+   + 以下情况不适合对函数进行inline:
+     1) virtual function不适合inline，因为要到运行期才能决定使用哪个函数
+     2) 太过复杂的函数不能成为inline，比如有循环或者递归
+     3) 通过函数指针进行的调用不会被inline,因为inline 函数并不是真的函数，它没有地址，如
+        果你对一个inline函数取地址，那么其实就是编译器又生成了一个outline的让你指
+     4) ctor和dtor都不适合inline
+     5) 一旦更改inline函数的实现，那么所有用到他的文件都要重新编译，如果你不想这么做，不要
+        使用inline函数
+     6) inline函数内部不能设置断点。
 ** Item 31: Minimize compilation dependencies between files.
+   + 
