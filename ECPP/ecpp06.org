@@ -1,0 +1,106 @@
+* Chapter 6: Inheritance and Object-Oriented Design
+** Item 32: Make sure public inheritance models "is-a"
+   + 如果说OO设计最重要的是什么的话，总结起来一句就是Derived Class之于Base Class就是"is-a"
+     的关系。比如base class 是 Person， derived class 是 Student。那么所有的Student都
+     是Person,但反之则不一定
+   + "is-a"这种设计很多时候不是依靠常识来决定的，比如在常识中正方形 is a 矩形。但是其实在设计
+     类的时候，很可能不是，比如矩形设计的时候可能会要求width不等于height。
+** Item 33: Avoid hiding inherited names
+   + 我们先来看看重载，覆盖，隐藏三者之间的区别
+     |------------------+------------------+---------------------------|
+     | Overload         | Override         | Hide                      |
+     |------------------+------------------+---------------------------|
+     | Same Scope       | Differenct Scope | Different Scope           |
+     |------------------+------------------+---------------------------|
+     | Same Name        | Same Name        | Same Name                 |
+     |------------------+------------------+---------------------------|
+     | Different Para   | Same Para        | Different Para            |
+     |------------------+------------------+---------------------------|
+     | Optional Virtual | Virtual in Base  | [1]Forget Virtual in Base |
+     |                  |                  | or [2]Base has more than  |
+     |                  |                  | one overload functions    |
+     |                  |                  | Derived has fewer         |
+     |------------------+------------------+---------------------------|
+   + 我们可以发现Override是多态成功的一种体现，是一种好的现象。Overload是在相同
+     scope里面C++为了方便用户而新加的特性，也是一种良性特征。只有Hide是用户不小
+     心而产生的一种现象。
+   + 先看看常见的hide产生的情景:
+     #+begin_src c++
+       class Base {
+           void display() { //forget virtual here
+               cout << "In the base" << endl;
+           }
+       };
+       
+       class Derived: public Base {
+           void display() {
+               cout << "In the derived" << endl;
+           }
+       };
+       
+       Base *ptr = new Derived;
+       ptr->display(); //Oops! wrong, should be in the derived
+     #+end_src
+   + 而Hide之所以被设计出来，是为了出现这么一种情况:如果没有重载机制base class
+     中有多个overload函数，derived class继承的时候如果只继承了其中一个(而且不知
+     道其他overload函数的存在，比如base class在library里面)，而使用的时候不小
+     心参数写错了，恰好成了base class某一个overload的函数，编译器不会报错，那么
+     用户用错了都不知道。
+   + 下面我们来看一个由于Hide而产生的问题(base中多个overload function的情况)
+     #+begin_src c++
+       class base {
+       public:
+           virtual void disone() {
+               cout << "no para" << endl;
+           }
+           virtual void disone(int i) {
+               cout << "one para" << endl;
+           }
+       };
+       
+       class derived : public base {
+       public:
+           virtual void disone() {
+               cout << "no para in derived " << endl;
+           }
+       };
+       
+       int main(int argc, const char *argv[])
+       {
+           derived dd;
+           dd.disone(); 
+           dd.disone(1); //error, base scope is hidden
+           return 0;
+       }
+     #+end_src
+   + 解决办法也很容易,增加base的scope 
+     #+begin_src c++
+       class derived : public base {
+       public:
+           //add this sententce to include base scope
+           using base::disone;
+           virtual void disone() {
+               cout << "no para in derived " << endl;
+           }
+       };
+     #+end_src
+   + 如果我们不想让derived object继承那么多的函数，也就是说不要"is-a"的关系，那么
+     我们就可以使用private继承.
+** Item 34: Differentiate between inheritance of interface and inheritance of implementation
+   + 在类中的函数有三种:pure virtual, impure virtual, non-virtual 三种，其实他们是
+     对应了三种继承策略:
+     - 定义pure virtual function的目的:是仅仅继承一个function的interface
+     - 定义普通virtual function的目的:是不仅继承一个function的interface，同时还继承
+       他的default implementation
+     - 定义non-virtual function的目的:是不仅仅继承一个function的interface，同时还
+       继承他的mandatory implementation(不允许你进行更改)
+   + 新手在定义函数的时候，常常会犯的两种错误:
+     - 将所有函数声明为non-virtual,这样以来，derived函数就没有多少特殊化的工作要做了
+     - 将所有函数声明为virtual,这也往往不是正确的。因为总有些函数不允许在derived里面
+       进行重定义
+** Item 35: Consider alternatives to virtual functions
+** Item 36: Never redefine an inherited non-virtual function
+** Item 37: Never redefine a function's inherited default parameter value
+** Item 38: Model "has-a" or "is-implemented-in-terms-of" throught composition
+** Item 39: Use private inheritance judiciously
+** Item 40: Use Multiple inheritance judiciously
