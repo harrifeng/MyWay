@@ -100,7 +100,89 @@
        进行重定义
 ** Item 35: Consider alternatives to virtual functions
 ** Item 36: Never redefine an inherited non-virtual function
+   + non-virtual 函数都是静态绑定的，通过base指针调用的函数，永远是base中定义的函数，你在
+     derived里面重定义过是没有用的。如果你需要继承，而且base里面写成了non-virtual，就不应
+     该在derived里面对它进行重定义
+     #+begin_src c++
+       class Base {
+       public:
+           void dis() {
+               cout << "In Base " << endl;
+           }
+       };
+       
+       class Derived : public Base{
+       public:
+           void dis() {
+               cout << "In Der " << endl;
+           }
+       };
+       //will be the same result
+       Base* ptr = new Base;
+       ptr->dis(); 
+       Base* ptr2 = new Derived;
+       ptr2->dis(); 
+     #+end_src
+   + virtual 函数是动态绑定的，在运行期才决定调用哪个函数，所以使用base指针如果指向的是一个
+     derived类，也是可以使用正确的函数的
 ** Item 37: Never redefine a function's inherited default parameter value
+   + 我们知道，如果我们利用多态的特性，用指针来调用函数的话，使用哪个函数是动态绑定的，但
+     是，这些函数的default parameter是静态绑定的!
+     #+begin_src c++
+       class Base {
+       public:
+           virtual void dis(int def = 11) {
+               cout << "base default list is " << def << endl;
+           }
+       };
+       
+       class Derived : public Base{
+       public:
+           virtual void dis(int def = 22) {
+               cout << "derived default list is " << def << endl;
+           }
+       };
+       
+       //will see 11 twice
+       Base* ptr = new Base;
+       ptr->dis(); 
+       Base* ptr2 = new Derived;
+       ptr2->dis(); 
+     #+end_src
 ** Item 38: Model "has-a" or "is-implemented-in-terms-of" throught composition
+   + 除了public inheritance以外，还有一种类之间的联系，叫做Composition.
+   + Composition有两者表现形式:
+     - 第一种很好理解，因为它就是我们生活中常见的"has-a"的意思，比如，每个人都有一个名字
+       #+begin_src c++
+         class Address {/*...*/};
+         class PhoneNumber {/*...*/};
+         
+         class Person {
+         public:
+             //...
+         private:
+             std::string name;
+             Address address;
+             PhoneNumber voiceNumber;
+         };
+       #+end_src
+     - 第二种和生活不是联系特别紧密，是指的某种数据结构借助其他数据结构实现的情况，其实现
+       方法和"has-a"非常像，也是把另外的类作为自己的member data。这种情况有个新的名字，
+       叫做"is-implemented-in-terms-of"
+       #+begin_src c++
+         template<typename T>
+         class Set {
+         public:
+             bool member(const T& item) const;
+             void insert(const T& item);
+         private:
+             std::list<T> rep;        //representation for Set data
+         };
+         
+         template<typename T>
+         void Set<T>::insert(const T& item) {
+             if (!member(item)) rep.push_back(item);
+         }
+       #+end_src
 ** Item 39: Use private inheritance judiciously
 ** Item 40: Use Multiple inheritance judiciously
