@@ -1,0 +1,93 @@
+* Chapter 7: Templates and Generic Programming
+** Item 41: Unserstand implicit interfaces andcompile-time  polymorphism
+   + 这个item研究的了四个概念:
+     - OO编程中有两个:
+       1) explicit interface
+       2) runtime polymorphism
+     - template编程中有两个:
+       1) implicit interface
+       2) compile-time polymorphism
+   + 在OO编程中explict interface就是函数接口设计，一般都会声明在头文件里面，比如下面
+     例子中的size()， swap()， normalize()等等
+     #+begin_src c++
+       class Widget {
+       public:
+           //Following Five are all explicit interface
+           Widget();
+           virtual ~Widget();
+           virtual std::size_t size() const;
+           virtual void normalize();
+           void swap(Widget& other);
+           //...
+       };
+     #+end_src
+   + OO中的多态，我们很熟悉了，可以声明为base object但是传入derived class
+     #+begin_src c++
+       //can input Derived object
+       void doProcessing(Base& w){
+           //... do something with w
+       }
+     #+end_src
+   + 在template编程中implicit interface是指的下面例子当中，T 类型的w object必须
+     能够满足含有size()函数，operator!= 等等特殊规定
+     #+begin_src c++
+       template<typename T>
+       void doProcessing(T& w) {
+           if (w.size() > 10 && w != someNastyWidget) {
+               //....
+               display(w);
+           }
+       }
+     #+end_src
+   + 在template编程中compile-time polymoriphism就是说在调用相同函数的时候，参数
+     不同，那么调用不同的overload的函数
+     #+begin_src c++
+       //if different is given to T, different overload function is called
+       void display(&double)
+       void display(&Widget)
+     #+end_src
+** Item 42: Understand the two meanings of typename
+   + typename 第一个作用是声明template，这个时候，它和class没有区别
+     #+begin_src c++
+       //They are the same!
+       template<class T> class Widget;
+       template<typename T> class Widget;
+     #+end_src
+   + 第二个作用是由于c++ template的局限性引起的，如果我们要引用一个template
+     里面的函数我们可以用T::function,我们要引用一个template里面的类型，我们
+     可以用T::type,这样以来没有区分度，所以如果我们想引用一个type的时候，就在
+     这个句子最前面加上typename关键字
+     #+begin_src c++
+       template<typename C>
+       void print2nd(const C& container) {
+           if (container.size() >= 2) {
+           typename C::const_iterator iter(container.begin());
+           //...
+           }
+       }
+     #+end_src
+   + typename虽然是标明类型的，但是很多时候(比如在para list里面),明显是type
+     不可能是function的情况下，不需要写typename，比如
+     #+begin_src c++
+       template<typename T>
+       //base class list: typename not allowed
+       class Derived: public Base<T>::Nested {
+       public:
+           //base class identifier in  mem initialize list
+           //typename not allowed
+           explicit Derived(int x) : Base<T>::Nested(x) {
+               //need typename
+               typename Base<T>::Nested temp;
+           }
+       }
+     #+end_src
+   + 有时候，我们想定义一个temp变量，它的类型是某个iterator指向的数据，那么方法如下
+     #+begin_src c++
+       template<typename IterT>
+       void workWithIterator(IterT iter) {
+           //IterT is vecotr<int>::iterator, temp is of type int
+           //IterT is list<string>::iterator, temp is of type string
+           typename std::iterator_traits<IterT>::value_type temp(*iter);
+       }
+     #+end_src
+** Item 43:
