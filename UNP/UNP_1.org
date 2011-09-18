@@ -1,12 +1,14 @@
-* Chapter 1
+* Chapter 1 Introduction
 ** Introduction
-   + 不管怎样，要先设计protocol，Web Server是一个long-running program(or daemon) that sends
-     network messages *only* in response to requests coming in from the network.
-   + client一般一次连接一个server，而server一次却要处理很多的client访问
-   + client and server are typically user processes, while the TCP and IP protocols are
-     normally part of the protocol stack within the kernel.
-** A Simple Daytime Server
-   + 我们首先来看一个简单的Daytime Client 如何编写
+   + Web server呢就是只有从网络上有请求，它才会回应的
+   + Web client主要工作就是通过网络，向Web Server发送请求
+   + 某一个时段client只会像一个server发送请求，而一个server却常常在某一个时段，处理多个
+     client发来的请求
+   + client和server之间的沟通，都是通过application protocol, 而实际上的沟通可能都是在
+     更下面的TCP, IP，直到物理层进行的
+   + 一般来说client和server都是应用程序，而TCP和IP则都是内核中protocol stack的一部分
+** A Simple Daytime Client
+   + 先来看一个daytime client的实现方法
      #+begin_src c
        #include    "unp.h"
        
@@ -20,29 +22,18 @@
            if (argc != 2)
                err_quit("usage: a.out <IPaddress>");
        
-           /* Create the socket*/
            if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                err_sys("socket error");
        
            bzero(&servaddr, sizeof(servaddr));
            servaddr.sin_family = AF_INET;
            servaddr.sin_port   = htons(13);    /* daytime server */
-           /* configure the server to the para #2 */
            if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0)
                err_quit("inet_pton error for %s", argv[1]);
        
-           /* SA is short for struct address*/
            if (connect(sockfd, (SA *) &servaddr, sizeof(servaddr)) < 0)
                err_sys("connect error");
        
-           /* 
-            * With a byte-stream protocol, these 26 bytes can be returned
-            * in numerous ways: a single TCP segment containing all 26
-            * bytes of data, in 26 TCP segments each containing 1 byte of
-            * data. Therefore, when reading from a TCP socket, we always
-            * need to code the read in a loop and terminate the loop when
-            * either return 0 or a value less than 0 (an error)
-           */
            while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
                recvline[n] = 0;    /* null terminate */
                if (fputs(recvline, stdout) == EOF)
@@ -53,143 +44,186 @@
        
            exit(0);
        }
-       
      #+end_src
+*** Include our own header
+    + unp.h里面是我们自己写的各种头文件，和error文件
+*** Command-line 
+    + 这个程序是需要输入参数的
+*** Create TCP socket 
+    + 这里socket函数带了两个参数AF_INET, SOCK_STREAM，就是TCP socket的别称,
+      这里用sockfd来代表TCP socket
+*** Specify server's IP address and port
+    + client要创建一个连接，TCP socket是负责接受数据的，还要一个数据结构来确定
+      server的位置，这就是sockaddr_in类型的servaddr
+    + bzero就是把数据结构清零，它比memset好用(少一个参数，不容易用错)
+    + inet_pton是IPV6中替代inet_addr的函数
+*** Establish connection with server
+    + 我们在unp.h里面define SA 成 struct sockaddr， sockaddr是generic socket
+      address structure,每次用到pointer to socket address structure，都要cast
+      到SA*
+*** Read and display server's reply
+    + 我们使用了while那一串的代码来处理得到的reply，主要原因是TCP返回结果的方式是不固定
+      的，可能用一个TCP socket,也可能返回很多歌，所以我们要用while，一直read到0(表示
+      成功结束),或者到负数(表示出现错误)
+*** Terminate program
+    + exit结束了整个函数，当process结束的时候，Unix会关闭所有我们程序中打开的descriptor
+      这样以来，我们的TCP socket就关闭了。
 ** Protocol Independence
-   前面的例子，到处都是IPv4的身影，sockaddr_in, AF_INET 等等，下面我们来看看如何创造在IPv6下面也能
-   运行的例子
-   #+begin_src c
-     #include "unp.h"
-     
-     int
-     main(int argc, char **argv)
-     {
-         int sockfd, n;
-         char recvline[MAXLINE + 1];
-         struct sockaddr_in6 servaddr;
-     
-         if (argc != 2)
-             err_quit("usage: a.out <IPAddress>");
-     
-         if ((sockfd = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
-             err_sys("socket error");
-     
-         bzero(&servaddr, sizeof(servaddr));
-         servaddr.sin6_family = AF_INET6;
-         servaddr.sin6_port = htons(13);
-         if (inet_pton(AF_INET6, argv[1], &servaddr.sin6_addr) <= 0)
-             err_quit("inet_pton error for %s", argv[1]);
-     
-         if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) < 0)
-             err_sys("connect error");
-     
-         while ((n = read(sockfd, recvline, MAXLINE)) > 0) {
-             recvline[n] = 0;
-             if (fputs(recvline, stdout) == EOF)
-                 err_sys("fputs error");
-         }
-         
-         if (n < 0)
-             err_sys("read error");
-        
-         exit(0); 
-     }
-   #+end_src
-
-** Error Handling: Wrapper Functions
-   + Since terminating on an error is the commaon case, we can shorten our
-     programs by defining a wrapper function, which performs the actual function
-     call, tests the return value, and terminates on an error
+   + 我们再来看一个在ipv6版本下依然能工作的client
      #+begin_src c
+       #include    "unp.h"
+       
+       int
+       main(int argc, char **argv)
+       {
+           int                 sockfd, n;
+           struct sockaddr_in6 servaddr;
+           char                recvline[MAXLINE + 1];
+       
+           if (argc != 2)
+               err_quit("usage: a.out <IPaddress>");
+       
+           if ( (sockfd = socket(AF_INET6, SOCK_STREAM, 0)) < 0)
+               err_sys("socket error");
+       
+           bzero(&servaddr, sizeof(servaddr));
+           servaddr.sin6_family = AF_INET6;
+           servaddr.sin6_port   = htons(13);   /* daytime server */
+           if (inet_pton(AF_INET6, argv[1], &servaddr.sin6_addr) <= 0)
+               err_quit("inet_pton error for %s", argv[1]);
+       
+           if (connect(sockfd, (SA *) &servaddr, sizeof(servaddr)) < 0)
+               err_sys("connect error");
+       
+           while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
+               recvline[n] = 0;    /* null terminate */
+               if (fputs(recvline, stdout) == EOF)
+                   err_sys("fputs error");
+           }
+           if (n < 0)
+               err_sys("read error");
+       
+           exit(0);
+       }
+     #+end_src
+   + 这个版本问题也不少，虽然能在ipv6下工作了，但是ipv4却不行了，更好的解决办法是创建一
+     个protocol-independent的版本
+   + 另外，我们也最好用名字来代替IP Address
+** Error Handling: Wrapper Functions
+   + Wrapper Function在本文中的意思就是因为每次函数调用后都会进行错误处理，我们敢情
+     把两者结合起来，创建一个一体的函数
+     #+begin_src c
+       sockfd = Socket(AF_INET, SOCK_STREAM, 0);
        int
        Socket(int family, int type, int protocol)
        {
            int n;
-           if ((n = socket(family, type, protocol)) < 0)
+           if ( (n = socket(family, type, protocol)) < 0)
                err_sys("socket error");
            return (n);
        }
      #+end_src
-   + When we discuss threads, we will find that thread functions do not set the
-     standard Unix errno variable when an error occurs; instead the errno value
-     is the return value of the function.
-   + Every time we call one of the pthread_ functions, we must allocate a variable,
-     save the return value in that variable, and then set errno to this value before
-     calling err_sys. We will simplify the the code like this
-     #+begin_src c
-       int n;
-       if ((n = pthread_mutex_lock(&ndome_mutex)) != 0)
-           errno = n, err_sys("pthread_mutex_lock error");
-     #+end_src
-   + We can also defined some wrapper function for pthread
+   + 除了函数调用的时候会用到Wrapper Function,在thread 也加入到我们考虑范围内的时候，
+     因为thread function不是在出错误的时候去设置errno variable(因为多个thread共享
+     这个变量).而是在函数返回值的时候返回这个错误，这个时候，我们也可以利用wrapper
+     function了。
      #+begin_src c
        void
-       Pthread_mutex_lock(pthred_mutex_t *mptr)
+       Pthread_mutex_lock(pthread_mutex_t *mptr)
        {
            int n;
-           
-           if ((n = pthread_mutex_lock(mptr)) == 0)
+           if ( (n = pthread_mutex_lock(mptr)) == 0)
                return;
            errno = n;
-           err_sys("pthread_mutex_lock error ");
+           err_sys("pthread_mutex_lock error");
        }
      #+end_src
-   + When an error occurs in a Unix function, the global variable errno is set to a
-     positive value indicating the type of error and the function normally return -1
-   + Our err_sys function looks at the value of errno and prints the corresponding
-     error message string.
-   + The value of errno is set by a function only if an error occurs. They are often
-     all-uppercase names beginning with "E". They do not work with multiple threads
-     that share all global variables.
-** A simple Dayime Server
-   + Previous daytime client may need following server
+*** Unix errno Value
+    + 如果不是multiple thread的环境下面，通常是函数出现错误，就返回-1，然后把全局变量
+      errno设置成一个代表错误类型的整数，通常这些整数在sys/errno.h里面都有宏定义，比如
+      ETIMEDOUT这种名字
+** A Simple Daytime Server
+   + 说完client了，我们再看一个最简单版本的daytime server
      #+begin_src c
-       #include "unp.h"
-       #include <time.h>
+       #include    "unp.h"
+       #include    <time.h>
        
        int
-       main(int argc, char **agrv)
+       main(int argc, char **argv)
        {
-           int listenfd, connfd;
-           struct sockaddr_in servaddr;
-           char  buff[MAXLINE];
-           time_t ticks;
+           int                 listenfd, connfd;
+           struct sockaddr_in  servaddr;
+           char                buff[MAXLINE];
+           time_t              ticks;
        
-           /* Creation of TCP socket is identical to the client code */
            listenfd = Socket(AF_INET, SOCK_STREAM, 0);
        
-           bzeros(&servaddr, sizeof(servaddr));
-           servaddr.sin_family = AF_INET;
-           /* 这一项是多加的，用来指定可以访问的IP地址*/
+           bzero(&servaddr, sizeof(servaddr));
+           servaddr.sin_family      = AF_INET;
            servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-           servaddr.sin_port = htons(13);
+           servaddr.sin_port        = htons(13);   /* daytime server */
        
-           /*依靠bind函数来联系我们建立的socket和数据结构*/
-           Bind(listenfd, (SA*)&servaddr, sizeof(servaddr));
-           
-           /*调用listen函数之后，这个socket就转化成listening socket了, 这样一来
-            *来自网络的访问就可以被kernel接受了, LISTENQ 是kernel接受queue的最大数量
-            */
+           Bind(listenfd, (SA *) &servaddr, sizeof(servaddr));
+       
            Listen(listenfd, LISTENQ);
        
-           for (; ;) {
-               /* accept 函数被调用后，server就等待client访问，完成三次握手后，这个函数才会
-                  返回，返回以后listenfd将不再使用了，因为我们现在是一个connected TCP连接
-                  了，所以connfd将正式取代listenfd的地位
-               */
-               connfd = Aceept(listenfd, (SA*)NULL, NULL);
+           for ( ; ; ) {
+               connfd = Accept(listenfd, (SA *) NULL, NULL);
        
                ticks = time(NULL);
                snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks));
-               /* write will write the result to the client */
                Write(connfd, buff, strlen(buff));
        
-               /* close function close the connection by sending FIN */
                Close(connfd);
            }
        }
      #+end_src
-   + 这个函数显然只能一次接受一个client的访问，访问都了就得queue，后面我们会看到fork的版本。fork才是Unix-like OS的精髓
-
-
-
+*** Create a TCP socket 
+    + 通过socket函数来创建socket的方法和client中一样
+*** Bind server's well-known port to socket
+    + 和client中类似，我们也要申请一个sockaddr_in类型的变量，来存放socket的信息
+    + 我们这里socket和socket 信息联系起来的函数是bind (client是connect)
+    + 这里我们设置的是INADDR_ANY，允许任何IP address来的访问
+*** Convert socket to listening socket
+    + 通过调用listen函数，我们的socket就转化成了一个listening socket.
+    + LISTENQ是我们unp.h里面定义的，表示内核队列会接受的最大连接数
+*** Accept client connection, send reply
+    + 通过accpet函数，server就会进入sleep状态，等待client连接的到来
+    + TCP connection是使用的"三次握手"的方式来建立连接的，连接建立成功以后，accept
+      函数就返回了，返回值就是connected descriptor.每次accept一个新的client，都会
+      产生一个新的connected descriptor，那这个下一步的数据传输就依赖这个descriptor了
+    + time函数返回自从1970年第一秒开始的秒数，然后用ctime转化成为人可以读的字符串形式
+    + 在用snprintf函数将前24个字母以左对齐的方式写到buffer里面.
+    + 最后通过write函数写入到connected descriptor里面，注意这里写入的就是strlen
+      长度的buffer了
+*** Terminate connection
+    + while循环最后，使用close进行TCP connection的关闭，这会开始一个4个packet的
+      关闭步骤
+** Roadmap to Client/Server Examples in the Text
+** OSI Model
+   + All People Seem To Need Double Pizza
+   + Transport层主要的协议就是TCp和UDP
+   + Application Presentation Session最后合并成一个层，就是Application层，这
+     本书主要介绍的，就是interface from application layer into the transport
+     layer.
+   + 之所以设计从前三层到后四层的interface是因为:
+     1) 前三层不知道数据传输的细节，后四层不了解应用程序
+     2) 前三层都是user process,而后四层则一般是OS kernel的一部分
+** BSD Networking History
+** Test Networks and Hosts
+*** Discovering Network Topology
+    + 多数unix-like系统都提供了netstat和ifconfig两个网络命令
+** Unix Standards
+** 64-Bit Architecture
+   + 32-bit和64-bit数据长度比较
+     |----------+--------+--------|
+     | datatype | 32-bit | 64-bit |
+     |----------+--------+--------|
+     | char     |      8 |      8 |
+     | short    |     16 |     16 |
+     | int      |     32 |     32 |
+     | long     |     32 |     64 |
+     | pointer  |     64 |     64 |
+     |----------+--------+--------|
+   + socket API使用socklen_t而不是size_t
+** Summary 
