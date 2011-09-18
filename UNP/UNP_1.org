@@ -224,6 +224,7 @@
      | int      |     32 |     32 |
      | long     |     32 |     64 |
      | pointer  |     64 |     64 |
+     |          |        |        |
      |----------+--------+--------|
    + socket API使用socklen_t而不是size_t
 ** Summary 
