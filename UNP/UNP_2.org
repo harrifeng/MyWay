@@ -18,3 +18,29 @@
    + UDP是一个简单的运输层协议，application层将信息写到UDP socket里面，然后再包装成
      UDP datagram，然后再放到下一层，但是不保证UDP datagram最终能传输到对方，传输的
      次序也不能保证，甚至不能保证只传输一次。
+   + UDP datagram是有长度信息的，而我们知道TCP是一个byte-stream protocol，没有任何
+     的边界信息，这个也是两者的重要不同
+   + UDP的client和server之间的关系也是非长期的:比如一个client可以从一个socket里面发
+     送一个datagram给一个server，然后不换socket，从同一个socket里面发送不同的datagram
+     给另外一个server。server也一样，可以一个socket服务多个client
+** Transmission Control Protocol (TCP)
+   + TCP提供的是一种server和client之间的connection,这个connection使用之前要建立，使用
+     之后要关闭
+   + TCP同时提供可靠性，当TCP向另一端传递数据的时候，它同时还是要求对数据的确认的，
+     如果某段数据的确认没有收到，那么，间隔一段时间TCP会再次发送这段数据的，直到多
+     次以后，最终放弃
+     - 我们说TCP是可靠的连接，但是不能保证100%传输成功，比如如果重传了很多遍，还是没有
+       成功，那么TCP会选择放弃。
+   + TCP含有计算RTT(round-trip time)的算法，所以TCP直到，多久等到acknoledge正常。RTT
+     的数值是不停在计算的，因为受网络的影响，数值总在变化
+   + TCP还会把所有发出的信息排序，以防止先传的后到(由于网络影响),和重传等造成的影响
+     - UDP不能提供任何的可靠性:确认，对数据编号，RTT, 超时重传，都不支持
+     - 先传后到和重发都会在UDP中发生，UDP要自己处理这些情况
+   + TCP提供了流量控制:接受者时时刻刻都在提醒发送者，我想要接受的数据数目:这个由
+     advertised window来保证。advertised windows一般就是received buffer的大小，也会
+     动态调整
+     - UDP就没有任何流量控制
+   + TCP连接是全双工的，也就说两个方向都可以同时收和发。也就是说两个方向的sequence
+     和window size信息都要保留
+     - UDP也可以是全双工的
+   + 
