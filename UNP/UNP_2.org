@@ -43,4 +43,55 @@
    + TCP连接是全双工的，也就说两个方向都可以同时收和发。也就是说两个方向的sequence
      和window size信息都要保留
      - UDP也可以是全双工的
+** Stream Control Transmission Protocol (SCTP)
+   + TCP提供的是connection，而SCTP提供的确是association: Association提供的是两个system
+     之间的联系，不一定局限在两个address
+   + 和TCP不同的是，SCTP提供的是message-oriented的信息。发送的长度信息也会发送给接受者
+   + SCTP也是分多个stream传输的，但不同的是，任何其中一个stream的丢失，不会影响到剩下
+     信息的传输。这点和TCP不一样，TCP一定要等到丢失的数据找到，否则这会block其他数据
+     的传输
+   + SCTP还有一个multhoming的特性，就是说一个SCTP endpoint拥有多个IP address.
+     - TCP也可以得到同样的健壮性，但是是通过routing protocol
+** TCP Connection Establishment and Termination
+*** Three-Way Handshake
+    + TCP建立连接的步骤如下:
+      1) Server必须准备接受一个connection，通常的过程是分别调用socket, bind, listen这
+         三步称作passive open
+      2) client通过调用connect来启动active open. connect会发送一个SYN告诉server当前client
+         的initial sequence number(假设数字为X). SYN里面没有数据只有IP header, TCP header，TCP option
+      3) Server必须ACK(X+1) client的SYN X,并且发送自己的SYN Y。 这个SYN和ACK在一个segment里面发送过去
+      4) client必须ACK(Y+1) server的SYN
+*** TCP Options
+    SYN里面通常都有TCP option，常用的如下
+    + MSS option: TCP 用这个option来声明自己的maximum segment size，也就是每个TCP segment最
+      大我可以接受的数字。
+    + Window scale option: 一个TCP可以告知(advertise)其他TCP自己的最大窗口值是65535,这是因为
+      在TCP header里面，这是个16bits数字，但是现在通过一个14bit的option，我们可以声明最大
+      (65535 * pow(2, 10))
+      - 只有在发送放SYN中含有这个option，返回方的SYN中同样有个额这个option的时候，scale才
+        能起效，不过这个规定没有在实现中予以保证
+    + Timestamp option: 对于防止可能的数据损坏很有作用。
+*** TCP Connection Termination
+    + 建立连接是三步，而且结束连接是四步
+      1) 首先，一方提出close，这个叫做active close. close会发送一个FIN, 表示它发送完了
+      2) 然后接受到FIN的一方，就是passive close了。收到的这个FIN会被TCP接受，然后作为end-of
+         -file传给application，因为收到这个FIN也就意味着在对方那里啥也接收不到了
+      3) 马上，或者过一段时间，刚才收到FIN的那一端，也会close its socket，这个close也会像
+         反方向发送一个FIN
+      4) active close这一方收到这个FIN，并且ACK就代表整个关闭TCP过程接受
+    + 在第2，3步骤之间，就是passive close传数据给active close,我们叫做half-close
+    + 如果是程序结束的话exit()函数也会发送FIN
+** TIME_WAIT State
+   + 当实施active close的用户无论如何，最后都会进入这个状态，这个状态的时间是2MSL(Maximum
+     segment lifetime)
+   + MSL是一个IP datagram可以在网络上存活的最大时间，一般来说是2分钟。
+   + 设计TIME_WAIT是为了如下两个方面:
+     1) 为了保证全双工的正常结束:比如从client的角度出发，发送完最后一个ACK就到TIME_WAIT状态
+        了。但是有可能最后一个ACK server没有收到，它就会认为自己的FIN client没有收到，于是会
+        重发FIN.这也就是为什么实施active close的一方是最终TIME_WAIT的一方了，因为它的最后的
+        ACK可能会丢失
+     2) 为了让老的重复的segment在网络上消失:比如我们用12.106.32.254:1500和206.168.112.219:21
+        这两对地址创建了一个连接，关闭以后，我们用同样的一对地址再次创建了连接。如果没有
+        2MSL那么很可能上次连接的信息会被重复的接收。(因为reply的存在，一个IP datagram最多
+        存在的时间无限接近于2MSL)
    + 
