@@ -1,0 +1,7 @@
+* Chapter 1: Introduction to the Linux Kernel
+** History of Unix
+   + Unix 产生于Multics
+   + 1977 Unix Systme III
+   + 1982 AT&T 推出System V
+   + Unix的几个特点:1. Unix is simple 2. in Unix, everything is a file 3. Unix 是用
+     C语言写成的 4. Unix有很快的process创建过程 5. Unix提供了简单却健壮的IPC机制
