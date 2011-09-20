@@ -1,7 +1,44 @@
-* Chapter 1: Introduction to the Linux Kernel
-** History of Unix
-   + Unix 产生于Multics
-   + 1977 Unix Systme III
+* Chapter 1: Introduction to the Linux Kernel 
+** History of Unix 
+   + Unix 产生于Multics + 1977 Unix Systme III
    + 1982 AT&T 推出System V
    + Unix的几个特点:1. Unix is simple 2. in Unix, everything is a file 3. Unix 是用
      C语言写成的 4. Unix有很快的process创建过程 5. Unix提供了简单却健壮的IPC机制
+** Along Came Linus: Introduction to Linux
+   + Linux系统的基础是:
+     - kernel
+     - C library
+     - toolchain
+     - basic system utilities (login process & shell, etc)
+** Overview of Operating Systems and Kernels
+   + 操作系统是用来负责基本使用和管理的系统通常包括以下部分:
+     - kernel
+     - device drivers
+     - boot loader
+     - command shell
+     - basic file and system utilities
+   + 一般来说，kernel包括:
+     - interrupt handlers : 处理中断
+     - scheduler : 分配处理器时间
+     - networking
+     - IPC
+   + 在现代操作系统当中，内存都是有保护机制的:受保护的内存地址，加上对硬件完全
+     的访问权限就叫做kernnel-space
+   + 应用程序和kenerl的合作，是通过system call(我们调用的C library其实内部就是调
+     用的system call)
+   + 当调用system call的时候，我们说"kernel 为了 application在执行"
+   + kernel还要处理系统的硬件，大部分系统和硬件打交道的方式都是interrupt，所有的
+     interrupt都不是发生在process context的，而是为了加快对interrupt的响应，发生
+     在一个和任意process都没有关系的interrupt context
+   + 在任意时刻，处理器只会做下面三种事情
+     1) 在uers-space 执行user code
+     2) 在kernel-space, process context，为process的利益执行
+     3) 在kernel-spae，interrupt context, 和任何process都没有关系，处理interrupt
+** Linux Versu Classic Unix Kernels
+   + 大部分Unix系统都是单内核的 :内核是作为单一一个进程在运行的，kernel内部的交流
+     很容易，因为都是在一个process内
+   + Linux也是单内核的，但是有许多新的特点:
+     - 模块化设计
+     - 自我抢占 (kernel preemption)
+     - 内核线程 (kernel thread)
+     - 动态加载 kernel modules到内核里面
