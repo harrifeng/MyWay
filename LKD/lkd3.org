@@ -33,3 +33,27 @@
    + 为了容易的计算process descriptor的地址，thread_info通常是放在kernel stack
      (大小一般为8k，32bit)的最小地址(如果stack从大地址往小地址增长的话)。这
      样,从大地址到thread_info最上面都是合理的stack 空间
+
+                   Process Kernel Stack
+
+                 +--------------------+ Highest Address
+                 |                    |
+                 |    start of stack  |
+                 |         +          |
+                 +---------|----------+ Stack Pointer
+                 |         |          |
+                 |         v          |
+                 |                    |
+                 |                    |
+                 |                    |
+                 |                    |
+                 +--------------------+
+                 |                    |
+                 |    exec_domain *   |
+                 |    task_struct *   |
+                 +-----------+--------+ Lowest Address
+                             |
+                             |
+                             +------->  task_struct
+
+** 
