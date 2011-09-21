@@ -53,4 +53,12 @@
                   |
                   +------->  task_struct
      #+end_example
-** 
+** Storing the Process Descriptor
+   + 系统是依靠pid来区分，pid的类型是pid_t (其实就是int), 但是为了向前兼容
+     最大值只有32768(short int) 
+   + 每个系统的task_struct都是非常常用的数据结构，我们用current()这个宏来
+     求，不同平台实现current方法不同
+     - 在PowerPC中，寄存器多，task_struct就分了一个寄存器
+     - 在x86当中(如上图) stack pointer取前13位(8kb情况)就是thread_info的地址
+       然后current_thread_info()->task 就得到了相应的数据结构。
+   + 
