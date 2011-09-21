@@ -71,3 +71,8 @@
 ** Synchronization and Concurrency
    + 由于要处理多核，内核抢占，中断处理等等，内核的同步和并发非常难处理
    + spinlock 和 semaphores是主要解决办法
+** Importance of Portability
+   + 既然Linux要有更好的移植性，那么就要注意下面的几点:
+     - endian
+     - 64-bit
+     - 不要assume word 和page的大小
