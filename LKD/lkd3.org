@@ -1,0 +1,35 @@
+* Chapter 3: Process Management
+** The Process
+   + process简单点说，就是运行的program code，但是又不仅仅是这些，它还包括一些
+     打开的文件，信号，线程，(包含全局变量的)data section,这些都需要kernel来处理
+   + 线程拥有自己的program counte, process stack, some register等，在linux里面线程
+     只是被当成一种特殊的进程来看待
+   + 现代操作系统，提供了两个虚拟，让每个程序都以为
+     1) 自己独享处理器
+     2) 自己独享所有的内存
+   + 线程之间是共享"虚拟"内存的，但是"虚拟"处理器，还是认为自己独占的
+   + 在Unix-like系统当中进程都是fork出来的，fork() system call会在parent和child
+     进程当中返回两次
+   + 每次fork之后，通常都会执行exec()来创建一个新的address space,并且load一段
+     新的程序
+   + parent必须负责自己的child的wait()
+** Process Descriptor and the Task Structure
+   + kernel会在一个双向链表中通过process descriptor来保存所有process的信息，这
+     个process descriptor的类型是task_struct的
+   + task_struct在内核当中算数比较大的数据结构了(1.7K左右),保存了运行时program
+     的信息:open files, address space, pending signal, process's state, etc
+** Allocating the Process Descriptor
+   + 在2.6以后，task_struct都是通过slab allocator来动态申请的，既然是动态申请，
+     那么返回的就是一个指针，2.6中新创建一个叫做thread_info的结构体来管理
+     动态申请来的task_struct和其他一些信息
+     #+begin_src c
+       struct thread_info {
+           struct task_struct    *task;
+           struct exec_domain    *exec_domain;
+           __u32                 flags;
+           //....
+       };
+     #+end_src
+   + 为了容易的计算process descriptor的地址，thread_info通常是放在kernel stack
+     (大小一般为8k，32bit)的最小地址(如果stack从大地址往小地址增长的话)。这
+     样,从大地址到thread_info最上面都是合理的stack 空间
