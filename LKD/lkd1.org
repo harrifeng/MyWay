@@ -38,7 +38,11 @@
    + 大部分Unix系统都是单内核的 :内核是作为单一一个进程在运行的，kernel内部的交流
      很容易，因为都是在一个process内
    + Linux也是单内核的，但是有许多新的特点:
-     - 模块化设计
-     - 自我抢占 (kernel preemption)
-     - 内核线程 (kernel thread)
-     - 动态加载 kernel modules到内核里面
+     - Linux 支持动态家在kernel module
+     - Linux有SMP的支持
+     - Linux kernel是可抢占的 (Solaris 和 IRIX也是可抢占的)
+     - Linux 中不区分thread和process，那些可以共享资源的process就是传统意义上的
+       thread
+     - Linux中没有支持黑客们认为很糟糕的部分，比如STREAM
+** Linux Kernel Versions
+   + 分开发版和稳定版本，由minor version的奇偶性来决定

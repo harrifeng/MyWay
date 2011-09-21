@@ -1,0 +1,73 @@
+* Chapter 2: Getting Started with the Kernel
+** The Kernel Source Tree
+   + 我们来看看kernel 源代码的各个文件夹的作用
+     | Directory      | Description                                    |
+     |----------------+------------------------------------------------|
+     | arch           | Architecture-specific source                   |
+     | block          | Block I/O layer                                |
+     | crypto         | Crypto API                                     |
+     | Documenatation | Kernel source documentation                    |
+     | drivers        | Device drivers                                 |
+     | firmware       | Device firmware need ed to use certain drivers |
+     | fs             | The VFS and the individual filesystems         |
+     | include        | Kernel headers                                 |
+     | init           | kernel boot and initialization                 |
+     | ipc            | Interprocess communication code                |
+     | kernel         | Core subsystems, such as the scheduler         |
+     | lib            | Helper routines                                |
+     | mm             | Memory management subsystem and the VM         |
+     | net            | Networking subsystem                           |
+     | samples        | Sample, demonstrative code                     |
+     | scripts        | Scripts used to build the kernel               |
+     | sound          | Sound subsystem                                |
+     | usr            | Early user-space code                          |
+     | tools          | Tools helpful for developing Linux             |
+     | virt           | Virtualization infrastructure                  |
+** A Beast of a Different Nature
+   + Linux kernel 和 普通的user-space的应用有很多不同的地方:
+     - kernel不能访问C library
+     - kernel 是 GNU C
+     - kernel没有内存保护机制
+     - kernel不能轻易的执行浮点数操作
+     - kernel的stack非常的小
+     - 并发和同步非常麻烦
+     - 移植性很重要
+** No libc or Standard Headers
+   + kernel不能和standard C library一起编译，因为standard C library实在是太大了
+   + 正是因为这样，在include文件夹中常见的libc function几乎被重新实现了一遍
+   + 最著名的实现就是printk来替代libc中的printf，printk可以指定priority flag
+     #+begin_src c
+       //this flag is used by syslogd to decide where to display
+       //kernel message
+       printk(KERN_ERR "this is an error!\n");
+     #+end_src
+** GNU C
+   + kernel不是遵循ANSI C的，而是遵循GNU C，所以里面有很多gcc的语言扩展
+   + GNU C的inline function在kernel中有应用，但是inline function会增加编译
+     结果的大小，所以注意选择何时的function inline
+   + asm() compiler directive在kernel中也有应用，以使得汇编代码得以插入
+   + gcc中有对conditiional 分支优化的关键字
+     #+begin_src c
+       /* we predict 'error' is nearly always zero */
+       if (unlikely(erro) ) {
+           /* ... */
+       }
+       
+       /* we predict 'success' is nearly always nonzero ... */
+       if (likely(success)) {
+           /* ... */
+       }
+     #+end_src
+** No Memory Protection
+   + 如果user-space 程序试图访问非法内存的话，那么kernel会trap error发送
+     SIGSEGV 信号，kill这个process。但是kernel是没有人监督它的，所以kernel
+     的内存使用要很小心
+   + 而且kernel内存是不分页的，所以你每使用一段内存就占掉了一段物理内存
+** No (Easy) Use of Floating Point
+   + 因为浮点数会占用大量的寄存器，而且很难处理，kernel中极少使用浮点数
+** Small, Fixed-Size Stack
+   + 在kernel里面，每个process的stack都是固定的，就是两个page的大小，32-bit
+     是8KB,64-bit是16KB
+** Synchronization and Concurrency
+   + 由于要处理多核，内核抢占，中断处理等等，内核的同步和并发非常难处理
+   + spinlock 和 semaphores是主要解决办法
