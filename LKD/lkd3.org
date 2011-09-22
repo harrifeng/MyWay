@@ -61,4 +61,97 @@
      - 在PowerPC中，寄存器多，task_struct就分了一个寄存器
      - 在x86当中(如上图) stack pointer取前13位(8kb情况)就是thread_info的地址
        然后current_thread_info()->task 就得到了相应的数据结构。
-   + 
+** Process State
+   + process descriptor中有个state域来说明当前process的condition
+     - TASK_RUNNING : 要么正在运行，要么在runqueue中等待被调用
+     - TASK_INTERRUPTIBLE : sleep，等待某个condition发生，随之就可以被kernel
+       设置成runnable了，或者这个process收到一个信号，那么它也可以变成
+       runnable
+     - TASK_UNINTERRUPTIBLE:和TASK_INTERRUPTIBLE一样，除了不能被信号唤醒
+     - __TASK_TRACED : 被其他程序(比如debugger) trace
+     - __TASK_STOPPED : 程序运行已经停止了
+** Process Context
+   + 一般来说，process都是从user-space开始执行，当process执行system call
+     或者触发exception的时候，就进入了kernel-space. 但是这个时候kernel其
+     实是"executing on behalf of the process"，也我们说的在process context
+   + 在process context, current macro是有效的
+** The Process Family Tree
+   + 在Unix和Linux系统中process都是有各种各样的联系的，在每个process
+     descriptor里面都有一个parent指向父进程，一个child成员指向自己的子
+     进程
+   + 如果向上不断寻找，会发现最根部的process是init (PID = 1)
+** Process Creation
+   + 在Unix-like系统当中程序创建分了两步:
+     - fork() : 通过对当前process进行复制，而创建一个新的子进程，大部分
+       内容一致，除了:PID, PPID， 一些资源(比如pending signal)
+** Copy-on-Write
+   + Unix传统的fork的方法是把原来process所有的资源都复制一遍，但是对
+     data部分的复制显然很不明智，因为如果fork()之后马上exec()的话，那么
+     复制的那些数据就都白瞎了
+   + Copy-on-write的做法就是除非要对数据进行写入操作，否则parent和child
+     共享一封address space
+** Forking
+   + Linux中fork(), vfork()， __clone()都是通过clone实现的，只是传给clone()
+     的flag不同(这些flag标示要共享哪些resource)
+   + clone()又调用do_fork(), do_fork()中实际起作用的是copy_process()这个函数
+     这个函数的步骤如下
+     1) 创建新的kernel stack, thread_info structure(就是在kernel stack最下面)
+        task_struct(动态分配的process descriptor)，这时候数值和父进程一样
+     2) 检查一下如果加上新的process，当前用户是不是超过了自己的资源额度
+     3) 根据需要更改一下某些task_struct的值，以来区别父进程和子进程
+     4) 子进程设置成TASK_UNINTERRUPTIBLE
+     5) 更新task_struct的flag
+     6) 分配一个PID给子进程
+     7) 根据传入clone的flag不同，来决定哪些资源需要复制(open files,
+        porcess address space等等)
+     8) 返回一个指向新进程的指针
+   + 当创建新process的过程成功以后，kernel自动的让child先运行，因为如果
+     让parent先运行，很可能会写入数据，从而让copy-on-write变得没有意义
+** vfork()
+   + vfork()和fork()唯一的区别就是vfork()的child和parent连address space都是
+     共享的(所以也就不用分配page table)
+   + vfork()有很多缺点和不确定因素，其实不怎么好用，从2.2开始Linux就把
+     vfork()实现成普通的fork()
+** The Linux implementation of Threads
+   + Thread可以使得并发编程成为可能，在多核系统中，还能实现真正的并行
+   + Linux中thread只不过是共享某些资源(比如address space)的一些process
+** Creating Threads
+   + Liunx中是通过给clone函数不同的参数来创建新的thread的:
+     #+begin_src c            
+       clone(CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND, 0);
+     #+end_src
+   + 我们可以看到四种资源是child和parent共享的:
+     - CLONE_VM : address sapce
+     - CLONE_FS : filesystem resource
+     - CLONE_FILES : file descriptor
+     - CLONE_SIGHAND : signal handler
+** Kernel Threads
+   + 就好比是守护进程一样，kernel一样需要一些后台运行的程序，Linux专门
+     设计了这一类程序，叫做kernel thread,它的主要特点有:
+     1) 没有address space (mm 指针为空)
+     2) 只在kernel-space运行，不能context switch到user-space
+     3) 和普通process一样可以被调度和抢占
+     4) kernel thread只能由kernel thread来创建
+** Process Termination
+   + 程序退出的时候，不管是自己调用exit(), 还是收到信号，还是遇到无法
+     处理的异常，还是从main中return，都是最终调用的do_exit():
+     1) 设置task_struct的flag为PF_EXITING
+     2) 删除kernel timers
+     3) 为BDS process 写记录信息
+     4) 释放mm_struct (如果没有其他用户也用到这个address space,它会被释放)
+     5) 退出IPC 信号量等待队列
+     6) 释放file descriptor和filesystem data
+     7) 设置task_struct里面的一个exit_code的域为ZOMBIE
+     8) 告知parent，我运行完了
+     9) 调用哪个schedule()来运行其他函数
+   + 这个时候，除了kernel stack, thread_info, task_struct以外的其他部分都被
+     释放掉了，留着这些信息是为了给parent留下运行介绍的程序的信息。parent
+     了解这些信息后，会通知kernel释放这些数据结构
+** Removing the Process Descriptor
+   + parent都是通过wait()函数来实现对child的处理的，wait()内部是wait4()
+     system call:停止当前调用进程的运行，知道当前进程其中一个child结束
+     运行
+** The Deliemma of the Parentless Task
+   + 如果parent在child之前就结束了，那么就要重新给child找新parent，一般
+     来说是先找当前thread group里面的另外的process,如果失败了的话，就
+     "过急"给init
