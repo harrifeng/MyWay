@@ -1,0 +1,23 @@
+* Chapter 4: Process Scheduling
+** Multitasking
+   + 多任务操作系统是可以同时运行多个process，每个process占用一段时间cpu后
+     再让给其他process
+   + 多任务操作系统分两者:
+     - 合作式多任务(cooperative multitasking)
+     - 抢占式多任务(preemptive multitasking) 
+   + Linux属于抢占式多任务系统，这种系统中scheduler来决定process何时运行，
+     这次运行多少时间(timeslice)，运行时间都是根据表现，动态确定的
+   + 合作式多任务系统就是scheduler无法控制process，process自己来决定什么时
+     候放弃cpu
+** Linux's Process Scheduler
+   + 早先Linux的scheduler非常简陋，从2.5开始，引入了O(1) scheduler
+   + 后来发现O(1) scheduler对于interactive process的处理很不理想，所以从
+     version2.6.23开始，引入了CFS(Completely Fair Scheduler)
+** Policy
+*** I/O-Bound Versus Processor-Bound Processes
+    + process通常分成两类:
+      - I/O-bound : 花费大量时间等待 IO, 比如GUI
+      - processor-bound : 花费大量时间执行代码，比如一个空循环
+    + Linux更偏向于I/O-bound的process，以便提供更好的程序响应
+*** Process Priority
+    + 

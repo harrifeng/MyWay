@@ -1,0 +1,70 @@
+* Chapter 5: System Calls
+** Communicating with the Kernel
+   + system call在硬件和user-space 进程之间，建立了一个层次，这个层次的
+     作用主要有三
+     1) 为user-space 进程提供硬件接口
+     2) system call保证了系统的安全和稳定
+     3) 为进程提供virtualized system
+** APIs, POSIX, and the C Library
+   + 一般来说，application一般是调用在user-space实现的一套API，而不是直
+     接调用system call, 这样一来，可以在不同的系统当中提供一致的API，而
+     API内部根据操作系统不同，进行实现
+   + POSIX API就是unix-like中最重要的API
+   + 在Linux中，很多system call interface都是C library提供的
+** Syscalls
+   + sycalls在linux中，通常是C 函数的形象，比如获取system call的函数的定义
+     如下:
+     #+begin_src c
+       SYSCALL_DEFINE0(getpid)
+       {
+           //return current->tgid, in Linux, task group id
+           //is actually PID
+           return task_tgid_vnr(current);  
+       }
+     #+end_src
+   + SYSCALL_DEFINE0是个宏，展开以后，应该是如下形式:
+     #+begin_src c
+       //sys prefix is naming convention with all
+       //system call in Linux
+       asmlinkage long sys_getpid(void)
+     #+end_src
+*** System Call Numbers
+    + 在使用system call的时候，不是用name来引用，而是使用system call的number
+      这个number如果不用了，就要设为sys_ni_syscall(),返回错误，而不能重复利用
+*** System Call Performance
+    + Linux下的system call比较快，因为context switch快，而且system call handler
+      的机制也很简约
+** System Call Handler
+   + system call是通过software interrupt的方法来从user-space进入kernel-space的
+     system call发出一个exception，那么就可以去执行响应的exception handler，
+     在这里，这个exception handler也就是system call handler
+*** Denoting the Correct System Call
+    + 所有的system call都是通过exception vector 128进入kernel mode的，进入了以
+      后，还要有所区分，到底是哪个system call 触发的exception，这就需要eax
+      寄存器来保存我们前面说的system call number
+*** Parameter Passing
+    + 知道是哪个system call了以后，我们还需要函数参数，这一般都是通过寄存器
+      进行传递的，值得注意的是一般只有六个寄存器，如果参数大于六个，那么
+      最后一个寄存器里面保存一个指向user-space的指针
+    + 函数返回值一般也是通过寄存器返回的，一般是eax
+** System Call Implementation
+   + 我们可以看到system call handler其实就是起了一个进入kernel space的作用
+     具体到参数，函数是哪个，返回值，都和handler没关系。所以加一个system
+     call其实是很简单的，只是对system call的实现很复制
+*** Implementing System Calls
+    + system call的功能要单一，代码要健壮，扩展性要强
+*** Verifying the Parameters
+    + System call所有的参数都要进行检查的，因为system call都是在kernel运行
+      的，一个非法的数据造成的影响不可估量
+    + 参数确认的分类:
+      - 参数的有效性，比如一个file descriptor是否可用
+      - user process提供的指针
+      - 用户是否有权限来调用这个system call
+** System Call Context
+   + 我们前面说过，在执行system call的时候，kernel是在process context的，
+     current 也是指向调用这个system call的process的
+   + 在process context的好处，是kernel可以
+     - sleep :可以sleep的话，kernel和普通的编程差别就没那么大，可以简化
+       kernel programming
+     - 被抢占 : 也是kernel-space和user-space更加接近的表现，因为一段system
+       call可能被同时多次调用，保证system call的reentrant非常重要
