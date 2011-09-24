@@ -128,4 +128,15 @@
     + 因为这个时候在user-sapce,所以运行current task是安全的，那么选择另外一个
       新的，更合适的task来运行，也是安全的
 *** Kernel Preemption
-    + 
+    + 所谓kernel preemption，就是在如下四种情况下检查need_reshced flag:
+      - 从interrupt handler 退出，返回kernel-space以前
+      - 当kernel code的 preempt_count变成0，也就是说kernel code 重新变成preemptible
+        的时候
+      - task在kernel显式调用schedule()
+      - task在kernel中block住了
+    + 普通的Unix在kernel space，是不能抢占的，也就是说，kernel code要么运行完毕返回
+      user-space，要么明显的被block住，否则，无法对他们进行抢占
+    + Linux是可以抢占kernel code的，但是要保证安全，保证代码没有被锁住，设置了一个
+      preempt_count(在thread_info里面)来记录代码被几个锁锁住，一旦preempt_count为0的时候，
+      会去检查need_resched flag
+
