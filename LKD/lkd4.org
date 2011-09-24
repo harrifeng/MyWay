@@ -89,4 +89,43 @@
     + 在理想状态下，我们可以用cpu proportion来代表cpu资源，但是因为各种条
       件的限制，最终还是选择用一个虚拟的时间来代表已经运行了多久
 *** Process Selection
+    + 既然CFS的哲学就是看vruntime，那么选择vruntime最小的运行是很正常的。CFS选择最小值的办法
+      是把所有的可运行的process放在一个红黑树里面。然后找最左边的子节点
+    + 红黑树的特点是增删改查都是nlogn, 为了方便查找，经常用一个变量rb_leftmost来cache住
+*** Adding Processes to the Tree
+    + 其实就是红黑树的插入操作，保持树的平衡么
+*** Removing Processes from the Tree
+    + 当process 被block住，或者运行结束的时候，要从runable rbtree上进行删除操作
+** The Scheduler Entry Point
+   + kernel一般就是选择调用schedule()来决定下面调用哪个函数，schedule()的实现也很简单，它就是
+     遍历各个scheduler class(我们前面不是说了很多中scheduler来负责调度不同类型的process么)，询
+     问那些scheduler类，下一个该被调用的proces
+** Sleeping and Waking Up
+   + 一旦process进入sleep，那么就要从runable的红黑树中删除，加入到一个wait queue里面
+*** Wait Queues
+    + wait queue 就是一个链表，每个wait queue就是等待一种event的集合，一旦event发生，那么这个
+      queue里面的process就被wake up了
+*** Waking Up
+    + 一旦一个wait queue的链表上面某个event发生，整个queue就会wake up。但是要注意的是，有时候
+      会有错误的wake-up,所以一定要再次检查condition是否满足
+** Preemption and Contex Switching
+   + 从一个runnable process转到另外一个runnable process是通过context_switch()来实现的，
+     context_switch()是被schedule()调用的，主要做了下面两件事:
+     - switch_mm() : 更改virtual memory mapping
+     - switch_to() : 更改 processor state, stack information
+   + 我们在前面的代码中看到，很多代码中都明确的调用了schedule()，但是，如果只有这些schedule()
+     运行，那么很多user-space process就会无限制的运行。所以kernel在下面两种情况下都会自动的check
+     一下变量need_resched flag，如果为true，就自动触发scheduler
+     - 返回user space的时候
+     - 从一个interrupt 返回的时候
+   + need_resched flag是如下两个函数设置的:
+     - scheduler_tick() :当一个process应当被抢占
+     - try_to_wake_up() :或者有更高权限的process出现
+*** User Preemption
+    + 所谓user preemption，就是在如下两者情况下检查need_resched flag:
+      - 从system call 返回 user-space的时候 
+      - 从interrupt handler返回user-space的时候，
+    + 因为这个时候在user-sapce,所以运行current task是安全的，那么选择另外一个
+      新的，更合适的task来运行，也是安全的
+*** Kernel Preemption
     + 
