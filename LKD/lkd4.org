@@ -20,4 +20,73 @@
       - processor-bound : 花费大量时间执行代码，比如一个空循环
     + Linux更偏向于I/O-bound的process，以便提供更好的程序响应
 *** Process Priority
+    + Linux有两套priority range:
+      - nice value: nice越大，说明对别人越好，自己的优先级就越低
+      - real-time priority: 和nice想反的是，real-time priority越大，优先级越
+        高,而且，所有的real-time process的级别都高于任意普通process
+*** Timeslice
+    + 对于时间片的要求，不同类型process是不同的，比如IO-bound的process就不
+      需要太大的时间片(虽然他们需要经常使用),而processor-bound的process就需
+      要更大一点的时间片
+    + 新的CFS系统是分配的CPU的比例，nice value高的(优先级低的)就得到比较
+      少的CPU使用比例
+    + 我们知道Linux是可抢占的，那抢占时候所看的，就是两个process已经消耗
+      的cpu的比例，消耗的少的，会替代消耗的多的(因为消耗的少的，说明之
+      前运行的少)
+*** The Schedulling Policy In Action
+    + 我们来举个例子说明CFS的调度策略，比如我们只有两个进程，一个是text
+      editor,一个是video encoder.而且nice value相同
+    + 开始的时候，两个process分别被分配了50%的CPU time, 但是因为text editor
+      因为其实一直在等IO所以用到的不多。当一个key传到text editor，它要被
+      唤醒的时候，kernel会比较text editor和video encoder的CPU使用的比例:很
+      显然text editor使用的很少，它将抢占video encoder.
+    + 上述抢占在老的调度策略中，是赋予text editor一个比较高的priority，然后
+      在唤醒的时候，比较谁的priority高。而priority又要经常动态的去更新:根据
+      process最近的表现
+** The Linux Scheduling Algorithm
+*** Scheduler Classes
+    + Linux scheduler也是模块化的，分层次的，每个层次使用不同的scheduler，用
+      不同的算法来调度不同类型的process
+    + CFS是用来调度normal process的，叫做SCHED_NORMAL (POSIX就叫做SCHED_OTHER)
+*** Process Scheduling in Unix Systems
+    + 传统的Unix System调度的核心有两个
+      1) priority 
+      2) timeslice
+    + 传统priority 和 timeslice的缺点就是process之间微小的差距可能带来巨大的
+      调度策略的倾斜，还有为了照顾interactive process会造成新的分配不公
+    + 所以CFS其实就是放弃了经典的priority+timeslice，而转用cpu比例来替代
+*** Fair Schedulling
+    + CFS其实核心思想就是nice value决定了你的CPU proportion的大小。
+    + 而且这个CPU proportion相互之间的比例是由差值，而不是绝对值决定的，比
+      如，两个process一个nice value是0，另一个是5，分配总共20秒的时间。那么
+      分配给他们的时间是15和5。而两个process一个是10，一个是15，那么分配
+      给他们的时间同样是15和5
+** The Linux Scheduling Implementation
+*** Time Accounting
+    + 每个process会被分配一个timeslice，系统clock每tick一下，timeslice就减小
+      一下，到0的时候，就说明该换process了
+*** The Scheduler Entity Structure
+    + 在task_struct里面，有个叫做se的scheduler entity structure里面记录了CFS
+      需要的结构
+      #+begin_src c
+        struct sched_entity {
+            struct load_weight         load;
+            struct rb_node             run_node;
+            struct list_head           group_node;
+            unsigned int               on_rq;
+            u64                        exec_start;
+            u64                        sum_exec_runtime;
+            u64                        vruntime;
+            u64                        prev_sum_exec_runtime;
+            u64                        last_wakeup;
+            u64                        avg_overlap;
+            u64                        nr_migrations;
+            u64                        start_runtime;
+            u64                        avg_wakeup;
+        };
+      #+end_src
+*** The Virtual Runtime
+    + 在理想状态下，我们可以用cpu proportion来代表cpu资源，但是因为各种条
+      件的限制，最终还是选择用一个虚拟的时间来代表已经运行了多久
+*** Process Selection
     + 
