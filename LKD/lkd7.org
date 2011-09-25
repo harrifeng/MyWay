@@ -10,4 +10,25 @@
    + 处理interrupt和exception的方式特别相似，都是cpu放下手中的活，去另外的地方处理相
      对更紧急的事情。所以exception也经常被称作synchronous interrupt
 ** Interrupt Handlers
-   + 
+   + 我们既想让interrupt handler尽快的返回，而有时候handler其实又要处理非常多的事情。
+     如果我们handler里面要处理的事情过多，我们就把事情分成两类:一类是无论如何必须
+     完成的，一类是可以延后完成的
+   + 无论如何必须完成的，就是top halves，通常就是确认收到interrupt，reset硬件等等
+   + 可以稍后完成的，就是bottom halves。
+   + 举个简单的例子:
+     - 当网卡收到网络上来的数据的时候，他会给cpu发一个interrupt告诉cpu，有数据来了。
+     - 然后cpu会迅速的把数据从network data buffer拷贝到内存(这一步很重要，因为network
+       data buffer很小，如果不及时处理造成buffer溢出)，然后设置network 告知network我处
+       理完了
+** Interrupt Context
+   + 我们前面说过，在kernel space执行sytem call的时候，其实还是在process context,这个时候
+     current依然指向被打断的process，所以sleep也是可行的，sleep就意味着current 指向的
+     process放弃cpu，让其他process运行
+   + 而被interrupt打断后，进入了interrupt context, 这个context是不和任何process有瓜葛的，
+     所以current 的值是非法的。既然没有对应的process，也就无法调度，就不能sleeep，必须
+     抱着cpu一直运行
+   + interrupt handler不能sleep，决定了它必须一直运行，并且快速的返回，因为它其实是打
+     断了人家的code。
+   + interrupt handler是没有自己的stack的，他用的是被中断的那个process的 kernel stack，也
+     就是32-bit下8kb的样子。如果设置了kernel stack 从2 page 到 1 page，那么interrupt 会
+     被赋予一个单独的page。
