@@ -139,4 +139,32 @@
     + Linux是可以抢占kernel code的，但是要保证安全，保证代码没有被锁住，设置了一个
       preempt_count(在thread_info里面)来记录代码被几个锁锁住，一旦preempt_count为0的时候，
       会去检查need_resched flag
+** Real-Time Scheduling Policies
+   + 我们前面说过，对于普通process的调度策略是SCHED_NORMAL,而对于real-time process,
+     Linux提供了两者策略SCHED_FIFO, SCHED_RR。所有的real-time process永远在普通process之前
+     进行调度。
+   + SCHED_FIFO 是一种简单的先入先出的策略，而且没有时间片概念，每个task如果没有优先级
+     高的task来替代的话，就一直运行。除非它自己放弃cpu，或者block住
+   + SCHED_RR是一种带时间片的SCHED_FIFO。时间片用完以后，相同priority的task进行round-robin
+   + Real-time的priority的区间是0 到 99. 而我们说的normal process有nice value -20 到 19 的
+     priority和real-time priority使用一块内存空间，对应的数值是100到139
+** Scheduler-Related System Calls
+   + 常见的调度system call如下:
+     |-------------------------+------------------------------------|
+     | Function Name           | Description                        |
+     |-------------------------+------------------------------------|
+     | nice()                  | Sets a process's nice value        |
+     |-------------------------+------------------------------------|
+     | sched_setscheduler()    | Sets a process's scheduling policy |
+     |-------------------------+------------------------------------|
+     | sched_getscheduler()    | Gets a process's scheduling policy |
+     |-------------------------+------------------------------------|
+     | sched_setparam()        | Sets a process's real-time policy  |
+     |-------------------------+------------------------------------|
+     | sched_getparam()        | Gets a process's real-time policy  |
+     |-------------------------+------------------------------------|
+     | sched_rr_get_interval() | Gets a process's timeslice value   |
+     |-------------------------+------------------------------------|
+     | sched_yield()           | Temporaily yields the processor    |
+     |-------------------------+------------------------------------|
 
