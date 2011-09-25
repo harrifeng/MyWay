@@ -77,4 +77,26 @@
       包含list_head的structure的地址，然后(type*)强制转换指针
     + 剩下的增删改查就可以利用到所有的数据结构了
 ** Queues
-   + 
+   + 在kernel中常见的"生产者和消费者"问题，将会依赖一个重要的数据结构，就是
+     queue，因为queue是先入先出的，所以queue也叫做FIFO
+*** kfifo
+    + Linux的queue实现叫做kfifo, 它有最普遍的操作，入队和出队
+** Maps
+   + map也叫associative array,也就是一个key对应于一个特殊的值，对于Map
+     来说最基本的三个操作:
+     - Add(key, value)
+     - Remove(key)
+     - value = Lookup(key)
+   + 虽然has table也是一种map，但是不是所有的map都是通过hash来实现的，
+     比如self-balancing binary search tree: 
+   + 因为虽然hash 能够提供更好的平均复杂度。但是binary search tree
+     1) 提供了更好的最坏情况复杂度
+     2) 可以有效的将数据排序出来
+     3) 不需要hash function
+** Binary Tree
+   + 几种树的关系:
+     - 二分树就不用说是啥了
+     - 二分查找树是左树大于右树的二分树，
+     - 平衡二分查找树是左右子树的深度差距最多为1的二分查找树
+     - 红黑树是平衡二叉树的一种实现方式
+   + Linux就是通过红黑树来实现二分树的
