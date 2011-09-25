@@ -63,7 +63,7 @@
 ** System Call Context
    + 我们前面说过，在执行system call的时候，kernel是在process context的，
      current 也是指向调用这个system call的process的
-   + 在process context的好处，是kernel可以
+   + 在process context的好处，kernel可以
      - sleep :可以sleep的话，kernel和普通的编程差别就没那么大，可以简化
        kernel programming
      - 被抢占 : 也是kernel-space和user-space更加接近的表现，因为一段system
