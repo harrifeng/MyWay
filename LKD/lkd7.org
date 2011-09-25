@@ -1,0 +1,13 @@
+* Chapter 7: Interrupts and Interrupt Handlers
+  + os最重要的一个功能就是和硬件打交道，为了完成这个使命，kernel需要和机器的各个
+    设备进行沟通，因为cpu比硬件快的多，所以kernel发送请求后，其实是做别的事情，等
+    待interrupt来通知它事情搞定了
+** Interrupts
+   + 我们这里要先分清楚两个概念:
+     - interrupt: 外部硬件发给cpu的信号，可以在任意时刻发出
+     - exception: 可以理解为软件给cpu发的信号，这个是和processor clock 配合的很好，在
+       当前instruction执行完之后才发出的
+   + 处理interrupt和exception的方式特别相似，都是cpu放下手中的活，去另外的地方处理相
+     对更紧急的事情。所以exception也经常被称作synchronous interrupt
+** Interrupt Handlers
+   + 
