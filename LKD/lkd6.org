@@ -1,0 +1,80 @@
+* Chapter 6: Kernel Data Structures
+** Linked Lists
+   + 链表是在Linux中应用最广泛的数据结构，是动态分配的，内存地址不在一块
+*** Singly and Doubly Linked Lists
+    + 单向链表只能找下一个，双向链表还可以找前一个
+*** Circular Linked Lists
+    + 一般来说，最后一个结点都是会设成NULL,但如果最后一个结点指向头结点的话，我
+      们就创造了一个循环链表
+    + Linux使用的就是一个双向循环列表
+*** Moving Through a Linked List
+** The Linux Kernel's Implementation
+   + 通常来说，我们都是把一个structure变成linked list,比如:
+     #+begin_src c
+       struct fox {
+           unsigned long weight;
+           bool          is_fantastic;
+           struct fox    *next;
+           struct fox    *prev;
+       };
+     #+end_src
+   + Linux没有选择这种做法，因为这样做的话，需要对每一个structure设计一套增删改查，
+     Linux的方法是把linked list node嵌入到structure里面去。
+*** The Linked List Structure
+    + Linux的做法是设计如下的linked list node, 然后放到 structure里面去
+      #+begin_src c
+        struct list_head {
+            struct list_head *next;
+            struct list_head *prev;
+        };
+        
+        struct fox {
+            unsigned long       weight;
+            bool                is_fantastic;
+            struct list_head    list;
+        };
+      #+end_src
+    + 这套做法能够起作用的主要原因是在C语言中，一个变量在structure中的offset是在编译
+      阶段就定下来的，所以container_of函数可以起作用，下面是对containr_of的深入分析
+      #+begin_src c
+        #include <stdio.h>
+        
+        #define container_of(ptr, type, member) ( { \
+                const typeof( ((type*)0) -> member) *__mptr = (ptr); \
+                (type*) ( (char*)__mptr - offsetof(type, member) );})
+        
+        #define offsetof(TYPE, MEMBER) ((size_t)&((TYPE*)0)->MEMBER)
+        
+        
+        struct student {
+            char name[20];
+            char sex;
+        } stu = {"zhangsan", 'm'};
+        
+        int main(int argc, const char *argv[])
+        {
+            struct student *stu_ptr;  // return value of container_of
+            int offset;
+        
+            // equal to container_of
+            const typeof(((struct student *)0)->sex) *_mptr = &stu.sex;
+        
+            offset = (int)(&((struct student*)0)->sex);
+        
+            stu_ptr = (struct student*)((char*)_mptr - offset);
+            printf("offsetof sut.sex = %d\n", offset);
+            printf("stu_ptr->name: %s\tstu_ptr->sex: %c\n", stu_ptr->name, stu_ptr->sex);
+        
+            char *fhrp = &stu.sex;
+            struct student *fhrtest;
+            fhrtest = container_of(fhrp, struct student, sex);
+            printf("fhrtest->name: %s\tfhrtest->sex: %c\n", fhrtest->name, fhrtest->sex);
+         
+            return 0;
+        }
+      #+end_src
+    + 上面代码的核心思想就是知道sex的地址，然后知道sex的offset，相减以后就是
+      包含list_head的structure的地址，然后(type*)强制转换指针
+    + 剩下的增删改查就可以利用到所有的数据结构了
+** Queues
+   + 

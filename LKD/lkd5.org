@@ -68,3 +68,21 @@
        kernel programming
      - 被抢占 : 也是kernel-space和user-space更加接近的表现，因为一段system
        call可能被同时多次调用，保证system call的reentrant非常重要
+*** Final Steps in Binding a System Call
+    + system call写完以后，需要注册一下:
+      1) 在system call table里面加一个entry
+      2) 为每一个支持的平台确定一个syscall number
+      3) 把syscall编译到内核里面
+*** Accessing the System Call from User-Space
+    + 如果没有明确的library support 支持，那么调用system call的例子如下
+      #+begin_src c
+        #define __NR_open 5
+        /* _syscall3() is a macro, first para is return type
+         * second para is the syscall name, and following are
+         * the type and value of the syscall
+         */
+        _syscall3(long, open, const char *, filename, int, flags, int, mode)
+      #+end_src
+*** Why Not to Implement a System Call
+    + 大多数时候，system call都是最正确的选择。一般情况下还是使用系统
+      提供的system call。
