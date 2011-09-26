@@ -1,0 +1,26 @@
+* chapter 15: The Process Address Space
+  + 第十二章讲到的，是kernel如何管理物理内存，除了物理内存,kernel还要管理user-space
+    process的内存，这些内存叫做process address space.
+  + 在现代操作系统理论中有两个虚拟，其中一个就是process认为自己能够访问所有内存，
+    提供这种虚拟化的，就是虚拟内存，虚拟内存可以比物理内存大。
+** Address Spaces
+   + 我们以32位为例，每个process都被赋予了flat 32-bit address也就是从0x00000000到
+     0xFFFFFFFF.
+   + 但是一个process里面的地址，放到另外一个process里面，就毫无意义，但是
+     process可以选择share自己的内存，这就是我们所的thread
+   + 虽然一个process可以拥有4GB的虚拟地址，但是仅仅又一部分的连续地址是process有
+     权限访问的，这些合法的连续地址叫做memory area
+   + memory area的访问权限也是不同的，又只读，读写，运行等等，如果一个proces以非
+     法的方式访问这些memory area,那么kernel就会杀掉这个process，并且发出一个叫做
+     segmentation fault的错误
+   + memory area之间不会重叠，最常见的memory area有:
+     - text section: 保存可执行代码
+     - data section: 初始化的全局变量
+     - bss section: 为初始化全局变量，会被赋值为0
+     - user-space stack: automatic 变量就是在这里申请，和krnel stack是两个概念
+     - 为shared libray准备的另外的text, data, bss section
+     - 内存映射文件
+     - 共享内存映射文件
+     - malloc()分配的匿名内存映射
+** The Memory Descriptor
+   + 

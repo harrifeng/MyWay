@@ -1,0 +1,53 @@
+* Chapter 12: Memory Management
+  + 在kernel内部进行内存的分配，不像在kernel外部那样容易，和user-space不同的是，
+    kernel没有轻松分配内存的能力，因为kernel经常不能sleep，而且无法更好的处理
+    内存分配错误
+** Pages
+   + 在内存管理中，page是最小的单位，大多数32位机器的page大小是4KB,64位机器是
+     8KB
+   + 内核给每一个page都分配了一个struct来表示，如下:
+     #+begin_src c
+       struct page {
+           unsigned long           flags;
+           atomic_t                _count;
+           atomic_t                _mapcount;
+           unsigned long           private;
+           struct address_space    *mapping;
+           pgoff_t                 index;
+           struct list_head        lru;
+           void                    *virtual;
+       };
+     #+end_src
+   + 我们分别来看看各个域的意义:
+     - flags: 标记page的状态，是否是dirty的，是否被所在内存当中
+     - _count: 表示有多少程序在使用这块page
+     - page可能被page cache所使用，这个时候mapping就会指向和这个page相关联的
+       address_sapace
+     - virtual是这个page所对应的虚拟地址，有些内存(high memory)是不会去对应虚拟
+       地址的，这些内存的virtual就是NULL,如果的确要使用这些地址，那么就要进行
+       动态的调用
+   + 我们要理解的是page是和物理的page进行联系的，而不是虚拟的page，有些信息
+     虽然一直没变，但是由于swap的关系，可能会存储在不同的struct page里面
+** Zone
+   + 因为硬件上的限制，kernel会根据page的物理地址的不同，将他们分成三了zone
+     分别进行处理，这些物理限制包括:
+     - 又写物理设备只能在某些物理地址进行DMA(Direct Memory Access)
+     - 有些体系支持的物理内存大于虚拟内存(64位上不存在，32位上的虚拟内存为4
+       G,很多体系会超过)
+   + 由于这些限制，Linux分了四个主要的内存zone:
+     - ZONE_DMA: 这个zone里面的page可以执行DMA
+     - ZONE_DMA32: 也是可以执行DMA的zone，但只能被32-bit device访问
+     - ZONE_NORMAL: 最正常的，map的内存page
+     - ZONE_HIGHMEM: 这个zone包含"high memory",这些内存不是永远的映射到kernel的
+       address space的
+   + 由于体系的不同，这写zone的定义有所不同:
+     - 在x86系统当中DMA就是0-16MB
+     - 在x86系统中ZONE_NORMAL就是16-896MB
+     - 在x86系统中ZONE_HIGHMEM就是大于896MB的内存
+     - 在x64位中就不存在ZONE_HIGHMEM,因为虚拟地址足够大
+** kmalloc() VS vmalloc
+   + kmalloc() 保证分配的内存是物理地址上面连续的，同时虚拟地址上面也是连续的
+   + vmalloc() 只保证虚拟地址是连续的，而物理地址是否连续不保证，这也是user-space
+     中malloc()的工作方式
+   + 大多数kernel code还是会使用kmalloc()来获取地址，因为这样效率更高
+    
