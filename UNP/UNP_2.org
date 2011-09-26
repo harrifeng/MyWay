@@ -61,6 +61,22 @@
          的initial sequence number(假设数字为X). SYN里面没有数据只有IP header, TCP header，TCP option
       3) Server必须ACK(X+1) client的SYN X,并且发送自己的SYN Y。 这个SYN和ACK在一个segment里面发送过去
       4) client必须ACK(Y+1) server的SYN
+      #+begin_example
+                       client             server
+                   socket       SYN J        | socket
+        connect(blocks) |+-----------------> | bind,listen
+                        |                    | 
+                        |                    | 
+                        |                    | 
+                        |   SYN K, ACK J+1   | 
+         connect return |<------------------ |accept(blocks)
+                        |                    |
+                        |                    | 
+                        |   ACK K+1          |
+                        |+-----------------> |accept returns
+                        |                    | 
+                        |                    |read(blocks)
+      #+end_example
 *** TCP Options
     SYN里面通常都有TCP option，常用的如下
     + MSS option: TCP 用这个option来声明自己的maximum segment size，也就是每个TCP segment最
@@ -79,6 +95,22 @@
       3) 马上，或者过一段时间，刚才收到FIN的那一端，也会close its socket，这个close也会像
          反方向发送一个FIN
       4) active close这一方收到这个FIN，并且ACK就代表整个关闭TCP过程接受
+      #+begin_example
+                       client             server
+                        |       FIN M        | 
+                  close |+-----------------> | read return 0
+                        |                    | 
+                        |    ACK M+1         | 
+                        |<------------------ |
+                        |    FIN N           |
+                        |<------------------ | close
+                        |                    |
+                        |                    | 
+                        |   ACK N+1          |
+                        |+-----------------> |
+                        |                    | 
+      #+end_example
+
     + 在第2，3步骤之间，就是passive close传数据给active close,我们叫做half-close
     + 如果是程序结束的话exit()函数也会发送FIN
 ** TIME_WAIT State
@@ -94,4 +126,28 @@
         这两对地址创建了一个连接，关闭以后，我们用同样的一对地址再次创建了连接。如果没有
         2MSL那么很可能上次连接的信息会被重复的接收。(因为reply的存在，一个IP datagram最多
         存在的时间无限接近于2MSL)
-   + 
+** SCTP Assocation Establishment and Termination
+*** Four-Way Handshake
+    + SCTP建立的时候，是四次握手，步骤如下:
+      1) server必须通过socket, bind, listen来做好passive open
+      2) client通过发送connect来开启active open，同时会发送INIT message
+      3) server应答client的INIT,用一个INIT-ACK,里面会包含state cookie信息
+      4) client应答server的state cookie信息，通过COOKIE-ECHO
+      5) server确认cookie是正确的，并且发送COOKIE-ACK
+      #+begin_example
+                       client             server
+                   socket       INIT         | socket
+        connect(blocks) |+-----------------> | bind,listen
+                        |                    | 
+                        |                    | 
+                        |                    | 
+                        |   INIT-ACK         | 
+                        |<------------------ |accept(blocks)
+                        |                    |
+                        |                    | 
+                        |   COOKIE-ECHO      |
+                        |+-----------------> |accept returns
+                        |   COOKIE-ACK       | 
+         connect return |<------------------ |read(blocks)
+      #+end_example
+    +
