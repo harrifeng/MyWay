@@ -150,4 +150,44 @@
                         |   COOKIE-ACK       | 
          connect return |<------------------ |read(blocks)
       #+end_example
-    +
+    + SCTP 四次握手并且使用cookie的方法，是为了防止denial-of-service的攻击
+*** Association Termination
+    + 对于SCTP来说，不存在类似TCP的half-close,当一个end关闭association的时候，另外一个
+      end必须关闭
+      #+begin_example
+             client             server
+              |   SHUTDOWN         | 
+        close |+-----------------> | read return 0
+              |                    | 
+              |   SHUTDOWN-ACK     |
+              |<------------------ | close
+              |                    |
+              |                    | 
+              |  SHUTDOWN-COMPLETE |
+              |------------------> |
+              |                    | 
+      #+end_example
+** Port Numbers
+   + 任意时刻，TCP，UDP，SCTP都会被使用，我们需要port number来将他们进行区分
+   + server端一般会使用一些叫做well-known port，也就是仅仅看port number，就知道，要运行
+     那种服务，比如21就是FTP的端口
+   + 在client端口，通常是使用ephemeral ports,也就是临时端口，一般来说，这些端口都是运输
+     层协议直接赋予client的，client也不是很关心它们的数字
+   + 端口会被分成如下的三类:
+     1) well-known ports: 从0到1023, 被IANA(Internet Assigned Numbers Authority)控制和分配
+     2) registered ports: 1024到49151，不被IANA控制，但是IANA会给出使用建议
+     3) dynamic or private ports: 49152到65535,也就是我们所的ephemeral ports
+   + Unix有reserved port的概念，也就是说所有小于1024的端口必须有超级管理员的权限才能
+     使用。所有的IANA well-known port也都是reserved port
+   + 早期BSD实现的ephemeral port的数量是1024到5000，现在很多host的connection都会超过这
+     个数字。新的实现一般connection在50000个左右
+   + 有些client也要reserved port，比如rlogin, rsh,那么他就需要通过library function rresvport
+     来从1023开始试，直到513
+*** Socket Pair
+    + 一般来说，TCP都是由一对IP Address和一对port number来确定的，SCTP是由一对IP Address组合
+      和一对port number来确定的
+    + 这种IP address和port number来确定两端endpoint的情况，就叫做socket.
+** TCP Port Numbers and Concurrent Servers
+   + 并发的server会fork出新的child 来处理新来的client请求，新的childe都会和parent拥有一样
+     的IP address和port number，所以，要通过一对IP address和一对port number才能确认一个connection
+
