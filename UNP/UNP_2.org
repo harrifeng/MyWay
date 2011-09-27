@@ -190,4 +190,25 @@
 ** TCP Port Numbers and Concurrent Servers
    + 并发的server会fork出新的child 来处理新来的client请求，新的childe都会和parent拥有一样
      的IP address和port number，所以，要通过一对IP address和一对port number才能确认一个connection
+** Buffer Sizes and Limitations
+   + 有很多的限制最终影响了IP datagram的大小，这些限制如下:
+     - IPv4的datagram 最大为65535,包括IPv4 header，这是因为其16位的total length
+     - IPv6的datagram 最大为65575, 包括了40byte的IPv6 header，我们可以发现IPv4的的total length算
+       了头部，而IPv6没有算。
+       - IPv6其实是可以选择32-bit length的，但是要有支持超过65535的MTU(maximum transmission unit)
+     - 很多网络的MTU都是取决于硬件，比如Ethernet MTU就是1500 bytes, Older LIP link的MTU为1006
+       - IPv4支持的最小MTU为68bytes，IPv6为1280bytes
+     - 两个host之间最下的MTU叫做path MTU, 两个方向上的path MTU不一定是一样的，因为路由的关系
+       从A到B,不一定就等于从B到A. 现在的网络情况下Ethernet MTU的1500 bytes通常都是瓶颈
+     - 当IP datagram的大小大于path MTU的时候，就要进行分片。IPv4的host和router都进行分片，而
+       IPv6只有host进行分片
+       - 在IPv4的头部就有分片设置，而IPv6认为分片是一种非正常情况，把设置放到了option header
+     - 如果"don't fragment"(DF) 在IPv4的header中设置，那么无论host还是router都不能对这个datagram
+       分片，如果datagram大小超过MTU，那么router会发出一个"destination unreachable, fragementation
+       needed but DF bit set"的错误消息
+       - IPv6不能被router分片，也就是说好比强行设置了DF，router发现datagram大于MTU的话，会发出
+         ICMPv6 "packet too big"的错误消息
+       - DF可以结合ICMP 的错误来对线路上面的path MTU 进行侦查，但是今天的防火墙通常会丢弃ICMP
+         消息，使得依赖ICMP error的机制不再靠谱
+     - 
 
