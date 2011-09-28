@@ -210,5 +210,32 @@
          ICMPv6 "packet too big"的错误消息
        - DF可以结合ICMP 的错误来对线路上面的path MTU 进行侦查，但是今天的防火墙通常会丢弃ICMP
          消息，使得依赖ICMP error的机制不再靠谱
-     - 
+     - TCP 定义了端口可以发的最大的segment的大小，叫做maximum segment size(MSS).也就是为了防止
+       被切分。一般MTU 减去IP和TCP的header
+     - SCTP 一般是根据path MTU进行切分
+*** TCP Output
+    + 每一个TCP socket都有一个send buffer(我们在LKD中也谈到，interrupt handler必须快速的返回，但是
+      有些工作又不得不做，从网络buffer里面取出数据就是必须做的，因为这些buffer通常非常的小，
+      很容易就满了)
+    + 当application(比如server)调用write的时候，kernel就会把application里面的内容拷贝到TCP的send
+      buffer。但是很可能因为application buffer里面的内容过多，或者send buffer里面原来有没发完的
+      内容。所以导致write命令会block，进而让process sleep。直到最后一个字节写入到send buffer里面
+      kernel才会让write函数返回成功。
+    + TCP把send buffer里面的数据取出来，通过connection传给peer TCP, peer TCP必须ACK这些数据，而且
+      当发送方收到某段数据的ACK以后，才能将这些数据从send buffer里面删除
+    + TCP再给IP传送数据的时候，一般是MSS的大小，(MSS大小一般是peer告知的，如果没告知就是536)，
+      IP在加上自己的信息后，把数据传输给数据链路层。再传给数据链路层的时候，如果没有设置
+      DF的话，IP可能会切分。当然因为现在MSS的设计，会极大减小切分的可能
+*** UDP Output
+    + UDP的不可靠性就体现在它没有像TCP一样拥有一个send buffer，而是只有一个send buffer size, 如果
+      从application发送过来的数据大于当前send buffer size，会报错。如果小于，当信息发出去以后，
+      也不会保存从application传来信息的备份一遍重传，因为他就没有重传机制
+    + 数据从UDP传到IP, IP再传给数据链路，这个时候，UDP被切分的可能性很大，因为它没有类似MSS的机
+      制。
+    + 在UDP中，write命令返回，意味着，write成功的把datagram(或者切分过的datagram)发送到数据链路
+      层的output queue. 如果不能完全方下datagram的话，ENOBUFS错误会返回给application
+*** SCTP Output
+    + 总体上来说，SCTP的情况和TCP基本类似，有实实在在的send buffer，write成功只意味着数据进入了
+      send buffer，只有数据的ACK收到以后，才去删除。
+
 
