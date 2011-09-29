@@ -20,7 +20,7 @@
        // Following code is illegal
        a = b;
      #+end_src
-** Item 6: Explicityl disallow the use of compilergenerated functions you do not want
+** Item 6: Explicityl disallow the use of compiler generated functions you do not want
    + 有些类是独一无二的，是无法复制的。好比球王马拉多纳如果他是球员这个类创建的
      object，他是无法复制的.没有两个一模一样的球员。
    + 为了避免一些类被复制，我们有如下两种方法:

@@ -60,7 +60,7 @@
      #+end_src
    + 无论是auto_ptr还是shared_ptr，在删除的时候，都是使用delete，而非delete[],所以
      智能指针和动态分配的数组配合是不正确而且非常危险的。
-** Item 14:Think carefully about copying behavior in resource-managing classes
+** Item 14: Think carefully about copying behavior in resource-managing classes
    + Item 13 介绍了auto_ptr和shared_ptr，它们是系统提供的resource-manage class, 但是
      它们只能对付dynamic allocated 的指针。如果遇到非dynamic allocated指针的情况下，要
      自己动手写resource-managing class, Item14介绍的就是resource在离开作用域的时候，不

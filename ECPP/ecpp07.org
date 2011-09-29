@@ -90,4 +90,69 @@
            typename std::iterator_traits<IterT>::value_type temp(*iter);
        }
      #+end_src
-** Item 43:
+** Item 43: Know how to access names in templatized base classes
+   + 如果base class是template的，那么derived class也是template, 在这种情况
+     下，derived class是无法获取base class的任何信息的，如下
+     #+begin_src c
+       class A {
+       public:
+           void sendCleartext(const std::string& msg);
+           void sendEncrypted(const std::string& msg);
+       };
+       class B {
+       public:
+           void sendCleartext(const std::string& msg);
+           void sendEncrypted(const std::string& msg);
+       };
+       
+       class MsgInfo { ... };
+       
+       template<typename Company>
+       class MsgSender {
+       public:
+           ...
+           void sendClear(const MsgInfo& info) {
+               /* create msg from info */
+               Company c;
+               c.sendCleartext(msg);
+           }
+       };
+       
+       //derived class will not compile
+       template<typename Company>
+       class LoggingMsgSender: public MsgSender<Company> {
+       public:
+           void sendClearMsg(const MsgInfo& info) {
+               sendClear(info); // call base class function, will not compile!    
+           }
+       };
+     #+end_src
+   + 解决办法有如下三种:
+     - this 指针
+       #+begin_src c
+         void sendClearMsg(const MsgInfo& info)
+         {
+             this->sendClear(info);  
+         }
+       #+end_src
+     - using
+       #+begin_src c
+         public:
+             using MsgSender<Company>::sendClear;
+         
+             void sendClearMsg(const MsgInfo& info)
+             {
+                 sendClear(info);
+             }
+       #+end_src
+     - 明确指出
+       #+begin_src c
+         void sendClearMsg(const MsgInfo& info)
+         {
+             MsgSender<Company>::sendClear(info);
+         }
+       #+end_src
+
+   
+
+*** Item 44: Factor parameter-independent code out of templates
