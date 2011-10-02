@@ -1,0 +1,179 @@
+* Chapter 3: Sockets Introduction
+** Introduction:
+   + socket 里面的IP地址不能用text的，而要用binary的，这就需要一些地址转换函数:
+     - inet_addr & inet_ntoa in IPv4
+     - inet_pton & inet_ntop in both IPv4 and IPv6
+   + 这些地址转换函数都是要依赖地址不同的，所以我们会在这里设计一系列的sock_
+     开头的函数来独立于IP version
+** Socket Address Structures
+*** IPv4 Socket Address Structure
+    + IPv4的address 也叫做"internet socket address structure"是依靠<netinet/in.h>里
+      面的sockaddr_in来定义的:
+      #+begin_src c
+        struct in_addr {
+            in_addr_t   s_addr;       /* 32-bit IPv4 address */
+        };                            /* network byte ordered*/
+        
+        struct sockaddr_in {
+            uint8_t         sin_len;      /* length of structure(16) */
+            sa_family_t     sin_family;   /* AF_INET */
+            in_port_t       sin_port;     /* 16-bit TCP or UDP port number */
+                                          /* network byte ordered */
+            struct in_addr  sin_addr;     /* see previous */
+            char            sin_zero[8]   /* unused */
+        };
+      #+end_src
+      - sin_len 是4.3BSD才加进来的一个域，而且POSIX没有强制要求, uint8_t也是根据
+        系统不同相应提供的, 是POSIX定义的一种数据类型,定义在<sys/types.h>
+      - 虽然length field在structure中，但是我们从来不会去设置它，除非我们要处理
+        routing socket。真正要用到它的是kernel
+      - 除非我们编译一个小的test program，否则我们无从知道系统是不是支持sin_len
+        这个域，有些系统是通过compile-time option(_SOCKADDR_LEN)来支持的。总体上来
+        说，保留这个域，主要是为了向前兼容
+      - POSIX所要求的，只有中间三个域: sin_famil, sin_port, sin_addr。但是基本上所
+        有的系统实现都加上了sin_zero这个填充变量，使得socket address最少是16bytes
+      - 从上面的代码我们也不难发现，IPv4 address 我们可以通过serv.sin_addr或者
+        serv.sin_addr.s_addr两种方法取得，不过第一个类型是in_addr，第二个类型是
+        in_addr_t。
+      - 子所以sin_addr是一个结构体，而不是一个内置类型，是因为历史原因,原来为了
+        访问ABC三类地址，还把sin_addr设置成union.
+      - sin_zero通常是为了凑够16byte的，因为我们在使用以前就把整个数据结构置0了，
+        所以sin_zero一般也是零啦
+*** Generic Socket Address Structure
+    + 我们的address structure一般是传指针的。又由于bind, connect等socket function虽
+      然把socket address structure的指针作为一个参数就要考虑到各种protocol的情况，
+      也就是说，传递一个 struct sockaddr_in* 的类型进去，是非常不明智的。
+    + 很明显，一般ANSI C中我们的做法就是传递一个void* 的类型，但是由于历史原因
+      在ANSI C出现之前，就有这种问题，当时的解决办法，就是定义一个generic socket
+      #+begin_src c
+        struct sockaddr {
+            uint8_t         sa_len;
+            sa_family_t     sa_family;
+            char            sa_data[14]; /* protocol-specific address */
+        };
+      #+end_src
+    + 这就解释了我们的bind function的声明为什么是下面的样子
+      #+begin_src c
+        int bind(int, struct sockaddr *, socklent_t);
+        
+        /* usage example */
+        struct sockaddr_in serv;
+        /*must cast the pointer to the protocol-specific 
+          socket address structure */
+        bind(sockfd, (struct sockaddr *)&serv, sizeof(serv));
+      #+end_src
+*** IPv6 Socket Address Structure
+    + IPv6 的结构定义在<netinet/in.h>, 如下
+      #+begin_src c
+        struct in6_addr {
+            uint8_t s6_addr[16]; /* 128-bit IPv6 address */
+        };                       /* network byte ordered */
+        
+        #define SIN6_LEN   /* required for compile-time tests */
+        
+        struct sockaddr_in6 {
+            uint8_t         sin6_len;       /* length of this struct (28) */
+            sa_family_t     sin6_family;    /* AF_INET6 */
+            in_port_t       sin6_port;      /* transport layer port# */
+            uint32_t        sin6_flowinfo;  /* flow information, undefined */
+            struct in6_addr sin6_addr;      /* IPv6 address */
+                                            /* network byte ordered */
+            uint32_t        sin6_scope_id;  /* set of interfaces for a scope */
+        };
+      #+end_src
+      - 我们define SIN6_LEN是为了以后程序可以#ifdef 来查找是否定义过SIN6_LEN,
+        这个define是表明系统支持length member这个项
+      - 所有的设置，通常会加个6，比如原来是AF_INT，现在变成了AF_INET6
+      - 虽然有一个128-bit的成员变量sin6_addr，但是sockaddr_in6还是64-bit align
+      - sin6_flowinfo分成了两部分:
+        1) low-order 20 bits are the flow label
+        2) high-order 12 bits are reserved
+      - 定义一个区域，在这个区域内地址有意义
+*** New Generic Socket Address Structure 
+    + 在IPv6领域，我们同样定义了一个generic socket address structure 叫做struct
+      sockaddr_storage:
+      #+begin_src c
+        struct sockaddr_storage {
+            uint8_t         ss_len;         /* length of this struct */
+            sa_family_t     ss_family;      /* address family: AF_XXX value */
+            /* implementation-dependent elements to provide:
+             * a) alignment sufficient to fulfill the alignment requirements of
+             *    all socket address types that the system supports
+             * b) enough storage to hold any type of socket address that the
+             *    system supports
+             */
+        };
+      #+end_src
+      - 如果socket address structure需要align，那么可以通过sockaddr_storage来实现
+      - sockaddr_storage设计的足够大到能装下系统支持的所有的socket address
+        structure.
+*** Comparison of Socket Address Structures
+    + 我们在本书中会遇到如下五种 socket address structure:
+      - IPv4 : sockaddr_in {}
+      - IPv6 : sockaddr_in6 {}
+      - Unix : sockaddr_un {}
+      - Datalink: sockaddr_dl {}
+      - Storage: sockaddr_storage {}
+** Value-Result Arguments
+   + 当一个socket address structure传递给socket function的时候，通常是pass by
+     reference(因为传递的是指针)，同时structure的长度也作为一个参数传递进去
+     但是具体这个长度如何传递，分了两种情况:
+     1) From process to kernel: 这个时候长度会被作为函数的一个参数传进去，由于
+        被明确告知，所以kernel知道到底该拷贝多少信息到kernel space.
+        #+begin_src c
+          struct sockaddr_in serv;
+          
+          /* fill in serv{} */
+          connect(sockfd, (SA *)&serv, sizeof(serv));
+        #+end_src
+     2) From kernel to process: 从kernel space传递信息到process 的时候，长度参数
+        通常是可变的，因为kernel不一定能够传递那么多的信息。(类似read函数有
+        时候并没有成功read那么多byte的数据). 这种argument就被叫做value-result
+        argument.因为kernel想要传value个数据，最后只传了result个数据
+        #+begin_src c
+          struct sockaddr_un cli; /*unix domain */
+          socklen_t   len;
+          
+          len = sizeof(cli);            /* len is a value */
+          getpeername(unixfd, (SA *) &cli, &len);
+          /* len may have changed */
+        #+end_src
+   + 一般来说如果socket address structure是fixed-length的话，那么value-result
+     argument返回的，也是fixed的，比如16 for IPv4，28 for IPv6, 而对于variable-
+     length的socket address structure来说，返回的数据很可能就是小于structure最
+     大值的任意数据
+   + 网络编程中，最常见的value-result 情况就是socket address structure返回值的
+     改变，但也有如下几种不常见情况:
+     - select function
+     - getsockopt function
+     - msg_namelen, msg_controllen member
+     - ifc_len member
+     - sysctl function
+** Byte Ordring Functions
+   + little endian 和 big endian是长久困扰我的问题，关于这个问题，明确两点就
+     容易理解了:
+     1) endian的最小单位是byte
+     2) little和big是指的多byte数据，最后是以最little的，还是最big的byte结尾
+   + 以32-bit数字0x01020304为例，在little endian上面是04, 03, 02, 01在big endian
+     上面的排序是01, 02, 03, 04
+   + endian是不同系统实现自己决定的，对某个系统的endian我们称之为host byte order
+     下面是一个判断host byte order的程序
+     #+begin_src c       union {
+           short   s;
+           char    c[sizeof(short)];   
+       }un;
+       //usage of union is easy to forget at this point
+       un.s = 0x0102;
+       
+       if (sizeof(short) == 2) {
+           if (un.c[0] == 1 && un.c[1] == 2)
+               printf("big-endian\n");
+           else if (un.c[0] == 2 && un.c[1] == 1)
+               printf("little-endian\n");
+           else
+               printf("unknown\n");
+       }
+       else
+           printf(" sizeof short is not 2");     
+      #+end_src
+   +  
