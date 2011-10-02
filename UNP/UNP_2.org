@@ -237,5 +237,40 @@
 *** SCTP Output
     + 总体上来说，SCTP的情况和TCP基本类似，有实实在在的send buffer，write成功只意味着数据进入了
       send buffer，只有数据的ACK收到以后，才去删除。
-
+** Standard Internet Services
+   + 大多数系统提供的TCP/IP services
+     | Name    | TCP port | UDP port | Description                                                 |
+     |---------+----------+----------+-------------------------------------------------------------|
+     | echo    |        7 |        7 | Server returns whatever client sends                        |
+     | discard |        9 |        9 | Server discards whatever the client sends                   |
+     | daytime |       13 |       13 | Server returns the time and date in a human-readable format |
+     | chargen |       19 |       19 | Server sends a continual stream of character, until the     |
+     |         |          |          | connection is terminated by the client                      |
+     | time    |       37 |       37 | Server returns teh time as 32-bit binary number, which is   |
+     |         |          |          | the seconds since Jan 1st 1900                              |
+** Protocol Usage by Common Internet Applications
+   + 常见的Internet application的protocol使用情况
+     |   | Application | IP | ICMP | UDP | TCP | SCTP |
+     |---+-------------+----+------+-----+-----+------|
+     | / | <>          | <> | <>   | <>  | <>  | <>   |
+     | # | ping        |    | U    |     |     |      |
+     | # | traceroute  |    | U    | U   |     |      |
+     | # | OSPF        | U  |      |     |     |      |
+     | # | RIP         |    |      | U   |     |      |
+     | # | BGP         |    |      |     | U   |      |
+     | # | BOOTP       |    |      | U   |     |      |
+     | # | DHCP        |    |      | U   |     |      |
+     | # | NTP         |    |      | U   |     |      |
+     | # | TFIP        |    |      | U   |     |      |
+     | # | SNMP        |    |      | U   |     |      |
+     | # | SMTP        |    |      |     | U   |      |
+     | # | Telnet      |    |      |     | U   |      |
+     | # | SSH         |    |      |     | U   |      |
+     | # | FTP         |    |      |     | U   |      |
+     | # | HTTP        |    |      |     | U   |      |
+     | # | NNTP        |    |      |     | U   |      |
+     | # | LPR         |    |      |     | U   |      |
+     | # | DNS         |    |      | U   | U   |      |
+     | # | NFS         |    |      | U   | U   |      |
+     |---+-------------+----+------+-----+-----+------|
 
