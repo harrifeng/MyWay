@@ -176,4 +176,24 @@
        else
            printf(" sizeof short is not 2");     
       #+end_src
-   +  
+   + 有host byte order,那么就有对应的network byte order, network byte order就不需
+     要判断了，一律都是big endian order
+   + 在socket address structure中某些field必须使用network byte order, 所以我们就
+     要使用下面的函数来转换host byte order和network byte order(注意，是host byte
+     order, 而不是little endian order,说明这些函数会自动先判断一下endian，再做
+     决定，如果机器本身就是big-endian那么就会啥都不做)
+     | #include <netinet/in.h>                  |                                    |
+     |------------------------------------------+------------------------------------|
+     | uint16_t htons(uint16_t host16bitvalue); | return value in network byte order |
+     |------------------------------------------+------------------------------------|
+     | uint32_t htonl(uint32_t host32bitvalue); | return value in network byte order |
+     |------------------------------------------+------------------------------------|
+     | uint16_t ntons(uint16_t net16bitvalue);  | return value in host byte order    |
+     |------------------------------------------+------------------------------------|
+     | uint32_t ntonl(uint32_t nett32bitvalue); | return value in host byte order    |
+     |------------------------------------------+------------------------------------|
+     - h 代表 host
+     - n 代表 network
+     - s 代表 short 也就是TCP UDP port number这样的16-bit value
+     - l 代表 long 也就是IPv4 address 这样的32-bit value
+   + 
