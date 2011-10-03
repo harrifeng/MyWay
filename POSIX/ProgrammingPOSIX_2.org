@@ -1,0 +1,133 @@
+* Chapter 2: Threads
+** Creating and using threads
+   + 和unix-like系统里面的其他资源一样，thread也需要一个thread descriptor来唯一标
+     识它自己，类型是pthread_t。
+   + 如果pthread_t只在当前function使用，那么可以使用auto storage 的变量来存放，但
+     是，一般情况下，都需要存在其他function也可以看到的static, extern 或者heap
+     memory.
+   + pthread的实质其实就是一个function，这个thread function的参数是一个void* 的类
+     型，返回值也是void*。pthread_create函数的最后两个参数，一个是function thread
+     的指针，另外一个就是void* 类型的参数指针
+   + 当pthread_create返回的时候，会返回一个pthread_t类型的descriptor. 如果想知道
+     当前thread的descriptor，可以使用pthread_self
+   + 比较两个pthread descriptor是否相等，可以使用pthread_equal
+   + main函数其实也是一个thread，叫做initial thread 或者main thread. 既然是thread
+     那么对其他thread有效的函数，比如pthread_self，也可以在main thread里面使用
+   + main thread当然有其特殊于其他thread的地方，当main thread 结束的时候，其他
+     thread都会被强制结束。既然是突然结束，如果thread又没有声明自己的thread该
+     怎么处置，那么通常情况下，操作系统也不会去清理这些资源
+   + 一般情况下，正确的做法是明确的detach资源:
+     - 可以通过在创建的时候给予pthread_create一个特殊的attribute来表示这个thread
+       在创建的时候，resource就detach了(适用于根本就不需要control thread的情况)
+     - 还可以随时调用pthread_detach来声明放弃resource(适用于不想等待自己创建
+       的thread，而且不再需要control thread的的情况)
+     - 调用pthread_join也意味这detach thread, pthread_join的作用是一直block caller
+       直到thread 返回，这样就可以收集thread返回的数据了(适用于需要知道thread
+       返回值的情况)
+   + 我们来看个pthread_join的例子
+     #+begin_src c
+       #include <pthread.h>
+       #include "errors.h"
+       
+       /*
+        *Thread strt routine
+        */
+       void* thread_routine(void* arg)
+       {
+           return arg;
+       }
+       
+       int main(int argc, const char *argv[])
+       {
+           pthread_t thread_id;
+           void *thread_result;
+           int status;
+       
+           status = pthread_create(&thread_id, NULL, thread_routine, NULL);
+           if (status != 0)
+               err_abort(status, "Create thread");
+       
+           status = pthread_join(thread_id, &thread_result);
+           if (status != 0)
+               err_abort(status, "Join thread");
+           if (thread_result == NULL)
+               return 0;
+           else 
+               return 1;
+       }
+     #+end_src
+     - 当我们pthread_join了以后，thread就已经被detach了，我们就不能再次join了，因
+       为人家resource已经放弃了，你无法得到它的返回值了。
+     - 如果有多个thread都要等一个返回值的情况下，应该用condition variable而不是
+       用pthread_join
+** The life of a thread
+   #+begin_example
+              +-----------+  wait satisfied      +------------+
+     created  |           |<--------------------+|            |
+      +------>| READY     |                      |  BLOCKED   |
+              |           |                      |            |
+              +-----------+<----------++--------->------------+
+                    +      preempted  ^ wait for resource
+                    |                 |
+                    |                 |
+                scheduled             |
+                    |          +------+------+
+                    +--------->|             |
+                               |   RUNNING   |
+                               |             |
+                               +------+------+
+                                    done
+                                      |
+                               +------v------+
+                               |             |
+                               |             |
+                               | TERMINATED  |
+                               |             |
+                               +-------------+
+   #+end_example
+*** Creation
+    + 一般来说thread都是通过pthread_create来创建的，一旦创建完以后，就是处于ready
+      的状态，等着被调度，如下:
+    + 需要注意的是在创建thread的时候，下面两者的发生顺序是无法确定的:
+      - pthread_create 函数返回
+      - 新thread被调度选中运行
+*** Startup
+    + 一旦一个thread被pthread_create，那么它终究是会运行的，pthread_create返回只是
+      让他进入了ready状态，什么时候运行有待调度(我们前面甚至看到，有时候运行会
+      在pthread_create返回之前)
+    + main thread和其他thread不太一样:
+      - main thread是从外部被调用的
+      - main thread的参数比较多，argc，argv，普通thread只有一个void*类型参数
+      - 其他thread的thread function即便return了，也不代表其他thread怎么样，但是
+        main thread一旦return了，其他thread必须terminate。如果你不想让main thread
+        return导致其他thread结束，可以使用pthread_exit来推出main thread
+*** Running and blocking
+    + 当thread ready了，并且被选中的时候，就进入了running状态，这通常意味着其他
+      thread有被block的了
+    + thread进入block状态的原因无非如下:
+      - 试图去获取一个被lock的mutex
+      - 等待一个condition variable
+      - 调用了sigwait 等待一个signal
+      - 进行了IO操作
+      - page fault
+*** Termination
+    + 一个thread从thread function return的时候，也就是结束的时候，除了从thread
+      function返回，还有就是调用pthread_exit和pthread_cancle，当然他们还要负责
+      一些资源回收工作
+    + thread很可能会有thread-specific data,如果有，就要调用响应的dtor
+    + 如果thread之前被detach的话，那么就马上进入recycling阶段，否则，就进入
+      terminated阶段，这个阶段和zombie非常相似: 它的resource依然有效，其他thread
+      还可以通过pthread_join来访问这些数据。
+    + thread的resource最少也有如下两个部分:
+      - thread descriptor (pthread_t)
+      - void* return value (thread function的返回值)
+    + thread function return返回，或者调用phtread_exit都是正常返回的情况，不正常
+      返回就是指的就是pthread_cancel返回，这个时候返回值永远是PTHREAD_CANCELLED
+*** Recycling
+    + 如果在create的时候就设置了detachstate attribute，或者中间调用了detach函数
+      那么当thread变成terminated的时候，就自然recycled了
+    + 如果没有在terminate之前设置detach，那么termination了之后要通过pthread_join
+      或者pthread_detach来进行recycle
+    + recycle的过程是释放所有termination时刻没有释放完的system 或者 process 资源:
+      - return value使用的存储空间
+      - 内部automatic 申请的stack变量
