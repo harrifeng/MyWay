@@ -1,0 +1,110 @@
+* Chapter 4: Elementary TCP Sockets
+** Introduction
+   + 下图展现了传统的TCP client和TCP server之间的关系
+** socket Function
+   + 创建socket要首先调用如下的socket函数
+     #+begin_src c
+       #include <sys/socket.h>
+       /* 
+        * Returns: non-negative descriptor if OK, -1 on error
+        */
+       int socket(int family, int type, int protocol);
+     #+end_src
+     - family 可以是如下的macro之一
+       | family   | Description           |
+       |----------+-----------------------|
+       | AF_INET  | IPv4 protocols        |
+       | AF_INET6 | IPv6 protocols        |
+       | AF_LOCAL | Unix domain protocols |
+       | AF_ROUTE | Routing sockets       |
+       | AF_KEY   | Key socket            |
+     - type可以是如下的macro之一
+       | type           | Description             |
+       |----------------+-------------------------|
+       | SOCK_STREAM    | stream socket           |
+       | SOCK_DGRAM     | datagram socket         |
+       | SOCK_SEQPACKET | sequenced packet socket |
+       | SOCK_RAW       | raw socket              |
+     - protocol可以是如下的macro之一
+       | protocol     | Description                    |
+       |--------------+--------------------------------|
+       | IPPROTO_TCP  | TCP transport protocol         |
+       | IPPPOTO_UDP  | UDP transport protocol         |
+       | IPPROTO_SCTP | SCTP transport protocol        |
+       | 0            | system's default for given     |
+       |              | combination of family and type |
+     - 不是所有的family 和 type的组合都是有效的，空白的是无效的，Yes是有效的
+       但是没有自己的名称
+       | #              | AF_INET  | AF_INET6 | AF_LOCAL | AF_ROUTE | AF_KEY |
+       | SOCK_STREAM    | TCP&SCTP | TCP&SCTP | Yes      |          |        |
+       | SOCK_DGRAM     | UDP      | UDP      | Yes      |          |        |
+       | SOCK_SEQPACKET | SCTP     | SCTP     | Yes      |          |        |
+       | SOCK_RAW       | IPv4     | IPv6     |          | Yes      | Yes    |
+     - 除了我们提到的这些macro，family和type还可以是其他的macro，这是由历史
+       原因和不同系统实现共同决定的
+*** AF_XXX Versus PF_XXX
+    + AF_前缀代表"address family"， PF_前缀代表"protocol family", 原来设计的时候
+      是想着一个protocol family里面有多个address family, 但实际的情况是一个
+      protocol family里面只有一个address family. 所有我们认为这两者其实是一回事
+** connect Function
+   + TCP client创建连接的时候，要用到connect函数
+     #+begin_src c
+       #include <sys/socket.h>
+       /*
+        * Returns: 0 if OK, -1 on error
+        */
+       int connect(int sockfd, const struct sockaddr *servaddr, socklen_t addrlen);
+     #+end_src
+     - sockfd 是socket function返回的descriptor
+     - 第二三个参数是指向socket address structure和它的size
+     - socket address structure里面必须包含server的IP地址和端口地址
+     - 在调用connect之前,client是不需要调用bind，内核会自动分配一个历史你还iduank
+       和IP address
+   + connect 在建立三次握手的连接的时候，会出现以下几种错误:
+     1) 如果目标server没有反应，会返回ETIMEDOUT
+     2) 如果目标server表示，你client指定的端口在我这里没有服务，那么server会发送
+        一个RST过来，出现ECONNREFUSED
+     3) 如果是因为路由的原因，导致暂时server不可达，中间的路由器会发送ICMP 错误
+        比如"destination unreachable"， 这个时候TCP要间隔一段时间重新发送SYN，如果
+        依然不成功，才会报EHOSTUNREACH，或者ENETUREACH 
+   + 在TCP状态图里面，connect把CLOSED state 转换成SYN_SENT state, 如果调用成功，就
+     转成ESTABLISHED state
+   + 如果我们connect失败的话，必须关闭当前socket descriptor，然后重新调用socket
+     function创建
+** bind Function
+   + bind function的主要作用是吧protocol address(我们主要就是说的IP address) 和一个
+     socket结合起来。只有server会用到bind，因为client的端口是临时的，由kernel指定
+     #+begin_src c
+       #include <sys/socket.h>
+       /*
+        * Returns: 0 if OK, -1 on error
+        */
+       int bind(int sockfd, const struct sockaddr *myaddr, socklen_t addrlen);
+     #+end_src
+   + 对于TCP来说，bind可以设置IP地址，端口号其一，或者全部
+   + 其实如果我们不调用bind的话，一旦调用connect或者listen的话，kernel会自动分配
+     一个临时端口的，但是这只适用与client，一般server不会这样的。
+   + 如果我们不调用bind话:
+     - kernel也会为client自动分配一个source IP address, 通过对数据是从哪个interface
+       传出去的。来指定IP address
+     - kernel也会为server自动分配一个source IP address(标示server的IP地址为多少)
+       通过client发过来的SYN里面的destination IP address
+   + 我们看看可能的IP地址和端口的组合
+     | IP address       | port    | Result                                            |
+     |------------------+---------+---------------------------------------------------|
+     | Wildcard         | 0       | Kernel chooses IP address and port                |
+     | Wildcard         | nonzero | Kernel chooses IP address, process specifies port |
+     | Local IP address | 0       | Process specifies IP address, Kernel chooses port |
+     | Local IP address | nonzero | Process specifies IP addresss and port            |
+     - 我们把端口设为0，不是真的指定0为端口，而是告诉kernel，帮我们找个临时端口，
+       kernel会在bind调用之前为我们选好
+     - 如果设置wildcard IP address，那么kernel只有在有了数据交流后，才知道设置什么
+       值
+     - bind function的第二个参数是const的，所以kernel给我们指定的啥port number我们
+       不可能从这个参数里面读取了，我们必须使用getsockname function来读取
+     - 一个最常见的绑定non-wildcard address的情况是，一个web server服务多个IP地址
+       比如一个web server有两个IP address:198.69.10.129 和 198.69.10.128 不同的IP 有自己
+       的server socket内部逻辑不同，如果让kernel自己去指定可能就指定错了。这个时候
+       就要自己指定non-wildcard IP address
+   + 这个函数常见的错误是EADDRINUSE : Address already in use. 
+** 
