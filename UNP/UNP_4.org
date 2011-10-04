@@ -107,4 +107,73 @@
        的server socket内部逻辑不同，如果让kernel自己去指定可能就指定错了。这个时候
        就要自己指定non-wildcard IP address
    + 这个函数常见的错误是EADDRINUSE : Address already in use. 
-** 
+** listen Function
+   + listen function 就是TCP server 专用的了，它的作用主要就是把unconnected socket 转
+     化成为一个passive socket, 在TCP状态转换图中，就是把socket从CLOSED state转换成
+     LISTEN state
+     #+begin_src c
+       #include <sys/socket.h>
+       int listen(int sockd, int backlog);
+     #+end_src
+     - 一般来说，这个函数在socket function 和 bind function之后被调用
+     - 第二个参数backlog的意思是kernel为这个socket所安排的最大队列数，这里说的队列
+       是两种队列:
+       1) incomplete connection queue: 从client那里发来了SYN, 但是还没有完成三次握手，
+          这些server socket还在SYN_RCVD state
+       2) complete connection queue: 包括了完成三次握手的socket
+   + 下图就是两种queue的示意图:
+     #+begin_example
+          +------+
+          |      |    accept                          sum of both sequence
+          |server|<--+----------+               +---->cannot execeed backlog
+          +------+              |               |
+                            +---+---------------+----------+ +-+
+                            | +---+   +---+                |   |
+                            | |   |   |   |                |   |+-> completed connection queue
+                            | +---+   +---+                |   |    ESTABLISHED state
+                            |           ^                  | +-+
+                            |           |                  |
+                            |       three-way handshake    |
+                            |           |                  |
+                            |           |                  |+--+
+                            | +---+   +-+-+    +---+       |   |
+                            | |   |   |   |    |   |       |   |+->incomplete connection queue
+                            | +---+   +---+    +---+       |   |   SYN_RCVD state
+                            |                    ^         |+--+
+                            +--------------------|---------+
+                                                 |
+                                                 +
+                                              arriving
+                                                SYN
+     #+end_example
+     - client的第一个SYN发来的时候，server首先在incomplete connection queue里面建立一
+       个entry来存放这个connection
+     - 当三次握手成功的时候，会被移动到complete connection, 如果entry超时(BSD系统中
+       是75秒)，就会被清除出queue
+     - 三次握手之后和accept function之前传过来的数据都要被存在connect server的receive
+       buffer里面。
+     - 如果queue都满的话，那么client发过来的SYN，server都会置之不理，因为这是个暂时
+       的情况:
+       - 不反应的话，client会超时重发SYN的
+       - 反而如果反应了，发个RST, client会不知所措，因为client区分不了"there is no
+         server at this port" 和 " there is a server at this point but its queue are full"
+   + 对于参数backlog:
+     - 一般来说backlog是两个queue的和
+     - backlog指定了一个数N, 实际上使用的时候都是N+m，各个系统实现都会给N多加些数
+       目，比如FreeBSD里面是都加了1， MacOS则是根据backlog的大小不同，加了1到7不等
+       Linux系统则是都加了3
+     - 不要把backlog设置成0，因为不同实现对0定义不同
+     - 传统意义上设置queue的原因是为了处理接连不断的accept function.这样就说明in
+       complete的queue要大于complete的，但是当前的Web Server的情况是incomplet queue
+       会随着client SYN的到来增长很快
+** accept Function
+   + accept function 也是server调用的函数，它的作用是从completed connection queue里面
+     返回队列最前面的completed connection, 如果completed connection queue是空的，那么
+     调用accept function的process就进入睡眠状态
+     #+begin_src c
+       #include <sys/socket.h>
+       /* Returns: non-negative descriptor if OK, -1 on error */
+       int accept(int sockfd, struct sockaddr *chiaddr, socklen_t *addrlen);
+     #+end_src
+     - chiaddr 是用来返回connection另一端的client的protocol address的                                                     
+   + 
