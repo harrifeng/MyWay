@@ -1,0 +1,52 @@
+* Chapter 5: TCP Client/Server Example
+** Introduction
+   + 我们下面的例子都是用前一章的函数来组合的，我们的echo server主要有如下步骤:
+     1) client从standard input读取并写入server
+     2) server从网络读取然后echo给client
+     3) client读取结果在打印到standard output
+   + 我们会研究很多的特殊情况，比如server主机crash等等
+** TCP Echo Server: main Function
+   + 我们来看看一个简单的echo server
+     #+begin_src c
+       #include "unp.h"
+       
+       int main(int argc, const char *argv[])
+       {
+           int         listenfd, connfd;
+           pid_t       childpid;
+           socklen_t   clilen;  
+       
+           struct sockaddr_in cliaddr, servaddr;
+       
+           listenfd = Socket(AF_INET, SOCK_STREAM, 0);
+           bzero(&servaddr, sizeof(servaddr));
+       
+           servaddr.sin_family = AF_INET;
+           servaddr.sin_addr.s_addr = htol(INADDR_ANY);
+           servaddr.sin_port = htons(SERV_PORT);
+       
+           Bind(listenfd, (SA*)&servaddr, sizeof(servaddr));
+       
+           Listen(listenfd, LISTENQ);
+       
+           for (; ;) {
+               clilen = sizeof(cliaddr);
+               connfd = Aceept(listenfd, (SA*)&cliaddr, &clilen);
+       
+               if ( (childpid = Fork()) == 0) {
+                   Close(listenfd);        /* close listening socket */
+                   str_echo(connfd);       /* process the request    */
+                   exit(0);         
+               }
+               Close(connfd);              /* parent closes connected socket */
+           }
+           return 0;
+       }
+     #+end_src
+     - 先看listening connect的创建，server使用了well-known 端口SERV_PORT(这个
+       是我们在unp.h里面定义的9877，仅仅做demo用)
+     - 而IP地址则选择了INADDR_ANY
+       的wildcard address, 选择wildcard 就是告诉kernel，server上面的任意一个
+       local interface都可以指定给这个connection
+** TCP Echo Server: str_echo Function
+   + 
