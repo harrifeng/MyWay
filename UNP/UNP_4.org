@@ -175,5 +175,75 @@
        /* Returns: non-negative descriptor if OK, -1 on error */
        int accept(int sockfd, struct sockaddr *chiaddr, socklen_t *addrlen);
      #+end_src
-     - chiaddr 是用来返回connection另一端的client的protocol address的                                                     
-   + 
+     - chiaddr 是用来返回connection另一端的client的protocol address的 
+     - addrlen 是一个value-result 参数，我们存入chiaddr的类型的socket address
+       structure的长度，返回的时候，会返回socket address structure的真实的值
+     - 如果accept的话，返回值是一个kernel新创建的descriptor，这个descriptor
+       用来修饰通过这次connect新建的connected server. 
+     - accept的第一个参数所代表的是listening socket.一个server一般就创建一个
+       listening socket，为每个accept的listening socket创建一个connected server
+     - 返回值其实有三个新descriptor, client的protocol address，client数据结构
+       的长度，如果你对后面两个不敢兴趣，可以设置为NULL
+** fork and exec Functions
+   + fork 函数是Unix系统当中，唯一能创建process的手段
+     #+begin_src c
+       #include <unistd.h>
+       /* Returns: 0 in child, process ID of child in parent, -1 on error */
+       pid_t fork(void);
+     #+end_src
+     - 在fork之前parent打开的所有的descriptor都要和fork出来的child共享，这在
+       网络编程中很常用:parent调用accept并且马上调用fork, 我们新创建的connected
+       socket肯定也和child共享，通常情况下，是child读写connected socket, parent
+       负责关闭connected socket.
+   + fork的使用除了生成一个child来帮我处理杂事以外，最主要的用途是产生新的
+     process，然后在新的process上运行新的program，这就要用到exec系列函数
+     - 这些函数里面只有execve是system call, 其他都是对它的包装
+     - 在exec 函数调用之前打开的descriptor在exec调用之后还是open的，除非你使用
+       fcntl来设置FD_CLOEXEC flag
+** Concurrent Servers
+   + server要同时处理多个client，一种方法就是采用fork 函数，如下
+     #+begin_src c
+       pid_t pid;
+       int   listenfd, connfd;
+       
+       listenfd = Socket(...);
+       
+       /* fill in sockaddr_in{} with server's well-known port */
+       Bind(listenfd, ...);
+       Listen(listenfd, LISTENQ);
+       
+       for ( ; ; ) {
+           connfd = Accept(listenfd, ...); /* probably blocks */
+       
+           if ( (pid = Fork()) == 0) {
+               Close(listenfd); /* child closes listening socket */
+               doit(connfd);    /* process the request */
+               Close(connfd);   /* done with this client */
+               exit(0);         /* child terminates */
+           }
+       
+           Close(connfd);       /* parent closes connected socket */
+       }
+     #+end_src
+     - 这个函数比较难理解的地方，就是connfd被close了两次，我们看了
+       close function的解释就理解了，这里connfd也是一种descriptor，在
+       unix里面，对所有descriptor的关闭，只是减少引用次数，只有引用
+       次数为0才会进行真正的关闭。
+     - 这里创建出child以后，connfd的ref count是2，只有两次close以后，
+       ref count降到0之后，才会发送FIN真正的开始TCP的四步关闭步骤
+** getsockname and getpeername Functions
+   + 这两个函数是返回sockfd指定的响应的socket信息的
+     #+begin_src c
+       #include <sys/socket.h>
+       /* Both return: 0 if OK, -1 on error */
+       int getsockname(int sockfd, struct sockaddr *localaddr, socklen_t *addrlen);
+       int getpeername(int sockfd, struct sockaddr *peeraddr, socklen_t *addrlen);
+     #+end_src
+   + 这两个函数的产生，是因为如下的需求:
+     - 我们知道client在创建的时候，是不调用bind，所有要通过getsockname来获悉
+       kernel分配给此client的IP地址和端口号
+     - 即便是server调用了bind，但是bind的端口参数是0，那么也要通过getsockname
+       来获取端口信息(IP地址信息麻烦些，在后面)
+     - getsockname还可以用来获取address family(AF_XXX)信息
+     - 一旦建立了connection, server可以利用connected socket descriptor来获取分配
+       给这个connection的IP地址信息
