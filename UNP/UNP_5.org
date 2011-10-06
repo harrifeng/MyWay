@@ -49,4 +49,209 @@
        的wildcard address, 选择wildcard 就是告诉kernel，server上面的任意一个
        local interface都可以指定给这个connection
 ** TCP Echo Server: str_echo Function
-   + 
+   + str_echo 函数是server的主要工作 
+     #+begin_src c
+       #include "unp.h"
+       
+       void str_echo(int sockfd)
+       {
+           ssize_t     n;
+           char        buf[MAXLINE];
+       
+       again:
+           while ((n = read(sockfd, buf, MAXLINE)) > 0)
+               Writen(sockfd, buf, n);
+       
+           if (n < 0 && errno == EINTR)
+               goto again;
+           else if
+               err_sys("str_echo: read error");
+       }
+     #+end_src
+     - 如果client主动发起FIN结束connection，那么收到FIN后，会导致read函数返回0，
+       从而结束str_echo函数(收到client的FIN，至少是half-close了)
+** TCP Echo Client: main Function
+   + 我们再来看看client端的socket的main函数
+     #+begin_src c
+       #include "unp.h"
+       
+       int main(int argc, const char *argv[])
+       {
+           int                 sockfd;
+           struct sockaddr_in  servaddr;
+       
+           if (argc != 2)
+               err_quit("usage: tcpcli <IP address>");
+       
+           sockfd = Socket(AF_INET, SOCK_STREAM, 0);
+       
+           bzero(&servaddr, sizeof(servaddr));
+           servaddr.sin_family = AF_INET;
+           servaddr.sin_port = htons(SERV_PORT);
+           Inet_pton(AF_INET, argv[1], &servaddr.sin_addr);
+       
+           Connect(sockfd, (SA *)&servaddr, sizeof(servaddr));
+       
+           str_cli(stdin, sockd);  /* do it all */
+       
+           exit(0);
+       }
+     #+end_src
+     - client 端的事情比较少, 主要就是connect，我们要记住client是不设置自己的IP
+       地址啊，端口的。connect设置的socket address其实是设置的server端socket的信息，
+       也就是它想要connect的那个socket.
+** TCP Echo Client: str_cli Function
+   + str_cli函数是client的主要工作，它通过fgets函数从stream(这里是stdin)获取数据，
+     然后写到sock里面发送给server，再从server发送过来的socket里面读取数据写到
+     stdout上面
+     #+begin_src c
+       #include    "unp.h"
+       
+       void
+       str_cli(FILE *fp, int sockfd)
+       {
+           char    sendline[MAXLINE], recvline[MAXLINE];
+       
+           while (Fgets(sendline, MAXLINE, fp) != NULL) {
+       
+               Writen(sockfd, sendline, strlen(sendline));
+       
+               if (Readline(sockfd, recvline, MAXLINE) == 0)
+                   err_quit("str_cli: server terminated prematurely");
+       
+               Fputs(recvline, stdout);
+           }
+       }
+     #+end_src
+** Normal Startup
+   + 首先启动server, 在经历socket, bind，listen, accept之后，server会被block在accept
+     (因为，completed connection queue是空的)，处于LISTEN state
+     #+begin_example
+       linux % tcpserv01 &
+       [1] 17870
+       
+       linux % netstat -a
+       Proto Recv-Q Send-Q Local Address  Foreign Address State
+       tcp      0      0     *:9877            *:*        LISTEN 
+     #+end_example
+   + 然后启动client
+     - client会调用socket, connect，connect开始的时候三次握手开始
+     - connect在child里面返回，并且accept在server里面返回的时候,(这两者是connect
+       先返回，client收到server发的ACK就可以返回了，accept收到client发的ACK才可
+       以返回)三次握手就完成了，剩下的就是倒腾数据了
+     - connect返回后，client调用str_cli，然后就会block在fgets，因为stdin上面没有数据
+     - accept返回后, server会fork出child来调用str_echo，echo其实就是调用read，因为
+       没有数据从client来，所以就block在read那里了
+     - server不管child的事情了，自己又重新accept，然后block在那里等待下一个client
+       connection
+   + 现在我们就有三个process:client, server parent, server child，都是在block(sleep)
+     的状态(wait_for_connect, tcp_data_wait, read_chan都是linux表示各种block的字符串)
+     同时，可以用ps命令查看他们的网络状态可以通过netstat 来查看
+     #+begin_example
+       liunx % ps -t pts/6 -o pid,stat,args,wchan
+       PID     STAT  COMMAND          WCHAN
+       22038   S     -bash            wait4
+       17870   S     ./tcpserv01      wait_for_connect
+       19315   S     ./tcpserv01      tcp_data_wait
+       19314   S     ./tcpcli01 127.0 read_chan 
+       
+       linux % netstat -a
+       Proto Recv-Q Send-Q Local Address    Foreign Address State
+       tcp      0      0   local host:9877  localhost:42758 ESTABLISHED
+       tcp      0      0   local host:42756 localhost:9877  ESTABLISHED
+       tcp      0      0    *:9877          *:*             LISTEN
+     #+end_example
+** Normal Termination
+   + 正常的关闭是指的client端发送EOF(这里是通过ctrl+D发送)，如果发送完，我们马上
+     执行netstat，client会进入TIME_WAIT状态(这个要相当快啊,我没试成功)
+     #+begin_example
+       linux % netstat -a | grep 9877
+       tcp      0   0      *:9877               *:*              LISTEN
+       tcp      0   0      localhost:42758      localhost:9877   TIME_WAIT
+     #+end_example
+   + 正常关闭函数的运行顺序:
+     1) stdin输入EOF，feget返回NULL,然后str_cli返回
+     2) str_cli的返回，会导致client main函数返回
+     3) client main函数返回，会关闭所有socket descriptor，kernel就会据此关闭client
+        socket，并发送FIN到server，server会回复以ACK,这就是half-close。此时，server
+        处于CLOSE_WAIT state，client处于FIN_WAIT_2 state
+     4) 当server TCP收到FIN的时候，server正被read函数block，最终这个read函数会返回
+        0，从而导致str_echo函数返回
+     5) str_echo返回，server的child也就是exit了
+     6) 这样一来，child server的socket descriptor也就都关闭了，kernel会关闭这个socket
+        并发送FIN给client，然后client会返回一个ACK,这样以后，server就成功关闭了，而
+        client则进入了TIME_WAIT state
+     7) kernel会发送一个SIGCHLD信号给parent server，当child server关闭的时候。
+   + 这个时候child server就进入了zombie状态
+** POSIX Signal Handling
+   + 信号可以有如下两者发送方式:
+     - process to process (or to itself)
+     - kernel to process
+   + SIGCHILD 信号就是从krnel发送给parent process的。
+   + 一般来说，对待任何一个信号，我们都可以设置sigaction function来设置他们的
+     disposition， 设置方法有三种:
+     1) 为signal提供一个handler，SIGKILL，SIGSTOP不能被caught
+     2) 忽略这个signal，SIGKILL, SIGSTOP不能忽略
+     3) 设置disposition为SIG_DEF,就按照default方法来处理signal，通常来说default处理
+        方式就是kill掉process
+   + signal function是我们为了夸平台而写的一个wrapper函数
+     #+begin_src c
+       #include "unp.h"
+       
+       typedef void Sigfunc(int);
+       
+       Sigfunc* signal(int signo, Sigfunc* func)
+       {
+           struct sigaction act, oact;
+       
+           act.sa_handler = func;
+           sigemptyset(&act.sa_mask);
+           act.sa_flags = 0;
+           if (signo == SIGALARM) {
+       #ifdef  SA_INTERRUPT        
+               act.sa_flags |= SA_INTERRUPT;         /* SunOS 4.x */
+       #endif
+           } else {
+       #ifdef  SA_RESTART        
+               act.sa_flags |= SA_RESTART;           /* SVR4, 4,4BSD */
+       #endif
+           }
+           if (sigaction(signo, &act, &oact) < 0)
+               return (SIG_ERR);
+           return (oact.sa_handler);
+       }
+     #+end_src
+     - Sigfunc是个typedef，因为signal第二个参数，和返回值都是一个指向函数的指针
+       这个函数带一个int参数，返回void
+     - sa_mask用来设定哪些signal在我们handler运行的时候，被block住，我们这里没有
+       设置任何被block的signal
+     - sigaction函数是把新的act设置，然后把旧的oact也同时返回过来，我们的signal
+       就返回oact的sa_handler
+   + 在POSIX 系统当中signal handling的特点有:
+     - 一旦一个signal handler设置了，那它就一直有效
+     - 一旦一个signal handler开始运行，那么这个signal和sa_mask里面设置的signal
+       都同时被block住
+     - 如果一个siganl被block的时候，同时又出现了一次同样的siganl，那么系统是不
+       知道的，换句话说，signal是不queued的
+     - 为了保护critical region code 不被某些signal打断，我们可以通过sigprocmask
+       来进行block和unbock某些signal
+     - 既然只是block，那么等handler执行完以后，我们还是可以继续处理刚才被block
+       的signal的
+** Handling SIGCHLD Signals
+*** Handling Zombies
+    + zombie信息不是我们想要的，我们要通过kernel发给parent的SIGCHLD来清除zombie
+      状态的process，我们的方法是自己写一个handler:sig_chld
+      #+begin_src c
+        #include "unp.h"
+        void sig_chld(int signo)
+        {
+            pid_t       pid;
+            int         stat;
+        
+            pid = wait(&stat);
+            /* attention: use printf in handler is not recommended */
+            printf("child %d terminated \n", pid);
+            return;
+        }
+      #+end_src
+    +  
