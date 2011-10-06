@@ -254,4 +254,130 @@
             return;
         }
       #+end_src
-    +  
+    + 在solaris上运行我们的程序，会有意想不到的情况
+      #+begin_example
+        solaris % tcpserv02 &
+        [2] 16939
+        solaris % tcpcli01 127.0.0.1
+        hi there
+        hi there
+        ^D
+        child 16942 terminated
+        accept error: Interrupted system call
+      #+end_example
+      - child xxxx terminated是我们想要的结果，这其实是signal handler起作用了，但
+        是accept error不是我们想要的
+      - 产生accept error的原因是，server正block在slow system call accept的时候，捕
+        获了SIGCHLD，kernel会中断accept，并且返回了EINTR, 而parent显然没有处理
+        这个error的代码，于是就出问题了
+      - 有很多系统实现会自动restart 被中断打断的system call, 同时，如果设置了flag
+        SA_RESTART，也会自动重新调用被中断的system call，可惜solaris不属于任何一
+        种情况，这给我们提了醒，我们在网络编程中，要时刻注意interrupted system
+        call的情况。
+*** Handling Interrupted System Call
+    + 那些可以block forever的系统调用就叫做slow system call. 大部分networking
+      function都属于这个范畴，比如accept function
+    + 当function被slow system call block的时候，并且process捕获了一个signal，并且
+      signal handler成功返回的话，slow system call会返回一个EINTR, 或者，有些系统
+      不返回错误，而是kernel出面restart system call
+    + 重启system call的话有些弊端，因为有些system call在某些系统实现中是从来都不
+      成功的，所以我们要有特殊的应对方式
+      #+begin_src c
+        for (; ;) {
+            clilen = sizeof(cliaddr);
+            if ((connfd = accept(listenfd, (SA *)&chliaddr, &clilen)) < 0) {
+                if (errno == EINTR)
+                    continue;             /* back to for() */
+                else
+                    err_sys("accept error");
+            }
+        }
+      #+end_src
+    + accept ，read， write， select，open都可以使用上面的方法restart interrupt
+      system call，但是如果系统没有自动为我们重启connect, 我们不可以如上手动
+      重启
+** wait and waitpid Functions
+   + wait and waitpid都是为了处理zombie process设计的
+     #+begin_src c
+       #include <sys/wait.h>
+       /* Both return: process ID if OK, 0 or -1 on error */
+       pid_t wait(int *statloc);
+       pid_t waitpid(pid_t pid, int *statloc, int options);
+     #+end_src
+     - 返回值返回wait到的process的ID, statloc返回这个child process的termination
+       status
+     - 如果没有terminated process，但是有process在运行，那么wait()会block等待
+       第一个terminate的process
+     - waitpid 的第一个参数可以让wait选择等待特定的process，如果设置为-1，那么
+       就等同于wait():等待第一个完成的process
+     - waitpid 的第三个参数可以增加更多的option，最常见的一个是WNOHANG, 意思是
+       告诉kernel如果没有terminated process,就不再block，立即返回
+*** Difference between wait and waitpid
+    + wait显然没有waitpid强大，wait只能处理最常见的情况，复杂的情况还是要由
+      waitpid出马
+    + 其中一种复杂的情况就是同时有三个或者三个以上的FIN发动到server端，有三
+      个或者三个以上的child 同时变成zombie，kernel会在极短时间内发送多个SIGCHLD
+      到parent，parent最多能处理两个(handler运行的时候，会block一个，再多来的
+      就被忽略了), 这种情况下就是waitpid出马了
+      #+begin_src c
+        for (i = 0; i < 5; i++) {
+            sockfd[i] = Socket(AF_INET, SOCK_STREAM, 0);
+            //...
+            Connect(sockfd[i], (SA*)&servaddr, sizeof(servaddr));
+        }
+        
+        /* should use waitpid for signal handler */
+        void sig_chld(int signo)
+        {
+            pid_t pid;
+            int   stat;
+        
+            while ((pid = waitpid(-1, &stat, WNOHANG)) > 0)
+                printf("child %d terminated \n", pid);
+            return;
+        }
+      #+end_src
+** Connection Abort before accept Returns
+   + 一种常见的错误是，在accept 调用之前，从child传来了RST
+   + 这种问题的处理方法和处理interrupted system call类似，就是重新调用一次
+     system call
+** Termination of Server Process
+   + 下面我们来看一下，如果server child process 关闭的情况，这种情况的特点是:
+     - server parent并没有关闭
+     - server child的结束会使得kernel发送一个SIGCHLD signal到parent, socket被正确
+       关闭后，会发送一个FIN到child
+     - child 接收到FIN，并不会有什么异样，因为:
+       1) 即便是收到了server的FIN, 只是说明server close了它那一端的connection，
+          client无法再读取了，但是依然可以写入
+       2) 在我们这个例子中，client还被block在fgets, 等待从stdin的数据输入
+     - 一旦fgets正确返回，还是能够成功调用writen写入socket, 因为刚才是half-close
+       嘛，当然这个写入传到server的时候，会被server回复一个RST,因为相关的server
+       已经关闭了
+     - 但是client看不到这个RST了，因为writen之后，它马上调用readlien，我们说过
+       half-closed肯定是不能read的，这个函数会返回0，然后打印错误"str_cli: server
+       terminated prematurely"
+     - 一旦出现错误，client也会乖乖关闭了，descriptor都关闭后，FIN也会发送给
+       server，完成四步关闭步骤
+   + 这个client的问题在于，它依赖于两个file descriptor，无法在server child 被kill
+     的第一时间得到消息
+** SIGPIE Signal
+   + 如果上面例子中的client不管readline返回的错误，执意要往socket里面写东西的话
+     第一次写入会导致server 发送一个RST, 第二次写入一个已经收到RST的socket，会
+     产生一个SIGPIPE的signal
+** Crashing of Server Host
+   + Crashing of server就是把server的网线拔掉，这个也可以模仿那种由于中间路由问
+     题导致的server不可达
+   + 因为server什么都没发送，client会以为他一切正常，会不停的超时重发
+   + 虽然最后client也会终究意识到server是真的关闭了，但是不同系统实现都会浪费
+     大量的时间，一个可行的替代方法是在readline函数那里设置超时
+** Crashing and Rebooting of Server Host
+   + 这种情况下就是先拔了网线，然后重启机器，并且重启原来的server，重启后server
+     连原来的descriptor都不记得了，面对client发过来的socket果断的返回RST
+   + 看到server发来的RST, client果断的在readline就挂了，并产生ECONNRESET
+   + 从这个例子我们看到了client能够探测server host 崩溃的必要性
+** Shutdown of Server Host
+   + 如果是server关机的话，init process其实是会给各个process发送SIGKILL signal的，
+     所以descriptor都会关闭，那么FIN也会发送给client
+   + 虽然发送了一个FIN,但是TCP connection还在half-close的情况下，server就关闭了
+     client还是像5.12 termination of srver process 那一节一样读取socket 数据失败
+     才知道server已经关闭了。所以最好是能提早知道server的关闭。
