@@ -1,0 +1,212 @@
+* Chapter 3: Synchronization
+** Invariants, critical sections, and predicates
+   + Invariant 这个词是指的一些不会改变的基础，程序的合理性，成功性都是建立在这
+     上面的，比如，我们使用一个非空的双向链表，我们自然而然的认为某个结点的prev
+     和next指针都是有实际意义的，指向有用内存地址的
+   + 但是这种invariant是可以被破坏的，比如，我们向这个双向链表添加新结点的时候，
+     这就要求我们在invariant被破坏的时候，保护我们的代码，防止这个时候有其他代码
+     来使用我们不完整的数据结构，这种防范的机制，就叫critical section
+** Mutexs
+   + 大部分thread都要分享数据，为了不让一个thread更改invariant的时候，数据被其他
+     thread访问，我们设计了一种锁，叫做Mutex
+   + Mutex其实是mutually exclusive的缩写，就是说对一份数据的访问，只能多选一
+   + 不只在数据修改的时候有左右，在多核情况下的数据读取中，mutex也有其重要的作用
+*** Creating and destroying a mutex
+    + 在POSIX里面mutex就是一个pthread_mutex_t类型的变量，我们可以如下两者方法创建:
+      1) 静态申请:
+        #+begin_src c
+          #include <pthread.h>
+          #include "errors.h"
+          
+          typedef struct my_struct_tag {
+              pthread_mutex_t    mutex;   /* Protects access to value */
+              int                value;   /* Access protected by mutex */
+          } my_struct_t;
+          
+          my_struct_t data = {PTHREAD_MUTEX_INITIALIZER, 0};
+          
+          int main(int argc, char *agrv[])
+          {
+              return 0;
+          }
+        #+end_src
+        - 静态申请的时候，要申请为全局变量(不在任何函数内部)
+        - 如果想要其他文件访问，那么要给变量加关键字extern
+        - 如果想要只在自己文件内部起作用，那么就是static作用域
+        - 必须用PTHREAD_MUTEX_INITIALIZER初始化这个变量
+      2) 动态申请 
+        #+begin_src c
+          typedef struct my_struct_tag {
+              pthread_mutex_t     mutex;
+              int                 value;
+          } my_struct_t;
+          
+          int main(int argc, char *argv[])
+          {
+              my_struct_t  *data;
+              int          status;
+          
+              data = malloc(sizeof(my_struct_t));
+              if (data == NULL)
+                  errno_abort("Allocate structure");
+              status = pthread_mutex_init(&data->mutex, NULL);
+              if (status != 0)
+                  err_abort(status, "Init mutex");
+              status = pthread_mutex_destroy(&data->mutex);
+              if (status != 0)
+                  err_abort(status, "Destroy mutex");
+              (void)free(data);
+              return status;
+          }
+        #+end_src
+        - 很多时候，mutex所在的数据结构是动态申请下来的，这个时候，我们的mutex
+          就不得不动态申请了。
+        - 动态申请出来的数据结构里面的值是未定的，所以我们用pthread_mutex_init
+          将mutex的部分设置为NULL
+        - 动态申请的mutex不光要初始化，还要destroy,使用pthread_mutex_destroy
+        - 如果你知道某个mutex不会有其他thread等待了，并且没有其他thread会试图去
+          lock它，那么这个时候去destroy这个mutex就很安全了。
+        - 比如在free某块数据之前，对它进行destroy，是很好的主意
+*** Locking and unlocking a mutex
+    + mutex 的使用相对简单，其实就是使用数据前，对数据进行上锁，然后离开数据前
+      解锁，alarm_mutex.c就是这么一个例子
+    + 首先是数据准备阶段
+      #+begin_src c
+        typedef struct alarm_tag {
+            struct alarm_tag        *link;
+            int                     seconds;
+            time_t                  time;   /* seconds from EPOCH */
+            char                    message[64];
+        } alarm_t;
+        
+        pthread_mutex_t  alarm_mutex = PTHREAD_MUTEX_INITIALIZER;
+        alarm_t *alarm_list = NULL;
+      #+end_src
+      - 新的数据结构里面增加了link指针，将所有的alarm_t都连接起来
+      - second还是指的要休眠多少秒
+      - time的产生，让程序更精确，程序创建的时候离EPOCH多少秒，加上sleep就是
+        在离EPOCH多少秒的时候要结束睡眠。
+      - 静态申请了alarm_mutex
+      - 把alarm_list链表初始化并清空
+    + 然后是thread function, 详细的操作其实是在这里面完成的
+      #+begin_src c
+        void *alarm_thread(void *arg)
+        {
+            alarm_t *alarm;
+            int sleep_time;
+            time_t now;
+            int status;
+        
+            while (1) {
+                /* lock the mutex !*/
+                status = pthread_mutex_lock(&alarm_mutex);
+                if (status != 0)
+                    err_abort(status, "Lock mutex");
+                alarm = alarm_list;
+        
+                if (alarm == NULL)
+                    sleep_time = 1;
+                else {
+                    //head move for the next node
+                    alarm_list = alarm->link;
+                    now = time(NULL);
+                    if (alarm->time <= now)
+                        sleep_time = 0;
+                    else 
+                        sleep_time = alarm->time - now;
+        #ifdef DEBUG
+                    printf ("[waiting: %d(%d)\"%s\"]\n",alarm->time,
+                            sleep_time, alarm->message);
+        #endif
+                }
+                /*
+                 *unlock the mutext bofore waiting
+                 */
+                status = pthread_mutex_unlock(&alarm_mutex);
+                if (status != 0)
+                    err_abort(status, "Unlock mutex");
+                if (sleep_time >0)
+                    sleep(sleep_time);
+                else
+                    sched_yield();
+                
+                if (alarm != NULL) {
+                    printf("(%d) %s\n", alarm->seconds, alarm->message);
+                    free(alarm);
+                }
+        
+            }
+        }
+      #+end_src
+      - thread function的主体是死循环，这也就意味着，只可能thread和main thread一
+        块结束
+      - 如果alarm_list链表上没有待处理的node，那就sleep 一秒，让main去接受用户
+        输入，准备链表
+      - 然后计算出真正需要睡的秒数，unlock掉mutex，开始睡眠
+      - 如果需要睡的时间为0，那么调用sched_yield()来让main函数有机会运行
+      - sleep后就可以打印结果了
+    + main 函数
+      #+begin_src c
+        int main(int argc, const char *argv[])
+        {
+            int status;
+            char line[128];
+            alarm_t *alarm, **last, *next;
+            pthread_t thread;
+        
+            status = pthread_create(&thread, NULL, alarm_thread,
+                                    NULL);
+            if (status != 0)
+                err_abort(status, "Create alarm thread");
+            while (1) {
+                printf("alarm> ");
+                if (fgets(line, sizeof(line), stdin) == NULL)
+                    exit(0);
+                if (strlen(line) <= 1) 
+                    continue;
+                alarm = (alarm_t*) malloc(sizeof(alarm_t));
+                if (alarm == NULL)
+                    errno_abort("Allocate alarm");
+        
+                if (sscanf(line, "%d %64[^\n]",
+                           &alarm->seconds, alarm->message) < 2) {
+                    fprintf(stderr, "Bad command\n");
+                    free(alarm);
+                } else {
+                    status = pthread_mutex_lock(&alarm_mutex);
+                    if (status != 0)
+                        err_abort(status, "Lock mutex");
+                    /* compute when should stop sleeping */
+                    alarm->time = time(NULL) + alarm->seconds;
+        
+                    /*
+                     *Insert the new alarm into the list of alarms,
+                     *sorted by expiration time
+                     */
+                    last = &alarm_list;
+                    next = *last;
+                    while (next != NULL) {
+                        if (next->time >= alarm->time) {
+                            alarm->link = next;
+                            *last = alarm;
+                            break;
+                        }
+                        last = &next->link;
+                        next = next->link;
+                    }
+                    if (next == NULL) {
+                        *last = alarm;
+                        alarm->link = NULL;
+                    }
+                    status = pthread_mutex_unlock(&alarm_mutex);
+                    if (status != 0)
+                        err_abort(status, "Unlock mutex");
+                }
+            }
+        }
+      #+end_src
+      - main 函数主要是对数据的准备
+      - 在数据之前，还是对mutex进行了lock，在离开前进行unlock
+    + 我们的alarm_mutex.c 就讲解完了，这个版本的多线程，还是有很多问题的，比如
+      thread在链表里面没有数据的时候，空空的sleep 一秒，这一秒什么都无法响应，我
+      们要在后面的例子中，改进这个机制。
