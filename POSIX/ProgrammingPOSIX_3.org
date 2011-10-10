@@ -210,3 +210,140 @@
     + 我们的alarm_mutex.c 就讲解完了，这个版本的多线程，还是有很多问题的，比如
       thread在链表里面没有数据的时候，空空的sleep 一秒，这一秒什么都无法响应，我
       们要在后面的例子中，改进这个机制。
+**** Nonblocking mutex locks
+     + 通常来说，我们调用pthread_mutex_lock的话，如果mutex已经被占用的话，调用thread
+       就会block，直到自己得到这个mutex。有的时候，我们不想让thread block住，发现
+       mutex不可用的话，其实也可以去做点别的事情，这个时候，我们就可以使用另外的
+       函数pthread_mutex_trylock, 如果mutex被占用，这个函数返回一个EBUSY, 而不是block
+     + 我们来看看nonblocking mutex lock的应用
+       #+begin_src c
+         #include <pthread.h>
+         #include "errors.h"
+         
+         #define SPIN 10000000
+         
+         pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+         long counter;
+         time_t end_time;
+         
+         /*
+          * Thread start routine that repeatedly locks a mutex and
+          * increments a counter.
+          */
+         void *counter_thread (void *arg)
+         {
+             int status;
+             int spin;
+         
+             /*
+              * Until end_time, increment the counter each
+              * second. Instead of just incrementing the counter, it
+              * sleeps for another second with the mutex locked, to give
+              * monitor_thread a reasonable chance of running.
+              */
+             while (time (NULL) < end_time)
+             {
+                 status = pthread_mutex_lock (&mutex);
+                 if (status != 0)
+                     err_abort (status, "Lock mutex");
+                 for (spin = 0; spin < SPIN; spin++)
+                     counter++;
+                 status = pthread_mutex_unlock (&mutex);
+                 if (status != 0)
+                     err_abort (status, "Unlock mutex");
+                 sleep (1);
+             }
+             printf ("Counter is %#lx\n", counter);
+             return NULL;
+         }
+         
+         /*
+          * Thread start routine to "monitor" the counter. Every 3
+          * seconds, try to lock the mutex and read the counter. If the
+          * trylock fails, skip this cycle.
+          */
+         void *monitor_thread (void *arg)
+         {
+             int status;
+             int misses = 0;
+         
+         
+             /*
+              * Loop until end_time, checking the counter every 3
+              * seconds.
+              */
+             while (time (NULL) < end_time)
+             {
+                 sleep (3);
+                 status = pthread_mutex_trylock (&mutex);
+                 if (status != EBUSY)
+                 {
+                     if (status != 0)
+                         err_abort (status, "Trylock mutex");
+                     printf ("Counter is %ld\n", counter/SPIN);
+                     status = pthread_mutex_unlock (&mutex);
+                     if (status != 0)
+                         err_abort (status, "Unlock mutex");
+                 } else
+                     misses++;           /* Count "misses" on the lock */
+             }
+             printf ("Monitor thread missed update %d times.\n", misses);                  
+             return NULL;
+         }
+         
+         int main (int argc, char *argv[])
+         {
+             int status;
+             pthread_t counter_thread_id;
+             pthread_t monitor_thread_id;
+         
+         #ifdef sun
+             /*
+              * On Solaris 2.5, threads are not timesliced. To ensure
+              * that our threads can run concurrently, we need to
+              * increase the concurrency level to 2.
+              */
+             DPRINTF (("Setting concurrency level to 2\n"));
+             thr_setconcurrency (2);
+         #endif
+         
+             end_time = time (NULL) + 60;        /* Run for 1 minute */
+             status = pthread_create (
+                 &counter_thread_id, NULL, counter_thread, NULL);
+             if (status != 0)
+                 err_abort (status, "Create counter thread");
+         
+             status = pthread_create (
+                 &monitor_thread_id, NULL, monitor_thread, NULL);
+             if (status != 0)
+                 err_abort (status, "Create monitor thread");
+         
+             status = pthread_join (counter_thread_id, NULL);
+             if (status != 0)
+                 err_abort (status, "Join counter thread");
+             status = pthread_join (monitor_thread_id, NULL);
+             if (status != 0)
+                 err_abort (status, "Join monitor thread");
+             return 0;
+         }
+       #+end_src
+       - counter_thread每1秒醒过来一次，锁住mutex，并且增加SPIN个counter
+       - monitor_thread每3秒醒过来一次，试图去取锁mutex,成功的话，打印counter，失败的
+         话，就再去等三秒
+       - 在Solaris上，必须调用thr_setconcurrency才能让两个thread在单核机器上并发运行
+*** Using mutexes for atomicity
+    + 我们经常会降到原子性"atomic",意思就是说某个操作是不可分割的最小单位(比如一条
+      汇编语句). 
+    + 但实际的情况是，很多时候我们想要"原子性"的操作，远不是一条汇编能满足的，这个
+      时候，与其费劲的琢磨编译器和硬件的不同，不如小心的使用mutex
+    + 在多线程编程里面,"原子性", 不是说不可分割，而是说"线程看不到那些让他们费解的
+      事情"
+*** Sizing a mutex to fit the job
+    + 我们所说的size a mutex，是指的mutex控制的区域，如果我们一个函数就是一个mutex的
+      话，那肯定是thread-safe的，但也同时意味着和单线程无异了。通常来说mutex的大小
+      有如下两个矛盾的指标:
+      - mutex本身要lock和unlock，也是有代价的，所以尽可能少的lock，会提高效率
+      - 一个mutex一次lock住太多资源的话，会令很多的thread等待，所以，尽可能的把大的
+        mutex拆分成小的mutex，这样thread会减少等待时间，提高程序效率
+    + 一开始，你会有一个大的mutex，随着工程的进行，你可以在不得已的情况下，依照自己
+      的经验，将大的mutex拆分成几个小的mutex
