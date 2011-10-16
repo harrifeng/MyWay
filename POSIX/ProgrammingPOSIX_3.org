@@ -347,3 +347,287 @@
         mutex拆分成小的mutex，这样thread会减少等待时间，提高程序效率
     + 一开始，你会有一个大的mutex，随着工程的进行，你可以在不得已的情况下，依照自己
       的经验，将大的mutex拆分成几个小的mutex
+*** Using more than one mutex
+    + 很多时候，你会发现，你要同时mutex两个数据，mutex虽然看似仅仅是数量增加了，但是
+      复杂度方面的增长更加大:比如，两个以上的mutex就会让你不得不考虑死锁的问题
+**** Lock hierarchy
+     + 我们来看一个经典的死锁例子，下图是两个thread调用mutex的顺序，我们说两者都不可能
+       进行到第二步，因为都要获得对方已经lock的mutex
+       | First thread                 | Scond thread                 |
+       |------------------------------+------------------------------|
+       | pthread_mutex_lock(&mutex_a) | pthread_mutex_lock(&mutex_b) |
+       | pthread_mutex_lock(&mutex_b) | pthread_mutex_lock(&mutex_a) |
+       |------------------------------+------------------------------|
+     + 为了防止死锁的发生，我们发明了两种策略:
+       - Fixed locking hierarchy: 说白了就是调用顺序要一致，比如我们都要先调用A, 然后调用B
+         不能反过来
+       - Try and back off: 说白了就是资源要么全部拥有，要么一个也不拥有。比如已经拥有一个
+         mutex的情况下，pthread_mutex_trylock下一个mutex失败，那么就把原来的mutex也释放
+     + 两种防止死锁的方法各有特点和现实情况下的限制，要相互合作
+**** Lock chaining
+     + 还有一种特殊的叫做chaining 的lock策略，所谓chaining，就是说先lock住一个mutex，然后lock
+       第二个mutex，在lock第二个mutex的时候，第一个mutex就不需要了，可以释放掉
+     + chaining lock最常见的，就是在遍历的数据结构中，比如树，我们可以先lock住root，然后等找
+       到下一个子节点的时候，lock下一个子节点，同时释放对root的mutex。这样可以防止lock住整
+       个树
+** Condition variables
+   + mutex的作用，是霸占住数据，然后对数据进行各种操作，有些情况下，我们是希望得
+     到数据的变化，比如我们想等到队列里面有数据了，然后对队列数据进行操作，这个
+     时候显然lock住数据的mutex是不对的，因为你lock住数据，数据是无论如何不会变化的
+   + 为了能够让数据发生变化，必须首先unlock该数据的mutex，然后设置一个wait函数block
+     住，等待后面使用这个数据的其他thread来通知。为了防止在unlock和wait之间发生其他
+     thread 抢占mutex的情况，把unlock和wait做成一个原子操作的机制就叫做condition
+     variable.
+   + 每个condition variable都要依赖同一个mutex，一个mutex可以同时拥有好几个condition
+     variable.
+   + 我们前面说的，"某种数据的变化", 其实就是一种断言(predicate), 比如队列不为空，就
+     是这样一个断言。一个condition variable最好只和一个predicate关联。虽然理论上可以
+     和多个predicate关联，但实践经验告诉我们，还是联系一个比较安全
+*** Creating and destroying a condition variable
+    + condition variable和mutex一样，也分静态创建和动态创建，也不能复制，常见的两种
+      创建方法如下
+      #+begin_src c
+        /* static creation */
+        typedef struct my_struct_tag {
+            pthread_mutex_t     mutex;
+            pthread_cond_t      cond;
+            int                 value;
+        } my_struct_t;
+        my_struct_t data = {
+            PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, 0};
+        
+        /* dynamic creation */
+        my_struct_t *data;
+        int status;
+        
+        data = malloc (sizeof (my_struct_t));
+        if (data == NULL)
+            errno_abort ("Allocate structure");
+        status = pthread_mutex_init (&data->mutex, NULL);
+        if (status != 0)
+            err_abort (status, "Init mutex");
+        status = pthread_cond_init (&data->cond, NULL);
+        if (status != 0)
+            err_abort (status, "Init condition");
+        status = pthread_cond_destroy (&data->cond);
+        if (status != 0)
+            err_abort (status, "Destroy condition");
+        status = pthread_mutex_destroy (&data->mutex);
+        if (status != 0)
+            err_abort (status, "Destroy mutex");
+        (void)free (data);
+      #+end_src
+*** Waiting on a condition variable
+    + 我们前面说的，把unlock mutex和wait集合于一身的函数就是如下的wait condition
+      variable函数
+      #+begin_src c
+        int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+        int pthread_cond_timedwait(pthread_cond_t *cond,
+                                   pthread_mutex_t *mutex,
+                                   struct timespec *expiration);
+      #+end_src
+    + wait condition variable函数是unlock mutex，然后一直sleep，直到有人signal或者
+      broadcast 这个condition variable, 这个时候wait condition函数返回，同时lock
+      住这个mutex!, 也就是说，函数sleep的时候是一个unlock & sleep的原子操作，函数
+      返回的时候，也是 lock & return的原子操作。
+*** Waking condition variable waiters
+    + 其他thread也要有责任在得到mutex并且更改了跟某个condition variable有关的数据
+      的情况下，把这个事情broadcast给大众，或者signal给一个thread
+      #+begin_src c
+        int pthread_cond_signal(pthread_cond_t *cond);
+        int pthread_cond_broadcast(pthread_cond_t *cond);
+      #+end_src
+    + broadcast和signal的区别就是broadcast是signal的一个超集，所以，如果不确定的情
+      况下，就使用broadcast
+    + 此处的signal和IPC中的信号不是一个概念，不要混淆
+*** One final alarm program
+    + 变量定义部分
+      #+begin_src c
+        #include <pthread.h>
+        #include <time.h>
+        #include "errors.h"
+        
+        /*
+         * The "alarm" structure now contains the time_t (time since the
+         * Epoch, in seconds) for each alarm, so that they can be
+         * sorted. Storing the requested number of seconds would not be
+         * enough, since the "alarm thread" cannot tell how long it has
+         * been on the list.
+         */
+        typedef struct alarm_tag {
+            struct alarm_tag    *link;
+            int                 seconds;
+            time_t              time;   /* seconds from EPOCH */
+            char                message[64];
+        } alarm_t;
+        
+        pthread_mutex_t alarm_mutex = PTHREAD_MUTEX_INITIALIZER;
+        pthread_cond_t alarm_cond = PTHREAD_COND_INITIALIZER;
+        alarm_t *alarm_list = NULL;
+        time_t current_alarm = 0;
+      #+end_src
+    + 插入函数的设计，插入成功后signal这个condition variable
+      #+begin_src c
+        void alarm_insert (alarm_t *alarm)
+        {
+            int status;
+            alarm_t **last, *next;
+        
+            /*
+             * LOCKING PROTOCOL:
+             * 
+             * This routine requires that the caller have locked the
+             * alarm_mutex!
+             */
+            last = &alarm_list;
+            next = *last;
+            while (next != NULL) {
+                if (next->time >= alarm->time) {
+                    alarm->link = next;
+                    *last = alarm;
+                    break;
+                }
+                last = &next->link;
+                next = next->link;
+            }
+            /*
+             * If we reached the end of the list, insert the new alarm
+             * there.  ("next" is NULL, and "last" points to the link
+             * field of the last item, or to the list header.)
+             */
+            if (next == NULL) {
+                *last = alarm;
+                alarm->link = NULL;
+            }
+        #ifdef DEBUG
+            printf ("[list: ");
+            for (next = alarm_list; next != NULL; next = next->link)
+                printf ("%d(%d)[\"%s\"] ", next->time,
+                    next->time - time (NULL), next->message);
+            printf ("]\n");
+        #endif
+            /*
+             * Wake the alarm thread if it is not busy (that is, if
+             * current_alarm is 0, signifying that it's waiting for
+             * work), or if the new alarm comes before the one on
+             * which the alarm thread is waiting.
+             */
+            if (current_alarm == 0 || alarm->time < current_alarm) {
+                current_alarm = alarm->time;
+                status = pthread_cond_signal (&alarm_cond);
+                if (status != 0)
+                    err_abort (status, "Signal cond");
+            }
+        }
+      #+end_src
+    + thread function，用来wait 队列，在有数据的时候进行打印
+      #+begin_src c
+        void *alarm_thread (void *arg)
+        {
+            alarm_t *alarm;
+            struct timespec cond_time;
+            time_t now;
+            int status, expired;
+        
+            /*
+             * Loop forever, processing commands. The alarm thread will
+             * be disintegrated when the process exits. Lock the mutex
+             * at the start -- it will be unlocked during condition
+             * waits, so the main thread can insert alarms.
+             */
+            status = pthread_mutex_lock (&alarm_mutex);
+            if (status != 0)
+                err_abort (status, "Lock mutex");
+            while (1) {
+                /*
+                 * If the alarm list is empty, wait until an alarm is
+                 * added. Setting current_alarm to 0 informs the insert
+                 * routine that the thread is not busy.
+                 */
+                current_alarm = 0;
+                while (alarm_list == NULL) {
+                    status = pthread_cond_wait (&alarm_cond, &alarm_mutex);
+                    if (status != 0)
+                        err_abort (status, "Wait on cond");
+                    }
+                alarm = alarm_list;
+                alarm_list = alarm->link;
+                now = time (NULL);
+                expired = 0;
+                if (alarm->time > now) {
+        #ifdef DEBUG
+                    printf ("[waiting: %d(%d)\"%s\"]\n", alarm->time,
+                        alarm->time - time (NULL), alarm->message);
+        #endif
+                    cond_time.tv_sec = alarm->time;
+                    cond_time.tv_nsec = 0;
+                    current_alarm = alarm->time;
+                    while (current_alarm == alarm->time) {
+                        status = pthread_cond_timedwait (
+                            &alarm_cond, &alarm_mutex, &cond_time);
+                        if (status == ETIMEDOUT) {
+                            expired = 1;
+                            break;
+                        }
+                        if (status != 0)
+                            err_abort (status, "Cond timedwait");
+                    }
+                    if (!expired)
+                        alarm_insert (alarm);
+                } else
+                    expired = 1;
+                if (expired) {
+                    printf ("(%d) %s\n", alarm->seconds, alarm->message);
+                    free (alarm);
+                }
+            }
+        }
+      #+end_src
+    + main函数，先调用thread，然后死循环等待输入，并插入到队列
+      #+begin_src c
+        int main (int argc, char *argv[])
+        {
+            int status;
+            char line[128];
+            alarm_t *alarm;
+            pthread_t thread;
+        
+            status = pthread_create (
+                &thread, NULL, alarm_thread, NULL);
+            if (status != 0)
+                err_abort (status, "Create alarm thread");
+            while (1) {
+                printf ("Alarm> ");
+                if (fgets (line, sizeof (line), stdin) == NULL) exit (0);
+                if (strlen (line) <= 1) continue;
+                alarm = (alarm_t*)malloc (sizeof (alarm_t));
+                if (alarm == NULL)
+                    errno_abort ("Allocate alarm");
+        
+                /*
+                 * Parse input line into seconds (%d) and a message
+                 * (%64[^\n]), consisting of up to 64 characters
+                 * separated from the seconds by whitespace.
+                 */
+                if (sscanf (line, "%d %64[^\n]", 
+                    &alarm->seconds, alarm->message) < 2) {
+                    fprintf (stderr, "Bad command\n");
+                    free (alarm);
+                } else {
+                    status = pthread_mutex_lock (&alarm_mutex);
+                    if (status != 0)
+                        err_abort (status, "Lock mutex");
+                    alarm->time = time (NULL) + alarm->seconds;
+                    /*
+                     * Insert the new alarm into the list of alarms,
+                     * sorted by expiration time.
+                     */
+                    alarm_insert (alarm);
+                    status = pthread_mutex_unlock (&alarm_mutex);
+                    if (status != 0)
+                        err_abort (status, "Unlock mutex");
+                }
+            }
+        }
+      #+end_src
+** Memory visibility between threads
