@@ -631,3 +631,35 @@
         }
       #+end_src
 ** Memory visibility between threads
+   + 内存实际的内容，和线程能看到的内存内容，有如下几条规则
+     - 在调用pthread_create之前内存内容是什么，那么当thread开始运行的时候，还是
+       认为这些内存的内容是什么。在pthread_create之后被写入内存的值，thread运行
+       的时候，就不知道了
+     - 当一个thread unlock mutex之前看到的内存中的数值，可以在另外一个thred lock
+       住同样的mutex的时候看到。如果在第一次unlock之前再像数据中写值，那么(由于
+       调度的关系), 另外一个thread不一定就能看到这个值的改变，比如下例:
+       | Thread A                       | Thread B                       |
+       |--------------------------------+--------------------------------|
+       | pthread_mutex_lock(&mutex1);   |                                |
+       | variableA = 1;                 | pthread_mutex_lock(&mutex1);   |
+       | variableB = 2;                 | localA = variableA;            |
+       | pthread_mutex_unlock(&mutex1); | localB = variableB;            |
+       |                                | pthread_mutex_unlock(&mutex1); |
+       |--------------------------------+--------------------------------|
+       + ThreadA 和 ThreadB 对variableA 和 variableB的值，见到的都是一样的
+       | Thread A                       | Thread B                       |
+       |--------------------------------+--------------------------------|
+       | pthread_mutex_lock(&mutex1);   |                                |
+       | variableA = 1;                 | pthread_mutex_lock(&mutex1);   |
+       |                                | localA = variableA;            |
+       | pthread_mutex_unlock(&mutex1); | localB = variableB;            |
+       | variableB = 2;                 | pthread_mutex_unlock(&mutex1); |
+       |--------------------------------+--------------------------------|
+       + 这里就很难保证两个thread能得到同样的值了，因为运行到ThreadA的unlock mutex
+         的时候，可能会schedule到Thread B那么两个thread就会对variableB的值认识不
+         一致
+     - 一个thread结束以前(比如调用pthread_exit)对内存数值的认识，可以通过threadB
+       的join命令进行取得，当然如果在join之前对这些内存又进行了写入，那就不能
+       保证两个thread认知一致了
+     - signal和broadcast也是一样，不能保证signal 和 broadcast之后进行的内存写入
+       会被其他thread看到
