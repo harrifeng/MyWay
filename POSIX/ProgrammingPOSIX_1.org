@@ -21,3 +21,201 @@
       保护critical data,而不是保护critical code
     + 可重入函数(reentrant)其实就是更有效率的线程安全，它利用了更加精妙的手段来保证
       线程安全。可重入函数不能依靠static data,理想情况下最好不要让线程间出现依赖
+    + 通常情况下，一个function可以通过把state数据存储在caller控制的"context structure"里面
+      来避免内部同步，初看起来，好像只是把责任丢给了caller，但实际的情况是，其实只有
+      caller才知道，某块区域是不是会有多个thread访问
+*** Concurrency control function
+    + 如果想让计算机拥有并发(concurrency)的特性，那么必须满足三个条件:
+      1) Execution context : 也就是一个process执行的现场，必须能够保护当前的现场，当重新
+         开始执行的时候，才知道从哪里开始
+      2) Scheduling : 调度策略是决定哪个execute context执行，执行多少时间
+      3) Synchronization : 同步策略能够让多个execute context之间在访问资源方面，相互合作
+         - 需要指出的是，在计算机里面synchronization(同步)的意思，恰恰不是"同时"访问某
+           个资源，而是让不同context之间相互合作决定谁先谁后访问资源
+    + 我们可以从下表中找到三者的对应实例
+      | #               | Execution  | Scheduling               | Synchronization                 |
+      |-----------------+------------+--------------------------+---------------------------------|
+      | Real traffic    | automobile | traffic lights and signs | turn signals and brake lights   |
+      |-----------------+------------+--------------------------+---------------------------------|
+      | Unix            |            |                          |                                 |
+      | (before thread) | process    | priority(nice)           | wait and pipes                  |
+      |-----------------+------------+--------------------------+---------------------------------|
+      | Pthreads        | thread     | priority, policy         | condition variables and mutexes |
+      |-----------------+------------+--------------------------+---------------------------------|
+** Asynchronous programming is intuitive
+*** because Unix is asynchronous
+*** because the world is asynchronous
+** About the examples in this book
+** Asynchronous programming, by example
+*** The baseline, synchronous version
+    + 我们先来看看一个最简单的alarm.c
+      #+begin_src c
+        #include "errors.h"
+        
+        int main(int argc, const char *argv[])
+        {
+            int seconds;
+            char line[128];
+            char message[64];
+        
+            while (1) {
+                printf("Alarm > ");
+                if (fgets(line, sizeof(line), stdin) == NULL) 
+                    exit(0);
+                if (strlen(line) <= 1) 
+                    continue;
+                if (sscanf(line, "%d %64[^\n]",
+                           &seconds, message) < 2) {
+                    fprintf(stderr, "Bad command\n");
+                } else {
+                    sleep(seconds);
+                    printf("(%d) %s\n", seconds, message);
+                }
+            }
+            return 0;
+        }
+      #+end_src
+      - 这个版本的问题很明显，每次只能有一个请求被处理
+*** A version using multiple processes
+    + 我们下面就来看一个通过fork，创造多个child来处理多个请求的例子
+      #+begin_src c
+        #include <sys/types.h>
+        #include <wait.h>
+        #include "errors.h"
+        
+        int main(int argc, const char *argv[])
+        {
+            int status;
+            char line[128];
+            int seconds;
+            pid_t pid;
+            char message[64];
+        
+            while (1) {
+                printf("Alarm> ");
+                if (fgets(line, sizeof(line), stdin) == NULL)
+                    exit(0);
+                if (strlen(line) <= 1) 
+                    continue;
+                if (sscanf(line, "%d %64[^\n]",
+                           &seconds, message) < 2) {
+                    fprintf(stderr, "Bad command\n");
+                } else {
+                    pid = fork();
+                    if (pid == (pid_t) -1)
+                        errno_abort("Fork");
+                    if (pid == (pid_t) 0) {
+                        /* in child, wait and print */
+                        sleep(seconds);
+                        printf("(%d) %s\n", seconds, message);
+                        exit(0);
+                    } else {
+                        /* in parent, call waitpid() to collect children */
+                        do {
+                            pid = waitpid((pid_t)-1, NULL, WNOHANG);
+                            if (pid == (pid_t)-1)
+                                errno_abort("Wait for child");
+                        } while (pid != (pid_t)0);
+                    }
+                }
+            }
+            return 0;
+        }
+      #+end_src
+*** A version using multiple threads
+    + 最后我们来看一个利用thread来完成的版本，这个版本会用到以下的pthread函数:
+      - pthread_create : 其第三个参数会指示在哪里创建thread
+      - pthread_detach : 调用后pthread会在结束前马上放弃自己的resource
+      - pthread_exit : 结束当前的thread
+      - pthread_self : 返回当前thread的ID
+    + 我们为alarm创建了一个structure alarm_t来保存数据
+      #+begin_src c
+        #include <pthread.h>
+        #include "errors.h"
+        
+        typedef struct alarm_tag {
+            int     seconds;
+            char    message[64];
+        } alarm_t;
+      #+end_src
+    + 每一个thread其实都是对一个function的创建, 如下 
+      #+begin_src c
+        void *alarm_thread(void *arg)
+        {
+            alarm_t *alarm = (alarm_t*)arg;
+            int status;
+        
+            status = pthread_detach(pthread_self());
+            if (status != 0)
+                err_abort(status, "Detach thread");
+            sleep(alarm->seconds);
+            printf ("(%d) %s\n", alarm->seconds, alarm->message);
+            free(alarm);
+            return NULL;
+        }
+      #+end_src
+      - thread function是参数是一个void*， 我们后面会看到，这个void *的arg一会
+        还会传给pthread_create
+      - 这里，我们通过一个cast，从arg中得到了alarm_t* 类型的alarm
+      - pthread detach设置了退出前自动释放自己的资源，那么系统就不再关心pthread
+        啥时候结束了(因为不需要wait它了)
+      - 一般来说Pthread会保留thread的resource，以便其他thread来查询
+      - 要记得free resource
+    + 最后，就是看看如何调用thread
+      #+begin_src c
+        int main(int argc, const char *argv[])
+        {
+            int status;
+            char line[128];
+            alarm_t *alarm;
+            pthread_t thread;
+            
+            while (1) {
+                printf("Alarm> ");
+                if (fgets(line, sizeof(line), stdin) == NULL)
+                    exit(0);
+                if (strlen(line) <= 1)
+                    continue;
+                alarm = (alarm_t*)malloc(sizeof(alarm_t));
+                if (alarm == NULL)
+                    errno_abort("Allocate alarm");
+                if (sscanf(line, "%d %64[^\n]",
+                           &alarm->seconds, alarm->message) < 2) {
+                    fprintf(stderr, "Bad command\n");
+                    free(alarm);
+                } else {
+                    status = pthread_create(&thread, NULL, 
+                                            alarm_thread, alarm);
+                    if (status != 0)
+                        err_abort(status, "Create alarm thread");
+                }
+            }
+            return 0;
+        }
+      #+end_src
+      - 我们前面看到在thread function里面要free resource，这个heap resource就是
+        在调用thread之前申请的，也就是通过共享内存，在thread之间共享了信息。
+      - pthread_create的用法也很简单，最后两个参数其实就是function thread，和
+        此function的parameter
+** Benefits of threading
+*** Parallelism
+    + 在多核计算机上，thread能真正让计算做到并行，同时带来效率方面的提升(不过
+      当然不是几个核就提高几倍，因为还有同步带来的代价
+*** Concurrency
+    + 即便是单核计算机，也能在thread那里得到实惠，我们知道如果没有使用thread的
+      话，process遇到要等待IO的时候要进行context switch到其他process，现在我们
+      用了thread，就不需要switch了，直接运行其他的thread就可以了
+*** Programming model
+    + 即便是不用到多核系统当中，使用thread进行编程也是一个很好的习惯
+** Costs of threading
+*** Computing overhead
+    + 线程编程所用到的代价有:系统同步的时间
+*** Programming discipline
+    + 编写线程是需要非常小心的，通常情况下POSIX保证ANSI C里面的函数都是线程安全
+      的，但是，你总会遇到非线程安全的函数
+    + 所有thread都共享address space，这就意味着破坏他人数据的危险
+    + 线性结构里面好的代码，并不意味着就是好的线程代码
+*** Harder to debug
+    + 因为线程代码的执行结果每次都是不一样的，所以调试自然麻烦
+** To thread or not to thread
+** POSIX thread concepts
