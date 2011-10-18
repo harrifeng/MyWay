@@ -1,0 +1,14 @@
+* Chapter 6: Multiplexing: The select and poll Functions
+** Introduction
+   + 在第5.12的讨论当中，我们知道，那个例子的问题在于TCP client同时处理了两个
+     input:一个standard input 和一个TCP socket. 所以TCP socket出现问题的时候，client
+     在等待standard input，对此毫不知情
+   + 我们现在的希望，是有一种机制:在一个或者多个IO condition满足的情况下，kernel
+     可以把这种状态及时通知我们。这种机制在Unix里面就叫做IO multiplexing
+   + IO multiplexing的应用场景通常有以下:
+     - 一个client同时处理多个descriptors, 比如5.12中的一个standard input 和一个
+       network socket
+     - 一个client同时处理多个sockets
+     - TCP server要处理一个 listening socket和多个connected sockets
+     - 一个server同时处理TCP和UDP的时候，IO multiplexing也要被使用
+     - 同样一个server处理多种service和多种protocol的时候，也要使用IO multiplexing
