@@ -1,0 +1,185 @@
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"Basic Setting, no plugin is need. :help keywords for help
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set nocompatible
+source $VIMRUNTIME/vimrc_example.vim
+source $VIMRUNTIME/mswin.vim
+behave mswin
+source $VIMRUNTIME/delmenu.vim
+source $VIMRUNTIME/menu.vim
+
+set nowrap
+set ignorecase
+set noerrorbells
+set shortmess=atI
+"automatically change directory, important for nerdtree plugin
+"This setting conflicts with many plugins
+set autochdir 
+nnoremap <silent> <F1> :lchdir %:p:h<CR>:pwd<CR>
+
+set number
+set nowrap
+
+language messages zh_CN.utf-8
+set encoding=utf-8
+set fileencodings=ucs-bom,utf-8,cp936,gb18030,big5,euc-jp,euc-kr,latin1
+
+set shiftwidth=4
+set tabstop=4
+set expandtab 
+set softtabstop=4 
+
+set guifont =Consolas:h10
+nmap lf :set guifont =Consolas:h16<CR>:set guifontwide=SimSun:h16<CR>
+nmap mf :set guifont =Consolas:h12<CR>:set guifontwide=SimSun:h12<CR>
+nmap sf :set guifont =Consolas:h10<CR>:set guifontwide=SimSun:h10<CR>
+set guifontwide=SimSun:h10
+
+winpos 0 0
+set lines=80
+set columns=160
+"set cursorline
+
+set nobackup
+set nowritebackup
+
+set guioptions-=m
+set guioptions-=T
+set guioptions-=r
+set guioptions-=b
+	
+nmap <C-H> <C-W><C-H>
+nmap <C-J> <C-W><C-J>
+nmap <C-K> <C-W><C-K>
+nmap <C-L> <C-W><C-L>
+nmap hi :res+1<CR> 
+nmap hd :res-1<CR> 
+nmap wi :vertical res+1<CR> 
+nmap wd :vertical res-1<CR> 
+
+" set list, especially tab
+set listchars=tab:>-,nbsp:-
+nmap sl : set list<CR>
+nmap sn : set nolist<CR>
+
+"highlight what I select in version mode
+vmap hl y/<C-R>"<CR>
+
+"set cmdline height
+set cmdheight=2
+
+"quick windows operation
+nmap qq :quit<CR>
+nmap sp :sp<CR>
+nmap vp :vsp<CR>
+nmap ol :only<CR>
+
+"Set mapleader, as keymapping maybe different
+let mapleader = ","
+
+"set tags=tags; 
+" Folding
+"set foldmethod=indent 
+"set tags=tags; 
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"Advanced Setting, .vim plugin needed
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+"Requires /plugin/mark.vim
+nmap mk <Plug>MarkSet 
+vmap mk <Plug>MarkSet
+nmap mr <Plug>MarkRegex 
+vmap mr <Plug>MarkRegex
+nmap mc <Plug>Mark
+nmap mn <leader>/
+
+"Requires /colors/*.vim
+set background="dark"
+colorscheme tango2
+nmap so : colorscheme solarized<CR>
+nmap dz : colorscheme darkZ<CR>
+nmap tg : colorscheme tango2<CR>
+
+"Requires /plugin/NERD_tree.vim
+"         /nerdtree_plugin/*.vim
+let NERDTreeBookmarksFile = $VIM.'/NERDTREE_BOOKMARK'
+nmap nt :NERDTreeToggle<cr> 
+nmap nf :NERDTreeFind<cr>
+nmap nm :NERDTreeMirror<cr>
+nmap nc :NERDTree c://<CR>
+nmap nd :NERDTree d://<CR>
+nmap ne :NERDTree e://<CR>
+
+"Requires /plugin/mru.vim
+let MRU_File = $VIM.'/VIM_MRU_FILES'
+let MRU_Max_Entries = 1000
+let MRU_Add_Menu = 0
+map fh :MRU <CR>
+
+"Requires /plugin/taglist.vim
+nnoremap <silent> <F8> :TlistToggle<CR>
+"select ctags path
+let Tlist_Ctags_Cmd = 'D:\UsefulCommand\ctags.exe'
+"Only current file shown 
+let Tlist_Show_One_File=1
+"Last window left, close it
+let Tlist_Exit_OnlyWindow=1
+let Tlist_File_Fold_Auto_Close=1
+"Right side
+let Tlist_Use_Right_Window=1 
+let Tlist_Show_Menu=1
+"shown after start up
+"let Tlist_Auto_Open=1 
+let Tlist_WinWidth = 60
+nmap tl :TlistToggle<CR>
+
+
+"Requires /plugin/bufexplorer.vim
+nmap bf :sil! BufExplorer<CR>
+nmap bs :sil! BufExplorerHorizontalSplit<CR>
+
+"Requires /plugin/grep.vim
+nmap se :lchdir %:p:h<CR>:pwd<CR>:Grep<CR>
+nmap sr :lchdir %:p:h<CR>:pwd<CR>:Rgrep<CR>
+nmap ee :lchdir %:p:h<CR>:pwd<CR>:Egrep<CR>
+
+:let Grep_Skip_Files = '*.bak *~ *.exe' 
+:let Grep_Default_Options = '-i'
+let Grep_Shell_Quote_Char = '"'
+":let Grep_Default_Filelist = '*.c *.cpp *.h *.py' 
+:let Grep_Default_Filelist = '*.*' 
+
+:let Grep_Path =  'd:\cygwin\bin\grep.exe'
+:let Fgrep_Path = 'd:\cygwin\bin\fgrep.exe'
+:let Egrep_Path = 'd:\cygwin\bin\egrep.exe'
+:let Agrep_Path = 'd:\cygwin\bin\agrep.exe'
+:let Grep_Find_Path = 'd:\cygwin\bin\find.exe' 
+:let Grep_Xargs_Path = 'd:\cygwin\bin\xargs.exe'
+:let Grep_Cygwin_Find = 1
+""""
+nmap <leader>bh:ConqueTerm bash --login -i
+
+
+
+"""""""""""""""""""""
+if &bg == "dark"
+ highlight BSignColor ctermfg=black ctermbg=darkmagenta guifg=white guibg=darkcyan
+else
+ highlight BSignColor ctermbg=white ctermfg=blue guibg=grey guifg=RoyalBlue3
+endif
+function Blank_Sign()
+    let sign_number = 0
+    let line = 1
+    while line <= line('$')
+        if getline(line) =~ '^\s*$'
+            exe 'sign define SignSymbol linehl=BSignColor texthl=BSignColor'
+            exe 'sign place ' . sign_number . ' line=' . line . ' name=SignSymbol buffer=' . winbufnr(0)
+        endif
+        let sign_number = sign_number + 1
+        let line = line + 1
+    endwhile
+endfunction
+"au BufRead * call Blank_Sign()
+nmap ww :au BufRead * call Blank_Sign()
+
