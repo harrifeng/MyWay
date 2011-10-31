@@ -12,3 +12,34 @@
      - TCP server要处理一个 listening socket和多个connected sockets
      - 一个server同时处理TCP和UDP的时候，IO multiplexing也要被使用
      - 同样一个server处理多种service和多种protocol的时候，也要使用IO multiplexing
+** I/O Models
+   + 在Unix体系当中通常，我们会遇到五种 I/O Models:
+     + blocking IO
+     + nonblocking IO
+     + IO multiplexing (select & poll)
+     + signal driven IO (SIGIO)
+     + asynchronous IO (POSIX aoi_ Function)
+*** Blocking I/O Model
+    + 我们最为常用的就是blocking IO, 默认来说，所有的socket都是blocking的。这种
+      IO model就是在等待IO来临，不来的时候，就sleep来block住自己
+*** Nonblocking IO Model
+    + 与block IO相对应的就是nonblocking IO, 它的特点是IO操作不能完成的时候，不是
+      选择sleep，而是马上返回
+*** IO Multiplexing Model
+    + 其实也是一种blocking IO，优势在于可以同时等超过一个的descriptor
+*** Signal-Driven IO Model
+    + 我们除了sleep，然后等待中断以外，还可以选择让kernel发送SIGIO 信号来通知我
+      们可以调用IO 函数了
+*** Asynchronous IO Model
+    + 和Signal-Driven IO Model相似，不同的是，kernel通知我们某个IO调用完成了,而不
+      是某个IO operation 可以开始了
+*** Synchronous IO versus Asynchronous IO
+    + POSIX 对这两个术语的定义如下:
+      - A synchronous I/O operation causes the requesting process to be blocked until
+        that I/O operation completes.
+      - An asynchronous I/O operation does not cause the requesting process to be blocked
+    + 从这里可以看出blocking IO， Noblocking IO， IO Multiplexing Model, Signal-Driven IO，
+      其实都是synchronous IO, 因为他们都在kernel model调用了recvfrom，这个会block
+      process的
+    + 只有asynchronous IO 保证了不block process，asynchronous IO也是某些高端Unix系统
+      承诺的特性
