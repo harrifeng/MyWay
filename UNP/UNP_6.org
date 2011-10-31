@@ -43,3 +43,23 @@
       process的
     + 只有asynchronous IO 保证了不block process，asynchronous IO也是某些高端Unix系统
       承诺的特性
+** select Function
+   + select 函数的作用是让process指导kernel等待多个event发生，如果这些events里面
+     有一个或者多个发生，或者经过了一定的时间，那么就让kernel来唤醒process
+   + select函数的原型如下:
+     #+begin_src c
+       #include <sys/select.h>
+       #include <sys/time.h>
+       /* 
+        *  Returns: positive count of ready descriptors, 
+        *  0 on timeout -1 on error 
+        */
+       int select(int maxfdp1, fd_set *readset, fd_set *writeset,
+                  fd_set *exceptset, const struct timeval *timeout);
+                  
+       struct timeval {
+           long tv_sec;       /* seconds */
+           long tv_usec;      /* microseconds */
+       };
+     #+end_src
+   + 
