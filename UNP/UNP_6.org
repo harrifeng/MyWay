@@ -62,4 +62,49 @@
            long tv_usec;      /* microseconds */
        };
      #+end_src
-   + 
+   + 此函数调用有三种情况:
+     1) Wait forever: 只有我们指定的descriptor返回的情况下，我们才结束，把timeout
+        设置成null pointer(表示永远)
+     2) Wait up to a fixed amout of time:设置时间和descriptor返回两个结束条件，任
+        何一个达到都立即返回
+     3) Do not wait at all. 把tv_sec和tv_usec都设置为0，
+   + 函数中间的三个参数readset, writeset, exceptset代表我们希望kernel去测试这些
+     descriptor，是否做好被读，被写，或者被是否是某些exception状态，现在我们只支
+     持如下两个exception状态:
+     1) socket接收到out-of-band的数据
+     2) pseudo-terminal的状况，本书不讨论。
+     读，写和异常情况的三个set集。
+   + 所谓set集就是用integer数组来代表bitmap，比如第一个integer代表0到31bit
+   + maxdp1代表被测试的descriptor的数目，比如我们想测试10个，那maxdp1就是10+1(要
+     算上maxdp1自己)。
+*** Under What Conditions Is a Descriptor Ready?
+    + 如下情况满足之一时，socket就准备好read了
+      - 每个socket有一个叫做low-water mark的值(可以通过SO_RCVLOWAT设置，在TCP和
+        UDP里面默认是1), 当socket的receive buffer大于这个low-water mark的时候，
+        socket就准备好被read了(因为read operation至少能返回一些值了)
+      - TCP connection收到对方传来的FIN, 那么read half of the connection就关闭了，
+        这种情况下也是ready for reading的，因为read的结果总是0
+      - socket是listening socket并且完成的connection非零的时候
+      - socket error存在的时候，这种情况下也是ready for reading的，因为总会返回-1
+    + 如下情况满足之一时，socket就准备好write了:
+      - 对于write来说，也有一个low-water mark的值(可以通过SO_SNDLOWAT设置，在TCP
+        和UDP里面默认是2048), 如果socket send buffer里面的值大于这个low-water
+        mark 并且满足发送条件(比如TCP的话，已经有connection了，UDP的话，有没有无
+        所谓)
+      - write half of the connection被关闭了，强行去写会产生SIGPIPE
+      - socket使用non-blocking connect成功了，或者connect建立失败
+      - socket error存在的时候，这种情况下也是ready for writing，因为总是会返回-1
+    + 当socket有out-of-band data来临的时候，socket就有exception condition
+      pending了
+*** Maximum Number of Descriptors for select
+    + 原来操作系统能力弱的时候，select处理descriptor的上限通常就是操作系统自己的
+      descriptor的上限，后来某些操心系统当中，都是使用如下的代码来控制select可以
+      控制的descriptor的个数
+      #+begin_src c
+        #ifndef FD_SETSIZE
+        #define FD_SETSIZE 256
+        #endif
+      #+end_src
+    + 虽然看上去我们可以通过更改这个宏的值来处理更多的descriptor，但很多时候是不
+      可行的，虽然很多的操作系统通过更改内核达到了可以控制更多descriptor的目的，
+      但是那些方法是不跨平台的，所以要小心。
