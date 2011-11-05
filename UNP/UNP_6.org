@@ -108,3 +108,164 @@
     + 虽然看上去我们可以通过更改这个宏的值来处理更多的descriptor，但很多时候是不
       可行的，虽然很多的操作系统通过更改内核达到了可以控制更多descriptor的目的，
       但是那些方法是不跨平台的，所以要小心。
+
+** str_cli Function (revisited)
+   + 我们前面的str_cli版本的缺陷，就是我们不能处理两个descriptor，这里我们借助
+     select function来成功处理两个descriptor
+     #+begin_src c
+       #include    "unp.h"
+       
+       void
+       str_cli(FILE *fp, int sockfd)
+       {
+           int         maxfdp1;
+           fd_set      rset;
+           char        sendline[MAXLINE], recvline[MAXLINE];
+       
+           FD_ZERO(&rset);
+           for ( ; ; ) {
+               FD_SET(fileno(fp), &rset);
+               FD_SET(sockfd, &rset);
+               maxfdp1 = max(fileno(fp), sockfd) + 1;
+               Select(maxfdp1, &rset, NULL, NULL, NULL);
+       
+               if (FD_ISSET(sockfd, &rset)) {  /* socket is readable */
+                   if (Readline(sockfd, recvline, MAXLINE) == 0)
+                       err_quit("str_cli: server terminated prematurely");
+                   Fputs(recvline, stdout);
+               }
+       
+               if (FD_ISSET(fileno(fp), &rset)) {  /* input is readable */
+                   if (Fgets(sendline, MAXLINE, fp) == NULL)
+                       return;     /* all done */
+                   Writen(sockfd, sendline, strlen(sendline));
+               }
+           }
+       }
+     #+end_src
+*** Call select
+    + 我们先通过FD_SET来设置一个rset, 这个rset以后会用到select里面，由于我们只需
+      要等到某个descriptor可读，所以我们只设置了第二个参数
+    + 我们还通过计算max of sockfd 和 fp的方式来确定maxfdp1的大小
+*** Handle readable socket
+    + 当select 成功返回后，rset里面如果是sockfd还被set着，说明现在socket是做好被
+      读取准备的
+*** Handle readable input
+    + 当select 成功返回后，rset里面如果是fd还被set着，说明现在fd是做好被
+      读取准备的
+** Batch Input and Buffering
+   + 前面我们的str_cli对于双通道的利用很不好，对于interactive的操作来说，还可以，
+     但是对于数据传输，我们最好还是使用batch mode: 就是说network能接受多少，我们
+     就传输多少，server也会按照接收的速率返回给用户
+** shutdown Function
+   + 通常情况下，关闭一个connection是依靠close function，但是shutdown function更
+     好，因为它杜绝了close function的两个缺点:
+     - close 是只有在descriptor 的 reference count为零的情况下，才关闭close的，
+       但是select function却可以随时发送FIN 给对方
+     - close 无法实现半关闭状态
+   + shutdown函数如下
+     #+begin_src c
+       #include <sys/socket.h>
+       
+       /* Returns 0 if OK, -1 on error */
+       int shutdown(int sockfd, int howto);
+     #+end_src
+   + 这个函数的变化主要体现在howto的值上，howto可以又如下三个macro的值可以选:
+     - SHUT_RD : connection的read half被关闭了，再来的数据会被接受，但是紧接着就
+       会被默默的丢弃
+     - SHUT_WR : connection的write half被关闭了，也就是我们常说的half close, 表
+       明server不会再往connection里面写数据了
+     - SHUT_RDWR : 其实就相当于调用了两次shutdown function，一次是SHUT_RD, 另一
+       次是SHUT_WR
+** str_cli Function(Revisited Again)
+   + 我们再来看看新版本的str_cli
+     #+begin_src c
+       #include    "unp.h"
+       
+       void
+       str_cli(FILE *fp, int sockfd)
+       {
+           int         maxfdp1, stdineof;
+           fd_set      rset;
+           char        buf[MAXLINE];
+           int     n;
+       
+           stdineof = 0;
+           FD_ZERO(&rset);
+           for ( ; ; ) {
+               if (stdineof == 0)
+                   FD_SET(fileno(fp), &rset);
+               FD_SET(sockfd, &rset);
+               maxfdp1 = max(fileno(fp), sockfd) + 1;
+               Select(maxfdp1, &rset, NULL, NULL, NULL);
+       
+               if (FD_ISSET(sockfd, &rset)) {  /* socket is readable */
+                   if ( (n = Read(sockfd, buf, MAXLINE)) == 0) {
+                       if (stdineof == 1)
+                           return;     /* normal termination */
+                       else
+                           err_quit("str_cli: server terminated prematurely");
+                   }
+       
+                   Write(fileno(stdout), buf, n);
+               }
+       
+               if (FD_ISSET(fileno(fp), &rset)) {  /* input is readable */
+                   if ( (n = Read(fileno(fp), buf, MAXLINE)) == 0) {
+                       stdineof = 1;
+                       Shutdown(sockfd, SHUT_WR);  /* send FIN */
+                       FD_CLR(fileno(fp), &rset);
+                       continue;
+                   }
+       
+                   Writen(sockfd, buf, n);
+               }
+           }
+       }
+     #+end_src
+   + 新版本增加了一个新的flag，stdineof。我们先从fp中读到EOF是正常的，通过这个
+     flag，可以让我们确认sockfd中的EOF是第二次读到，如果第一次读到，那应该是一个
+     premature termination
+   + 如果我们在fp中发现已经没有东西在发往client了，我们就shutdown with SHUT_WR
+** TCP Echo Server (Revisited)
+   + 其实我们也可以用select function来处理多个client(代替fork), 但是这样处理会造
+     成一个非常严重的问题，那就是无法应对DOS: Denial of Service
+   + DOS 造成的原因是server 被某些client给block住了。所以为了避免server因为设计
+     上的原因被黑客攻击，我们需要在server设计的时候，不要被某一个clidren的IO操作
+     所block住，需要使用遵循如下方法:
+     - 使用nonblocking IO
+     - 每个服务由专门的thread或者child process复制
+     - 对IO operation设计一个timeout
+** pselect Function
+   + 新的POSIX标准引入了pselect function
+     #+begin_src c
+       #include <sys/select.h>
+       #include <signal.h>
+       #include <time.h>
+       
+       int pselect(int maxfdp1, fd_set *readset, fd_set *writeset,
+                   fd_set *exceptset, const struct timespec *timeout,
+                   const sigset_t *sigmask);
+     #+end_src
+   + 此函数和select function有以下两点不同:
+     1) timespec struct里面，用纳秒级别的tv_nsec代替了微秒级别的tv_usec
+     2) pselect有了第六个参数， 用来保证程序禁止某些signal。
+** poll Function
+   + poll 和 select的功能相似，只是在file descriptor的提供方面有所不同:
+     #+begin_src c
+       #include <poll.h>
+       
+       int poll(struct pollfd fds[], nfds_t nfds, int timeout);
+       
+       struct pollfd {
+           int    fd;          /* File descriptor */
+           short  events;      /* Requested events bit mask */
+           short  revents;     /* Returned events bit mask */
+       };
+     #+end_src
+   + fds 就是一个struct pollfd类型的数组，nfds就是这个数组的大小，timeout自然就
+     是设置的超时了。
+** TCP Echo Server(Revisited Again)
+   + 我们当然也可以用poll代替select来实现我们的TCP Echo Server
+
+
