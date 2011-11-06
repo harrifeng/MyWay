@@ -1,0 +1,18 @@
+* Chapter 1: Introduction
+** A Brief History of Concurrency
+   + 以下几个因素促使操作系统考虑多个程序同时运行:
+     - 有时候程序会等待外部io输入，允许多个程序同时运行可以利用这段时间
+     - 多个用户或者程序应该被同等对待，出于公平也要允许同时运行
+     - 多个程序相互通信完成一件工作，比单独只写一个程序来的更加方便
+   + 同样出于上面三种要求，thread诞生了:在一个程序里面，现在允许共存多个program
+     control flow
+   + thread之间共享内存和文件句柄，但是每个thread却拥有自己的program counter,
+     stack, local variables(把它们想象成函数，就容易记忆了)
+   + thread能够最大限度的利用多核处理器:同一个程序的不同thread可以被同时映射到不
+     同的CPU来进行处理
+   + thread由于要共享内存，所以我们要付出一些同步的努力来防止因为内存问题导致的
+     thread读取数据错误
+** Benefits of Threads
+   + 在GUI的程序当中thread可以用来提高响应，在server程序当中，thread可以用来提高
+     资源利用率和吞吐量
+*** Exploiting Multiple Processors
