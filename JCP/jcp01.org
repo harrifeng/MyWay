@@ -16,3 +16,47 @@
    + 在GUI的程序当中thread可以用来提高响应，在server程序当中，thread可以用来提高
      资源利用率和吞吐量
 *** Exploiting Multiple Processors
+    + 因为thread是调度最基本单位，所以，多thread程序更有机会发挥多核CPU的性能
+    + 即便是在单核CPU中，由于能够在thread等待的时候，调用其他thread，所以这种情
+      况下，多线程也可以提高性能。
+*** Simplicity of Modeling
+    + 我们发现当我们的工作是一种类型的时候，比如fix几个bug，那么事情就容易管理，
+      效率也特别高(相比于又面试，又开发，又测试，又fixbug).同样的，将一个程序当
+      中不同部分按功能分到各个thread中，可以提高我们的开发效率
+*** Simplified Handling of Asynchronous Event
+    + 我们知道，我们可以利用non-blocking IO来达到避免等待IO而使得server失去响应，
+      但是 non-blocking IO的缺点是非常复杂而且比起synchronous IO来，更容易出错
+    + 多线程就可以很好的不利用non-blocking IO来解决asynchronous event的问题
+    + 由于操作系统原来允许的thread数目很小，现在已经有NPTL thread package等技术
+      出来来提高操作系统默认的thread的数目
+*** More Responsive User Interfaces
+    + GUI程序在thread的帮助下更加的responsive
+** Risks of Threads
+*** Safety Hazards
+    + 多线程编程最大的挑战，是难于测试，每次thread发生的顺序不一样，会导致结果不
+      同，下面的代码就可能由于不幸运的调用次序，而产生两个thread都调用getNext却
+      得到相同值的情况
+      #+begin_src java
+        @NotThreadSafe
+        public class UnsafeSequence {
+            private int value;
+        
+            /* Returns a unique value */
+            public int getNext() {
+                return value++;
+            }
+        }
+      #+end_src
+    + 危险产生的原因是因为threads可以共享一个相同的memory address, 在带来轻松共
+      享数据的同时，也意味这很多风险，这都是由于非线性的访问共享数据造成的
+    + Java提供了如下的同步机制来访问共享数据
+      #+begin_src java
+        @ThreadSafe
+        public class Sequence {
+            @GuardeBy("this") private int nextValue;
+        
+            public synchronized int getNext() {
+                return nextValue++;
+            }
+        }
+      #+end_src
