@@ -60,3 +60,18 @@
             }
         }
       #+end_src
+    + 如果没有synchronized这个关键字的话，编译器，硬件都会对数据，操作做很多优化，
+      对于多线程来说，这些优化是非常危险的。
+*** Liveness Hazards
+    + 线程的引入，同样引入了liveness failure的概念(也就是我们所说的 deadlock,
+      starvation, livelock)， 这些问题都非常难以发现
+*** Performace Hazards
+    + 线程的使用，也是又消耗的，这些消耗也会造成性能方面的损失。
+      - 执行上下文的保存
+      - CPU用来调度线程
+      - 同步机制访问数据
+      - 清空内存cache
+** Threads are Everywhere
+   + 每一个java程序都会用到多线程，因为当JVM开始的时候，他会创建一个JVM
+     housekeeping task(用来垃圾回收)，一个main thread来运行main,等等，所以在java
+     中到处都是多线程，你不可能逃避

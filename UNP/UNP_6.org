@@ -266,6 +266,6 @@
    + fds 就是一个struct pollfd类型的数组，nfds就是这个数组的大小，timeout自然就
      是设置的超时了。
 ** TCP Echo Server(Revisited Again)
-   + 我们当然也可以用poll代替select来实现我们的TCP Echo Server
+   + 我们当然也可以用poll代替select来实现我们的TCP Echo Server 
 
 
