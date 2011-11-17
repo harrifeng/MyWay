@@ -162,4 +162,17 @@
 *** SO_ERROR
     + 通过读取SO_ERROR，我们就可以知道存放socket error的变量so_error的值
     + 这个选项只可以读取，不能设置。
-
+*** SO_KEEPALIVE
+    + keepalive选项是指，当双方向上在两小时时间内没有任何数据交流的时候，发送
+      probe信息来了解当前两方peer的状态
+    + 很明显，这个option可以用来探测某个host是否挂掉或者不可达，而且是server更经
+      常使用这个option，因为server可以用这个option来检验client是否已经关机，或者
+      crash了，那样的话，这个connection就可以结束了。
+*** SO_LINGER
+    + 这个选项决定了close function的某些特性:当connection关闭时，close默认情况下
+      是马上返回，但是如果有数据还在传的话，我们可以通过设置SO_LINGER来保存这些
+      数据
+*** SO_OOBINLINE
+    + 这个选项设置后，out-of-band的数据会被反正普通的input queue
+*** SO_RCVBUF and SO_SNDBUF
+    + 这两个选项让我们可以改变default size的大小
