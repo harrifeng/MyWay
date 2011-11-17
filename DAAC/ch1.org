@@ -1,0 +1,64 @@
+* chapter 1: Introduction
+** 本书讨论的内容
+   + 作者首先举例了Kth element和字谜游戏的问题，算法的优势就是能降低复杂度，从而
+     在面对数据量的时候，比较从容。这也就是这本书要讨论的内容
+** 数学知识复习
+*** 指数:
+    + 2^N + 2^N = 2^(N+1)
+*** 对数
+    + 在计算机科学中，所有对数都是以2为底的
+    + logAB = logA + logB
+*** 级数
+    + sumof(A^i | 0<=i<=N) = (A^(N+1) - 1)/A-1
+    + 推演方法
+      #+begin_src c
+        S = 1 + A^1 + A^2 + A^3 ...
+        AS =    A^1 + A^2 + A^3 + A^4...
+        S - AS = 1
+        S = 1/(1 - A)
+      #+end_src
+    + 我们经常使用A=2时候的情况:sumof(2^i | 0<=i<=N) = 2^(N+1) - 1
+*** 模运算
+    + 如果N整除A-B,那么就说A与B模N同余
+** 递归的简单介绍
+   + 当一个函数用自身来定义时，就称为递归的。
+   + 递归的特点就是需要某些基准情况，它们不用递归就能算出来。
+     #+begin_src c++
+       int f(int x)
+       {
+           /* Base Case */
+           if (x == 0)
+               return 0;
+           else
+               return 2 * f(x - 1) + x * x;
+       }
+     #+end_src
+   + 打印输出整数是一个很好的递归的例子，这个例子还有个局部的优化方法:使用
+     n-(n/10)*10 来代替n%10, 因为mod这个过程消耗很大
+     #+begin_src c++
+       #include <iostream>
+       using namespace std;
+       
+       void printOut(int n)
+       {
+           if (n >= 10)
+               printOut(n / 10);
+           /*
+            *use n - (n / 10) * 10 is more effective than mod, as 
+            *mod is very costly for CPU
+            *cout << n - (n / 10) * 10;
+            */
+           cout << n % 10;
+       }
+       
+       int main(int argc, const char *argv[])
+       {
+           printOut(123459);    
+           cout << endl;
+           return 0;
+       }
+     #+end_src
+   + 递归要确保所有递归调用都能运行，在逻辑上不能又错误
+   + 最后，递归最好能满足合成效益法则:在求解一个问题的同一实例时，切勿在不同的递
+     归调用中做重复的工作。比如，使用递归来计算斐波那契数之类的简单函数值不是一
+     个特别好的注意，就是因为递归中有很多重复的操作。
