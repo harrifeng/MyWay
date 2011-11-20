@@ -91,4 +91,40 @@
 ** 抽象数据类型:
    + ADT就是对一种数据结构一系列的增删改查操作
 ** 表ADT:
-   + 
+*** 表的简答数组实现
+    + 如果对表的操作通常是在末尾插入元素，之后只有数组访问，在这种情况下，数组是
+      实现表比较好的方式
+    + 表的弱点就是插入和删除代价昂贵
+*** 简单链表
+    + 克服数组形式表插入删除代价昂贵的缺点，产生了链表
+*** STL的向量和表
+    + 在STL中，数组实现表的代表就是vector，链表实现表的代表就是list，其中在list
+      是双向链表。
+    + vector和list都支持的函数如下:
+      - int size() const
+      - void clear()
+      - bool empty()
+      - void push_back(const Object& x)
+      - void pop_back() 
+      - const Object &back() const
+      - const Object &front() const
+    + vector在头部插入效率不高，所以下面两个函数只被list支持
+      - void push_front(const Object &x)
+      - void pop_front()
+    + vector的特点是数据内存在一块，所以有以下特殊函数
+      - Object& operator[]
+      - Object& at(int idx)
+      - int capacity() const
+      - void reserve(int new Capacity)
+*** 迭代器
+    + 获得迭代器的方法:
+      - iterator begin()
+      - iterator end()
+    + 迭代器方法
+      - itr++ & ++itr
+      - *itr
+      - itr1 == itr2 如果两者指向同一个位置才为true
+    + 需要迭代器的容器操作
+      - iterator insert(iterator pos, Object &x)
+      - iterarot erase(iterator pos)
+      - iterator erase(iterator start, iterator end)
