@@ -128,3 +128,23 @@
       - iterator insert(iterator pos, Object &x)
       - iterarot erase(iterator pos)
       - iterator erase(iterator start, iterator end)
+*** const_iterator
+    + const_iterator和iterator的主要区别，是const_iterator的operator*返回常量引
+      用，这样const_iterator类型的*iter就不能出现在赋值语句的左边
+** 向量的实现
+** 表的实现
+** 栈ADT
+*** 栈模型
+*** 栈的实现
+    + 栈可以很容易的用vector和list来实现
+*** 应用
+    + 栈在计算机科学中的应用有:
+      1) 平衡符号:也就是我们常说的括号匹配
+      2) 中缀表达式到后缀表达式的转换
+      3) 后缀表达式的计算
+      4) 函数的调用
+    + 其中，四则表达式的计算就用到了上面提到的(2)和(3): 我们阅读常用的中缀表达式
+      作为输入，先利用栈把中缀表达式转化成后缀表达式，然后计算后缀表达式的值，就
+      可以得到四则运算的结果。
+
+    
