@@ -146,5 +146,120 @@
     + 其中，四则表达式的计算就用到了上面提到的(2)和(3): 我们阅读常用的中缀表达式
       作为输入，先利用栈把中缀表达式转化成后缀表达式，然后计算后缀表达式的值，就
       可以得到四则运算的结果。
-
+    + 尾递归:在程序最后一行进行的递归，叫做尾递归，尾递归是非常差劲的使用递归的
+      方法，可以通过将代码放到while循环中加以去除，如下
+      #+begin_src c
+        template <typename Iterator>
+        void print(Iterator start, Iterator end, ostream &out = cout)
+        {
+            if (start == end)
+                return;
+        
+            out << *start++ << endl; // Print and advance start
+            print(start, end, out);
+        }
+        /* previous recursive code can be replaced by following code */
+        template <typename Iterator>
+        void print(Iterator start, Iterator end, ostream &out = cout)
+        {
+            while (true)
+            {
+                if (start == end)
+                    return;
+                out << *start++ << endl; // Print and advance start
+            }
+        }
+      #+end_src
+** 队列ADT
+*** 队列模型
+    + 如果说栈是后进先出的话，队列就是先进先出
+*** 队列的数组实现
+    + 队列的数组实现是通过"循环数组"来避免队列在front和back两个图标到达数组尾部
+      的情况的。
+    + "循环数组"的设计，要求我们要记录数组的长度。因为会出现front在back后面但是
+      却合法的情况
+*** 队列的应用
+    + 看似是常识般的队列，却在算法中有非常重要的应用，比如广度优先算法就是借助于
+      队列的帮助
+* chapter 4:树
+** 预备知识
+   +对于大量的输入数据，链表线性访问的时间太长了，不宜使用，所以我们要引入新的数
+   据结构:树
+*** 树的实现
+    + 如果树的子结点数目不限制，那么就是一个传统意义上的树，这种树却由于子结点的
+      不固定性，不容易编码实现。
+** 二叉树
+   + 容易编码实现，且最终应用广泛的，是二叉树
+*** 实现
+    + 一个二叉树的典型实现如下:
+      #+begin_src c
+        struct BinaryNode
+        {
+            Object      element;
+            BinaryNode  *left;
+            BinaryNode  *right;
+        };
+      #+end_src
+*** 一个例子-表达式树
+    + 我们前面说的表达式，如果树叶代表操作数，其他结点代表操作符的话，整个树就可
+      以代表一个四则运算。
+** 查找树ADT-二叉查找树
+   + 对于一个普通的二叉树来说，最代表性的两个操作就是insert和remove
+*** insert
+    + insert其实就是和contains非常像，对于一个元素如果在指定地方没有找到它，我们
+      就该在那个地方插入这个元素
+      #+begin_src c++
+        /**
+         * Internal method to insert into a subtree
+         * x is the item to insert
+         * t is the node that roots the subtree, t maybe
+         * modified, so no const is applied.
+         * Set the new root of the subtree.
+         */
+        void insert(const Comparable &x, BinaryNode* &t)
+        {
+            /* if the fuction is contains, do nothing here */
+            if (t == NULL)
+                t = new BinaryNode(x, NULL, NULL);
+            else if (x < t->element)
+                insert(x, t->left);
+            else if (t->element > x)
+                insert(x, t->right);
+            /* if the fuction is contains, return true here,
+               as we find the exact node! */
+            else
+                ; // Duplicate; do nothing
+        }
+      #+end_src
+*** remove
+    + remove的理解难度则要大一点，主要在两点:
+      1) 如果要删除的结点有一个(或者零个)子结点的话，那么我们其实是，第一，用中
+         间变量保存自己的地址，第二，把自己的地址赋成自己的子结点的内容，第三，
+         把中间变量保存的那个地址里面的动态内存删掉。
+      2) 理解了第1条，那么第二条比较好理解:如果要删除的结点有两个子结点的话，那
+         么，直接删除是非常不明智的，我们采取把这个子节点的"右子树"的"最小结点"
+         的值给我们，然后让去删除"右子树"的"最小结点",因为只有这个结点可以放到"
+         根"的位置，而且它只会最多有一个子结点
+      #+begin_src c++
+        void remove(const Comparble &x, BinaryNode* &t)
+        {
+            if (t == NULL)
+                return;    //Item not found, do nothing
+            if (x < t->element)
+                remove(x, t->left);
+            else if(t->element < x)
+                remove(x, t->right);
+            else if (t->left != NULL && t->right != NULL) // two children
+            {
+                t->element = findMin(t->right)->element;
+                remvoe(t->element, t->right);
+            }
+            else 
+            {
+                BinaryNode *oldNode = t; //temp variable
+                t = (t->left != NULL) ? t->left : t->right;
+                delete oldNode; // Do not need let oldNode = NULL, as we stil use it
+            }
+        }
+      #+end_src
     
