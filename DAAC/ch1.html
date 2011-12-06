@@ -1,0 +1,1568 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>ch1</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2011-12-06 22:13:31 CST"/>
+<meta name="author" content="feng haoran"/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">ch1</h1>
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 chapter 1: 引论 </a>
+<ul>
+<li><a href="#sec-1.1">1.1 本书讨论的内容 </a></li>
+<li><a href="#sec-1.2">1.2 数学知识复习 </a>
+<ul>
+<li><a href="#sec-1.2.1">1.2.1 指数: </a></li>
+<li><a href="#sec-1.2.2">1.2.2 对数 </a></li>
+<li><a href="#sec-1.2.3">1.2.3 级数 </a></li>
+<li><a href="#sec-1.2.4">1.2.4 模运算 </a></li>
+</ul>
+</li>
+<li><a href="#sec-1.3">1.3 递归的简单介绍 </a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2 chapter 2: 算法分析 </a>
+<ul>
+<li><a href="#sec-2.1">2.1 数学基础 </a></li>
+<li><a href="#sec-2.2">2.2 模型 </a></li>
+<li><a href="#sec-2.3">2.3 要分析的问题 </a></li>
+<li><a href="#sec-2.4">2.4 运行时间计算 </a>
+<ul>
+<li><a href="#sec-2.4.1">2.4.1 运行时间中的对数 </a></li>
+</ul></li>
+</ul>
+</li>
+<li><a href="#sec-3">3 chapter 3: 表，栈和队列 </a>
+<ul>
+<li><a href="#sec-3.1">3.1 抽象数据类型: </a></li>
+<li><a href="#sec-3.2">3.2 表ADT: </a>
+<ul>
+<li><a href="#sec-3.2.1">3.2.1 表的简答数组实现 </a></li>
+<li><a href="#sec-3.2.2">3.2.2 简单链表 </a></li>
+<li><a href="#sec-3.2.3">3.2.3 STL的向量和表 </a></li>
+<li><a href="#sec-3.2.4">3.2.4 迭代器 </a></li>
+<li><a href="#sec-3.2.5">3.2.5 const_iterator </a></li>
+</ul>
+</li>
+<li><a href="#sec-3.3">3.3 向量的实现 </a></li>
+<li><a href="#sec-3.4">3.4 表的实现 </a></li>
+<li><a href="#sec-3.5">3.5 栈ADT </a>
+<ul>
+<li><a href="#sec-3.5.1">3.5.1 栈模型 </a></li>
+<li><a href="#sec-3.5.2">3.5.2 栈的实现 </a></li>
+<li><a href="#sec-3.5.3">3.5.3 应用 </a></li>
+</ul>
+</li>
+<li><a href="#sec-3.6">3.6 队列ADT </a>
+<ul>
+<li><a href="#sec-3.6.1">3.6.1 队列模型 </a></li>
+<li><a href="#sec-3.6.2">3.6.2 队列的数组实现 </a></li>
+<li><a href="#sec-3.6.3">3.6.3 队列的应用 </a></li>
+</ul></li>
+</ul>
+</li>
+<li><a href="#sec-4">4 chapter 4:树 </a>
+<ul>
+<li><a href="#sec-4.1">4.1 预备知识 </a>
+<ul>
+<li><a href="#sec-4.1.1">4.1.1 树的实现 </a></li>
+</ul>
+</li>
+<li><a href="#sec-4.2">4.2 二叉树 </a>
+<ul>
+<li><a href="#sec-4.2.1">4.2.1 实现 </a></li>
+<li><a href="#sec-4.2.2">4.2.2 一个例子-表达式树 </a></li>
+</ul>
+</li>
+<li><a href="#sec-4.3">4.3 查找树ADT-二叉查找树 </a>
+<ul>
+<li><a href="#sec-4.3.1">4.3.1 insert </a></li>
+<li><a href="#sec-4.3.2">4.3.2 remove </a></li>
+</ul>
+</li>
+<li><a href="#sec-4.4">4.4 AVL 树 </a></li>
+<li><a href="#sec-4.5">4.5 伸展树 </a></li>
+<li><a href="#sec-4.6">4.6 树的遍历 </a></li>
+<li><a href="#sec-4.7">4.7 B树 </a></li>
+<li><a href="#sec-4.8">4.8 标准库中的set和map </a>
+<ul>
+<li><a href="#sec-4.8.1">4.8.1 set </a></li>
+<li><a href="#sec-4.8.2">4.8.2 map </a></li>
+<li><a href="#sec-4.8.3">4.8.3 set 和 map的实现 </a></li>
+</ul></li>
+</ul>
+</li>
+<li><a href="#sec-5">5 chapter 5: 散列 </a>
+<ul>
+<li><a href="#sec-5.1">5.1 基本思想 </a></li>
+<li><a href="#sec-5.2">5.2 散列函数 </a></li>
+<li><a href="#sec-5.3">5.3 分离链接法 </a></li>
+<li><a href="#sec-5.4">5.4 不使用链表的散列表 </a>
+<ul>
+<li><a href="#sec-5.4.1">5.4.1 线性探测 </a></li>
+<li><a href="#sec-5.4.2">5.4.2 平方探测 </a></li>
+<li><a href="#sec-5.4.3">5.4.3 双散列 </a></li>
+</ul>
+</li>
+<li><a href="#sec-5.5">5.5 再散列 </a></li>
+<li><a href="#sec-5.6">5.6 可扩展散列 </a></li>
+</ul>
+</li>
+<li><a href="#sec-6">6 chapter 6:优先队列(堆) </a>
+<ul>
+<li><a href="#sec-6.1">6.1 模型 </a></li>
+<li><a href="#sec-6.2">6.2 一些简单的实现 </a></li>
+<li><a href="#sec-6.3">6.3 二叉堆 </a>
+<ul>
+<li><a href="#sec-6.3.1">6.3.1 结构性质 </a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> chapter 1: 引论 </h2>
+<div class="outline-text-2" id="text-1">
+
+
+</div>
+
+<div id="outline-container-1.1" class="outline-3">
+<h3 id="sec-1.1"><span class="section-number-3">1.1</span> 本书讨论的内容 </h3>
+<div class="outline-text-3" id="text-1.1">
+
+<ul>
+<li>
+作者首先举例了Kth element和字谜游戏的问题，算法的优势就是能降低复杂度，从而
+在面对数据量的时候，比较从容。这也就是这本书要讨论的内容
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-1.2" class="outline-3">
+<h3 id="sec-1.2"><span class="section-number-3">1.2</span> 数学知识复习 </h3>
+<div class="outline-text-3" id="text-1.2">
+
+
+</div>
+
+<div id="outline-container-1.2.1" class="outline-4">
+<h4 id="sec-1.2.1"><span class="section-number-4">1.2.1</span> 指数: </h4>
+<div class="outline-text-4" id="text-1.2.1">
+
+<ul>
+<li>
+2^N + 2^N = 2^(N+1)
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-1.2.2" class="outline-4">
+<h4 id="sec-1.2.2"><span class="section-number-4">1.2.2</span> 对数 </h4>
+<div class="outline-text-4" id="text-1.2.2">
+
+<ul>
+<li>
+在计算机科学中，所有对数都是以2为底的
+</li>
+<li>
+logAB = logA + logB
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-1.2.3" class="outline-4">
+<h4 id="sec-1.2.3"><span class="section-number-4">1.2.3</span> 级数 </h4>
+<div class="outline-text-4" id="text-1.2.3">
+
+<ul>
+<li>
+sumof(A^i | 0&lt;=i&lt;=N) = (A^(N+1) - 1)/A-1
+</li>
+<li>
+推演方法
+
+
+
+<pre class="src src-c">S = 1 + A^1 + A^2 + A^3 ...
+AS =    A^1 + A^2 + A^3 + A^4...
+S - AS = 1
+S = 1/(1 - A)
+</pre>
+
+
+
+</li>
+<li>
+我们经常使用A=2时候的情况:sumof(2^i | 0&lt;=i&lt;=N) = 2^(N+1) - 1
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-1.2.4" class="outline-4">
+<h4 id="sec-1.2.4"><span class="section-number-4">1.2.4</span> 模运算 </h4>
+<div class="outline-text-4" id="text-1.2.4">
+
+<ul>
+<li>
+如果N整除A-B,那么就说A与B模N同余
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-1.3" class="outline-3">
+<h3 id="sec-1.3"><span class="section-number-3">1.3</span> 递归的简单介绍 </h3>
+<div class="outline-text-3" id="text-1.3">
+
+<ul>
+<li>
+当一个函数用自身来定义时，就称为递归的。
+</li>
+<li>
+递归的特点就是需要某些基准情况，它们不用递归就能算出来。
+
+
+
+<pre class="src src-c++"><span style="color: #228b22;">int</span> <span style="color: #0000ff;">f</span>(<span style="color: #228b22;">int</span> <span style="color: #a0522d;">x</span>)
+{
+    <span style="color: #b22222;">/* </span><span style="color: #b22222;">Base Case */</span>
+    <span style="color: #7f007f;">if</span> (x == 0)
+        <span style="color: #7f007f;">return</span> 0;
+    <span style="color: #7f007f;">else</span>
+        <span style="color: #7f007f;">return</span> 2 * f(x - 1) + x * x;
+}
+</pre>
+
+
+
+</li>
+<li>
+打印输出整数是一个很好的递归的例子，这个例子还有个局部的优化方法:使用
+n-(n/10)*10 来代替n%10, 因为mod这个过程消耗很大
+
+
+
+<pre class="src src-c++"><span style="color: #7a378b;">#include</span> <span style="color: #8b2252;">&lt;iostream&gt;</span>
+<span style="color: #7f007f;">using</span> <span style="color: #7f007f;">namespace</span> <span style="color: #008b8b;">std</span>;
+
+<span style="color: #228b22;">void</span> <span style="color: #0000ff;">printOut</span>(<span style="color: #228b22;">int</span> <span style="color: #a0522d;">n</span>)
+{
+    <span style="color: #7f007f;">if</span> (n &gt;= 10)
+        printOut(n / 10);
+    <span style="color: #b22222;">/*</span><span style="color: #b22222;">
+     *use n - (n / 10) * 10 is more effective than mod, as 
+     *mod is very costly for CPU
+     *cout &lt;&lt; n - (n / 10) * 10;
+     */</span>
+    cout &lt;&lt; n % 10;
+}
+
+<span style="color: #228b22;">int</span> main(<span style="color: #228b22;">int</span> <span style="color: #a0522d;">argc</span>, <span style="color: #7f007f;">const</span> <span style="color: #228b22;">char</span> *<span style="color: #a0522d;">argv</span>[])
+{
+    printOut(123459);    
+    cout &lt;&lt; endl;
+    <span style="color: #7f007f;">return</span> 0;
+}
+</pre>
+
+
+
+</li>
+<li>
+递归要确保所有递归调用都能运行，在逻辑上不能又错误
+</li>
+<li>
+最后，递归最好能满足合成效益法则:在求解一个问题的同一实例时，切勿在不同的递
+归调用中做重复的工作。比如，使用递归来计算斐波那契数之类的简单函数值不是一
+个特别好的注意，就是因为递归中有很多重复的操作。
+
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> chapter 2: 算法分析 </h2>
+<div class="outline-text-2" id="text-2">
+
+
+</div>
+
+<div id="outline-container-2.1" class="outline-3">
+<h3 id="sec-2.1"><span class="section-number-3">2.1</span> 数学基础 </h3>
+<div class="outline-text-3" id="text-2.1">
+
+<ul>
+<li>
+主要就是说了大O复杂度分析法
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-2.2" class="outline-3">
+<h3 id="sec-2.2"><span class="section-number-3">2.2</span> 模型 </h3>
+<div class="outline-text-3" id="text-2.2">
+
+</div>
+
+</div>
+
+<div id="outline-container-2.3" class="outline-3">
+<h3 id="sec-2.3"><span class="section-number-3">2.3</span> 要分析的问题 </h3>
+<div class="outline-text-3" id="text-2.3">
+
+</div>
+
+</div>
+
+<div id="outline-container-2.4" class="outline-3">
+<h3 id="sec-2.4"><span class="section-number-3">2.4</span> 运行时间计算 </h3>
+<div class="outline-text-3" id="text-2.4">
+
+
+</div>
+
+<div id="outline-container-2.4.1" class="outline-4">
+<h4 id="sec-2.4.1"><span class="section-number-4">2.4.1</span> 运行时间中的对数 </h4>
+<div class="outline-text-4" id="text-2.4.1">
+
+<ul>
+<li>
+二分查找法:二分查找法因为每次都会去掉一半的搜索项目，所以最后的复杂度是O(lgN)
+</li>
+<li>
+欧几里得算法:是求两个整数的最大公约数的算法，也就是我们常说的辗转相除算法
+</li>
+<li>
+幂运算:求幂的话，最明显的是使用N-1次的乘法自乘，但是还有更高效的运算方法，
+那就是利用递归:
+
+
+
+<pre class="src src-c++"><span style="color: #228b22;">long</span> <span style="color: #0000ff;">pow</span>(<span style="color: #228b22;">long</span> <span style="color: #a0522d;">x</span>, <span style="color: #228b22;">int</span> <span style="color: #a0522d;">n</span>)
+{
+    <span style="color: #7f007f;">if</span> (n == 0)
+        <span style="color: #7f007f;">return</span> 1;
+    <span style="color: #7f007f;">if</span> (n == 1)
+        <span style="color: #7f007f;">return</span> x;
+    <span style="color: #7f007f;">if</span> (<span style="color: #228b22;">isEven</span>(<span style="color: #a0522d;">n</span>))
+        <span style="color: #7f007f;">return</span> pow(<span style="color: #228b22;">x</span> * <span style="color: #a0522d;">x</span>, n / 2);
+    <span style="color: #7f007f;">else</span>
+        <span style="color: #7f007f;">return</span> pow(<span style="color: #228b22;">x</span> * <span style="color: #a0522d;">x</span>, n / 2) * x;
+}
+</pre>
+
+
+
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> chapter 3: 表，栈和队列 </h2>
+<div class="outline-text-2" id="text-3">
+
+
+</div>
+
+<div id="outline-container-3.1" class="outline-3">
+<h3 id="sec-3.1"><span class="section-number-3">3.1</span> 抽象数据类型: </h3>
+<div class="outline-text-3" id="text-3.1">
+
+<ul>
+<li>
+ADT就是对一种数据结构一系列的增删改查操作
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-3.2" class="outline-3">
+<h3 id="sec-3.2"><span class="section-number-3">3.2</span> 表ADT: </h3>
+<div class="outline-text-3" id="text-3.2">
+
+
+</div>
+
+<div id="outline-container-3.2.1" class="outline-4">
+<h4 id="sec-3.2.1"><span class="section-number-4">3.2.1</span> 表的简答数组实现 </h4>
+<div class="outline-text-4" id="text-3.2.1">
+
+<ul>
+<li>
+如果对表的操作通常是在末尾插入元素，之后只有数组访问，在这种情况下，数组是
+实现表比较好的方式
+</li>
+<li>
+表的弱点就是插入和删除代价昂贵
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-3.2.2" class="outline-4">
+<h4 id="sec-3.2.2"><span class="section-number-4">3.2.2</span> 简单链表 </h4>
+<div class="outline-text-4" id="text-3.2.2">
+
+<ul>
+<li>
+克服数组形式表插入删除代价昂贵的缺点，产生了链表
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-3.2.3" class="outline-4">
+<h4 id="sec-3.2.3"><span class="section-number-4">3.2.3</span> STL的向量和表 </h4>
+<div class="outline-text-4" id="text-3.2.3">
+
+<ul>
+<li>
+在STL中，数组实现表的代表就是vector，链表实现表的代表就是list，其中在list
+是双向链表。
+</li>
+<li>
+vector和list都支持的函数如下:
+<ul>
+<li>
+int size() const
+</li>
+<li>
+void clear()
+</li>
+<li>
+bool empty()
+</li>
+<li>
+void push_back(const Object&amp; x)
+</li>
+<li>
+void pop_back() 
+</li>
+<li>
+const Object &amp;back() const
+</li>
+<li>
+const Object &amp;front() const
+</li>
+</ul>
+</li>
+<li>
+vector在头部插入效率不高，所以下面两个函数只被list支持
+<ul>
+<li>
+void push_front(const Object &amp;x)
+</li>
+<li>
+void pop_front()
+</li>
+</ul>
+</li>
+<li>
+vector的特点是数据内存在一块，所以有以下特殊函数
+<ul>
+<li>
+Object&amp; operator[]
+</li>
+<li>
+Object&amp; at(int idx)
+</li>
+<li>
+int capacity() const
+</li>
+<li>
+void reserve(int new Capacity)
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-3.2.4" class="outline-4">
+<h4 id="sec-3.2.4"><span class="section-number-4">3.2.4</span> 迭代器 </h4>
+<div class="outline-text-4" id="text-3.2.4">
+
+<ul>
+<li>
+获得迭代器的方法:
+<ul>
+<li>
+iterator begin()
+</li>
+<li>
+iterator end()
+</li>
+</ul>
+</li>
+<li>
+迭代器方法
+<ul>
+<li>
+itr++ &amp; ++itr
+</li>
+<li>
+*itr
+</li>
+<li>
+itr1 == itr2 如果两者指向同一个位置才为true
+</li>
+</ul>
+</li>
+<li>
+需要迭代器的容器操作
+<ul>
+<li>
+iterator insert(iterator pos, Object &amp;x)
+</li>
+<li>
+iterarot erase(iterator pos)
+</li>
+<li>
+iterator erase(iterator start, iterator end)
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-3.2.5" class="outline-4">
+<h4 id="sec-3.2.5"><span class="section-number-4">3.2.5</span> const_iterator </h4>
+<div class="outline-text-4" id="text-3.2.5">
+
+<ul>
+<li>
+const_iterator和iterator的主要区别，是const_iterator的operator*返回常量引
+用，这样const_iterator类型的*iter就不能出现在赋值语句的左边
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-3.3" class="outline-3">
+<h3 id="sec-3.3"><span class="section-number-3">3.3</span> 向量的实现 </h3>
+<div class="outline-text-3" id="text-3.3">
+
+</div>
+
+</div>
+
+<div id="outline-container-3.4" class="outline-3">
+<h3 id="sec-3.4"><span class="section-number-3">3.4</span> 表的实现 </h3>
+<div class="outline-text-3" id="text-3.4">
+
+</div>
+
+</div>
+
+<div id="outline-container-3.5" class="outline-3">
+<h3 id="sec-3.5"><span class="section-number-3">3.5</span> 栈ADT </h3>
+<div class="outline-text-3" id="text-3.5">
+
+
+</div>
+
+<div id="outline-container-3.5.1" class="outline-4">
+<h4 id="sec-3.5.1"><span class="section-number-4">3.5.1</span> 栈模型 </h4>
+<div class="outline-text-4" id="text-3.5.1">
+
+</div>
+
+</div>
+
+<div id="outline-container-3.5.2" class="outline-4">
+<h4 id="sec-3.5.2"><span class="section-number-4">3.5.2</span> 栈的实现 </h4>
+<div class="outline-text-4" id="text-3.5.2">
+
+<ul>
+<li>
+栈可以很容易的用vector和list来实现
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-3.5.3" class="outline-4">
+<h4 id="sec-3.5.3"><span class="section-number-4">3.5.3</span> 应用 </h4>
+<div class="outline-text-4" id="text-3.5.3">
+
+<ul>
+<li>
+栈在计算机科学中的应用有:
+<ol>
+<li>
+平衡符号:也就是我们常说的括号匹配
+</li>
+<li>
+中缀表达式到后缀表达式的转换
+</li>
+<li>
+后缀表达式的计算
+</li>
+<li>
+函数的调用
+</li>
+</ol>
+</li>
+<li>
+其中，四则表达式的计算就用到了上面提到的(2)和(3): 我们阅读常用的中缀表达式
+作为输入，先利用栈把中缀表达式转化成后缀表达式，然后计算后缀表达式的值，就
+可以得到四则运算的结果。
+</li>
+<li>
+尾递归:在程序最后一行进行的递归，叫做尾递归，尾递归是非常差劲的使用递归的
+方法，可以通过将代码放到while循环中加以去除，如下
+
+
+
+<pre class="src src-c">template &lt;typename Iterator&gt;
+<span style="color: #228b22;">void</span> print(<span style="color: #228b22;">Iterator</span> <span style="color: #a0522d;">start</span>, <span style="color: #228b22;">Iterator</span> <span style="color: #a0522d;">end</span>, ostream &amp;out = cout)
+{
+    <span style="color: #7f007f;">if</span> (start == end)
+        <span style="color: #7f007f;">return</span>;
+
+    out &lt;&lt; *start++ &lt;&lt; endl; <span style="color: #b22222;">// </span><span style="color: #b22222;">Print and advance start
+</span>    print(start, end, out);
+}
+<span style="color: #b22222;">/* </span><span style="color: #b22222;">previous recursive code can be replaced by following code </span><span style="color: #b22222;">*/</span>
+template &lt;typename Iterator&gt;
+<span style="color: #228b22;">void</span> print(<span style="color: #228b22;">Iterator</span> <span style="color: #a0522d;">start</span>, <span style="color: #228b22;">Iterator</span> <span style="color: #a0522d;">end</span>, ostream &amp;out = cout)
+{
+    <span style="color: #7f007f;">while</span> (<span style="color: #008b8b;">true</span>)
+    {
+        <span style="color: #7f007f;">if</span> (start == end)
+            <span style="color: #7f007f;">return</span>;
+        out &lt;&lt; *start++ &lt;&lt; endl; <span style="color: #b22222;">// </span><span style="color: #b22222;">Print and advance start
+</span>    }
+}
+</pre>
+
+
+
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-3.6" class="outline-3">
+<h3 id="sec-3.6"><span class="section-number-3">3.6</span> 队列ADT </h3>
+<div class="outline-text-3" id="text-3.6">
+
+
+</div>
+
+<div id="outline-container-3.6.1" class="outline-4">
+<h4 id="sec-3.6.1"><span class="section-number-4">3.6.1</span> 队列模型 </h4>
+<div class="outline-text-4" id="text-3.6.1">
+
+<ul>
+<li>
+如果说栈是后进先出的话，队列就是先进先出
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-3.6.2" class="outline-4">
+<h4 id="sec-3.6.2"><span class="section-number-4">3.6.2</span> 队列的数组实现 </h4>
+<div class="outline-text-4" id="text-3.6.2">
+
+<ul>
+<li>
+队列的数组实现是通过"循环数组"来避免队列在front和back两个图标到达数组尾部
+的情况的。
+</li>
+<li>
+"循环数组"的设计，要求我们要记录数组的长度。因为会出现front在back后面但是
+却合法的情况
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-3.6.3" class="outline-4">
+<h4 id="sec-3.6.3"><span class="section-number-4">3.6.3</span> 队列的应用 </h4>
+<div class="outline-text-4" id="text-3.6.3">
+
+<ul>
+<li>
+看似是常识般的队列，却在算法中有非常重要的应用，比如广度优先算法就是借助于
+队列的帮助
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> chapter 4:树 </h2>
+<div class="outline-text-2" id="text-4">
+
+
+</div>
+
+<div id="outline-container-4.1" class="outline-3">
+<h3 id="sec-4.1"><span class="section-number-3">4.1</span> 预备知识 </h3>
+<div class="outline-text-3" id="text-4.1">
+
+<p>+对于大量的输入数据，链表线性访问的时间太长了，不宜使用，所以我们要引入新的数
+据结构:树
+</p>
+</div>
+
+<div id="outline-container-4.1.1" class="outline-4">
+<h4 id="sec-4.1.1"><span class="section-number-4">4.1.1</span> 树的实现 </h4>
+<div class="outline-text-4" id="text-4.1.1">
+
+<ul>
+<li>
+如果树的子结点数目不限制，那么就是一个传统意义上的树，这种树却由于子结点的
+不固定性，不容易编码实现。
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-4.2" class="outline-3">
+<h3 id="sec-4.2"><span class="section-number-3">4.2</span> 二叉树 </h3>
+<div class="outline-text-3" id="text-4.2">
+
+<ul>
+<li>
+容易编码实现，且最终应用广泛的，是二叉树
+</li>
+</ul>
+
+</div>
+
+<div id="outline-container-4.2.1" class="outline-4">
+<h4 id="sec-4.2.1"><span class="section-number-4">4.2.1</span> 实现 </h4>
+<div class="outline-text-4" id="text-4.2.1">
+
+<ul>
+<li>
+一个二叉树的典型实现如下:
+
+
+
+<pre class="src src-c"><span style="color: #7f007f;">struct</span> <span style="color: #228b22;">BinaryNode</span>
+{
+    <span style="color: #228b22;">Object</span>      <span style="color: #a0522d;">element</span>;
+    <span style="color: #228b22;">BinaryNode</span>  *<span style="color: #a0522d;">left</span>;
+    <span style="color: #228b22;">BinaryNode</span>  *<span style="color: #a0522d;">right</span>;
+};
+</pre>
+
+
+
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-4.2.2" class="outline-4">
+<h4 id="sec-4.2.2"><span class="section-number-4">4.2.2</span> 一个例子-表达式树 </h4>
+<div class="outline-text-4" id="text-4.2.2">
+
+<ul>
+<li>
+我们前面说的表达式，如果树叶代表操作数，其他结点代表操作符的话，整个树就可
+以代表一个四则运算。
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-4.3" class="outline-3">
+<h3 id="sec-4.3"><span class="section-number-3">4.3</span> 查找树ADT-二叉查找树 </h3>
+<div class="outline-text-3" id="text-4.3">
+
+<ul>
+<li>
+对于一个普通的二叉树来说，最代表性的两个操作就是insert和remove
+</li>
+</ul>
+
+</div>
+
+<div id="outline-container-4.3.1" class="outline-4">
+<h4 id="sec-4.3.1"><span class="section-number-4">4.3.1</span> insert </h4>
+<div class="outline-text-4" id="text-4.3.1">
+
+<ul>
+<li>
+insert其实就是和contains非常像，对于一个元素如果在指定地方没有找到它，我们
+就该在那个地方插入这个元素
+
+
+
+<pre class="src src-c++"><span style="color: #b22222;">/**</span><span style="color: #b22222;">
+ * Internal method to insert into a subtree
+ * x is the item to insert
+ * t is the node that roots the subtree, t maybe
+ * modified, so no const is applied.
+ * Set the new root of the subtree.
+ */</span>
+<span style="color: #228b22;">void</span> insert(<span style="color: #7f007f;">const</span> <span style="color: #228b22;">Comparable</span> &amp;<span style="color: #a0522d;">x</span>, <span style="color: #228b22;">BinaryNode</span>* &amp;<span style="color: #a0522d;">t</span>)
+{
+    <span style="color: #b22222;">/* </span><span style="color: #b22222;">if the fuction is contains, do nothing here */</span>
+    <span style="color: #7f007f;">if</span> (t == <span style="color: #008b8b;">NULL</span>)
+        t = <span style="color: #7f007f;">new</span> <span style="color: #228b22;">BinaryNode</span>(x, <span style="color: #008b8b;">NULL</span>, <span style="color: #008b8b;">NULL</span>);
+    <span style="color: #7f007f;">else</span> <span style="color: #7f007f;">if</span> (x &lt; t-&gt;element)
+        insert(x, t-&gt;left);
+    <span style="color: #7f007f;">else</span> <span style="color: #7f007f;">if</span> (t-&gt;element &gt; x)
+        insert(x, t-&gt;right);
+    <span style="color: #b22222;">/* </span><span style="color: #b22222;">if the fuction is contains, return true here,
+       as we find the exact node! */</span>
+    <span style="color: #7f007f;">else</span>
+        ; <span style="color: #b22222;">// </span><span style="color: #b22222;">Duplicate; do nothing
+</span>}
+</pre>
+
+
+
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-4.3.2" class="outline-4">
+<h4 id="sec-4.3.2"><span class="section-number-4">4.3.2</span> remove </h4>
+<div class="outline-text-4" id="text-4.3.2">
+
+<ul>
+<li>
+remove的理解难度则要大一点，主要在两点:
+<ol>
+<li>
+如果要删除的结点有一个(或者零个)子结点的话，那么我们其实是，第一，用中
+间变量保存自己的地址，第二，把自己的地址赋成自己的子结点的内容，第三，
+把中间变量保存的那个地址里面的动态内存删掉。
+</li>
+<li>
+理解了第1条，那么第二条比较好理解:如果要删除的结点有两个子结点的话，那
+么，直接删除是非常不明智的，我们采取把这个子节点的"右子树"的"最小结点"
+的值给我们，然后让去删除"右子树"的"最小结点",因为只有这个结点可以放到"
+根"的位置，而且它只会最多有一个子结点
+
+</li>
+</ol>
+
+
+<pre class="src src-c++"><span style="color: #228b22;">void</span> remove(<span style="color: #7f007f;">const</span> <span style="color: #228b22;">Comparble</span> &amp;<span style="color: #a0522d;">x</span>, <span style="color: #228b22;">BinaryNode</span>* &amp;<span style="color: #a0522d;">t</span>)
+{
+    <span style="color: #7f007f;">if</span> (t == <span style="color: #008b8b;">NULL</span>)
+        <span style="color: #7f007f;">return</span>;    <span style="color: #b22222;">//</span><span style="color: #b22222;">Item not found, do nothing
+</span>    <span style="color: #7f007f;">if</span> (x &lt; t-&gt;element)
+        remove(x, t-&gt;left);
+    <span style="color: #7f007f;">else</span> <span style="color: #7f007f;">if</span>(t-&gt;element &lt; x)
+        remove(x, t-&gt;right);
+    <span style="color: #7f007f;">else</span> <span style="color: #7f007f;">if</span> (t-&gt;left != <span style="color: #008b8b;">NULL</span> &amp;&amp; t-&gt;right != <span style="color: #008b8b;">NULL</span>) <span style="color: #b22222;">// </span><span style="color: #b22222;">two children
+</span>    {
+        t-&gt;element = findMin(t-&gt;right)-&gt;element;
+        remvoe(t-&gt;element, t-&gt;right);
+    }
+    <span style="color: #7f007f;">else</span> 
+    {
+        BinaryNode *oldNode = t; <span style="color: #b22222;">//</span><span style="color: #b22222;">temp variable
+</span>        t = (t-&gt;left != <span style="color: #008b8b;">NULL</span>) ? t-&gt;left : t-&gt;right;
+        <span style="color: #b22222;">// </span><span style="color: #b22222;">Do not need let oldNode = NULL, as we stil use it
+</span>        <span style="color: #7f007f;">delete</span> oldNode; 
+    }
+}
+</pre>
+
+
+
+</li>
+<li>
+如果把事先排好序的数字输入树，那么一连串的insert操作将会代价非常巨大，因为
+此时的树将只由那些没有左儿子的结点组成，下一节就可以看到对此类情况的一个解
+决办法:平衡二叉树        
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-4.4" class="outline-3">
+<h3 id="sec-4.4"><span class="section-number-3">4.4</span> AVL 树 </h3>
+<div class="outline-text-3" id="text-4.4">
+
+<ul>
+<li>
+AVL树是其每个结点的左子树和右子树的高度最多差1的二叉查找树
+</li>
+<li>
+为了维持AVL树的这种结构，每次插入的时候，我们都要做很多工作，把要调整的最小
+的子树的根结点叫做a，插入后不平衡的情况有如下四种:
+<ol>
+<li>
+对a的左儿子的左子树进行一次插入
+</li>
+<li>
+对a的左儿子的右子树进行一次插入
+</li>
+<li>
+对a的右儿子的左子树进行一次插入
+</li>
+<li>
+对a的右儿子的右子树进行一次插入
+</li>
+</ol>
+</li>
+<li>
+上面的1和4，以及2和3都是对称的。1和4再经历一次"单旋转"之后就平衡了，2和3再
+经历一次比较麻烦的"双旋转"就平衡了。
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-4.5" class="outline-3">
+<h3 id="sec-4.5"><span class="section-number-3">4.5</span> 伸展树 </h3>
+<div class="outline-text-3" id="text-4.5">
+
+<ul>
+<li>
+所谓伸展树，它保证从空树开始，任意连续M次对树的操作最多花费O(MlogN)时间，虽
+然并不排除有些操作的时间是O(N)， 而且不存在差的输入序列。
+</li>
+<li>
+这就比单纯的二分查找树要强了，因为,虽然有些操作是O(N)，但是这个操作调整的过
+程中会把其他结点的高度调整的更浅，访问起来更快。
+</li>
+<li>
+伸展树的基本想法是,当一个结点被访问后，它就要经过一系列AVL树的旋转被推到根
+上，如果一个结点很深(可能会花费O(N)时间),那么在其路径上就存在许多也相对较深
+的结点，通过重新构造就可以使得对这些结点的进一步访问所花费的时间变少。
+</li>
+<li>
+比如，对于排序好的序列1-N,从空树构造伸展树的话，开始的时候，伸展树是一个全
+左结点的树，对1的访问要花费N的时间，但是访问完1以后，会对整个树进行伸展操作，
+把树变得更浅，下一次再访问2的时候，时间就不是N-2了，而是N/2,如果树够深的话，
+我们会发现，最好情况下，可以做到logN.
+</li>
+<li>
+这样看来，伸展树确实是比普通二叉查找树要好，相对于AVL树，伸展树不需要保留平
+衡信息，编码更容易。而且，由于我们把刚访问过的结点移动到了根，下次再访问这
+个结点的时候，时间就会大打加快了。计算机中一个内存被访问，在近期内被再次访
+问的概率很大。
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-4.6" class="outline-3">
+<h3 id="sec-4.6"><span class="section-number-3">4.6</span> 树的遍历 </h3>
+<div class="outline-text-3" id="text-4.6">
+
+<ul>
+<li>
+树的遍历分四种:
+<ol>
+<li>
+前序遍历
+</li>
+<li>
+中序遍历
+</li>
+<li>
+后序遍历
+</li>
+<li>
+层次遍历
+</li>
+</ol>
+</li>
+<li>
+前三种可以用递归实现，第四种需要用到队列。
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-4.7" class="outline-3">
+<h3 id="sec-4.7"><span class="section-number-3">4.7</span> B树 </h3>
+<div class="outline-text-3" id="text-4.7">
+
+<ul>
+<li>
+大O模型的前提是，所有的原子操作的时间是相似的，如果问题涉及到数据库，这个假
+设就不成立了，因为数据库是机械特性的，相对于一条机器指令，一条数据库访问的
+代价就太高了，所以，我们在实现数据库的时候，倾向于用比较复杂的数据结构来减
+少IO读取
+</li>
+<li>
+减少IO读取换句话说，就是降低树的高度，比如31个结点的二叉树高度最小为5，而31
+个结点的的五叉树的最小高度为3。这里就有了M叉查找树的定义。一个完全二叉树的
+高度为log2(N), 而完全M叉树的高度为logM(N)
+</li>
+<li>
+为了不让M叉查找树退化成二叉树,我们需要某种机制让M叉树保持平衡，其中一种实现
+的方法就是B-树, B+树, B*树(要和B树区分，B树其实就是二叉查找树)
+</li>
+<li>
+算上二叉树(也就是B树)，我们总结一下四种树:
+<ul>
+<li>
+B树: 二叉搜索，每个结点只存储一个关键字，等于则走左结点，大于走右结点
+</li>
+<li>
+B-树:多路搜索，每个结点存储M/2到M个关键字，非叶子结点存储指向关键字范围的
+子结点，所有关键字在整棵树中出现，且只出现一次，非叶子结点可以命中
+</li>
+<li>
+B+树:在B-树基础上，为叶子结点也增加链表指针，所有关键字都在叶子结点中出现，
+非叶子结点作为叶子结点的索引，B+树总是到叶子才接受命中
+</li>
+<li>
+B*树:在B+树基础上，为非叶子结点也增加链表指针，将结点的最低利用率从1/2提
+高到2/3
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-4.8" class="outline-3">
+<h3 id="sec-4.8"><span class="section-number-3">4.8</span> 标准库中的set和map </h3>
+<div class="outline-text-3" id="text-4.8">
+
+<ul>
+<li>
+前面介绍的vector和list在查找方面的开销都是线性的，STL还提供了两个对数级别时
+间开销(查找，插入，删除)的容器set和map，时间开销上的对数级别，说明了两者都
+是用树作为内部实现的数据结构
+</li>
+</ul>
+
+</div>
+
+<div id="outline-container-4.8.1" class="outline-4">
+<h4 id="sec-4.8.1"><span class="section-number-4">4.8.1</span> set </h4>
+<div class="outline-text-4" id="text-4.8.1">
+
+<ul>
+<li>
+set是一个排序后的容器，该容器不容许重复。iterator和const_iterator也嵌套于
+set, 允许遍历.
+</li>
+<li>
+可以把set理解成是一个内部用树形结构存储的列表，又有顺序的保证，在这个意义
+上来看set和vector以及list都是非常相似的，所以vector和list的方法,比如begin,
+end, size, empty都可以利用在set上
+</li>
+<li>
+因为set不允许重复，所以插入必然是特别一点的:
+
+
+
+<pre class="src src-c++"><span style="color: #b22222;">/* </span><span style="color: #b22222;">&#38500;&#20102;&#36820;&#22238;&#26159;&#21542;&#25554;&#20837;&#25104;&#21151;&#30340;bool&#20540;&#20197;&#22806;&#65292;&#36824;&#36820;&#22238;&#19968;&#20010;iterator
+ *  &#36825;&#20010;iterator&#26159;&#26032;&#25554;&#20837;&#39033;&#30340;&#22320;&#22336;&#65292;&#25110;&#32773;&#26159;&#22312;&#25554;&#20837;&#22833;&#36133;&#30340;&#24773;&#20917;&#19979;
+ * &#25351;&#31034;&#23548;&#33268;&#25554;&#20837;&#22833;&#36133;&#30340;&#39033;&#30340;&#22320;&#22336;&#65292;&#20174;&#32780;&#36827;&#34892;&#21024;&#38500;&#65292;&#32780;&#19981;&#38656;&#35201;&#20877;&#27425;&#36827;
+ * &#34892;&#26597;&#35810;&#25805;&#20316;
+ */</span>
+<span style="color: #228b22;">pair</span>&lt;<span style="color: #228b22;">iterator</span>, <span style="color: #228b22;">bool</span>&gt; <span style="color: #0000ff;">insert</span>(<span style="color: #7f007f;">const</span> <span style="color: #228b22;">Object</span> &amp;<span style="color: #a0522d;">x</span>);
+<span style="color: #228b22;">pair</span>&lt;<span style="color: #228b22;">iterator</span>, <span style="color: #228b22;">bool</span>&gt; insert(<span style="color: #228b22;">iterator</span> <span style="color: #a0522d;">hint</span>, <span style="color: #7f007f;">const</span> <span style="color: #228b22;">Object</span> &amp;<span style="color: #a0522d;">x</span>);
+</pre>
+
+
+
+</li>
+<li>
+查找函数返回的是具体的iterator地址
+
+
+
+<pre class="src src-c++">iterator <span style="color: #228b22;">find</span>(<span style="color: #7f007f;">const</span> <span style="color: #228b22;">Object</span> &amp;<span style="color: #a0522d;">x</span>) <span style="color: #7f007f;">const</span>;
+</pre>
+
+
+
+</li>
+<li>
+排序的话，是使用less&lt;Object&gt;调用operator&lt;来进行的
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-4.8.2" class="outline-4">
+<h4 id="sec-4.8.2"><span class="section-number-4">4.8.2</span> map </h4>
+<div class="outline-text-4" id="text-4.8.2">
+
+<ul>
+<li>
+针对set不能重复的缺点，又发明了map这种数据结构，它的特点是key不可以重复，
+但是value可以重复。其实就是key值用来构建树形结构，多加了个域来存储数据
+</li>
+<li>
+map有一个特别的获取键值的操作，可惜由于返回值是引用，所以这个操作无法应用
+到常量的map
+
+
+
+<pre class="src src-c++"><span style="color: #228b22;">ValueType</span> &amp; <span style="color: #7f007f;">operator</span><span style="color: #0000ff;">[]</span> (<span style="color: #7f007f;">const</span> <span style="color: #228b22;">KeyType</span> &amp; <span style="color: #a0522d;">key</span>);
+</pre>
+
+
+
+</li>
+<li>
+下面的例子来演示map的重要函数应用
+
+
+
+<pre class="src src-c++"><span style="color: #228b22;">map</span>&lt;<span style="color: #228b22;">string</span>, <span style="color: #228b22;">double</span>&gt; <span style="color: #a0522d;">salaries</span>;
+
+salaries[<span style="color: #8b2252;">"Pat"</span>] = 75000.00;
+cout &lt;&lt; salaries[<span style="color: #8b2252;">"Pat"</span>] &lt;&lt; endl;
+cout &lt;&lt; salaries[<span style="color: #8b2252;">"Jan"</span>] &lt;&lt; endl;
+
+<span style="color: #008b8b;">map</span>&lt;<span style="color: #228b22;">string</span>, <span style="color: #228b22;">double</span>&gt;::<span style="color: #228b22;">const_iterator</span> <span style="color: #a0522d;">itr</span>;
+itr = salaries.find(<span style="color: #8b2252;">"Chris"</span>);
+<span style="color: #7f007f;">if</span> (itr == salaries.end())
+    cout &lt;&lt; <span style="color: #8b2252;">"Not an employee of this company"</span> &lt;&lt; endl;
+<span style="color: #7f007f;">else</span>
+    cout &lt;&lt; itr-&gt;second &lt;&lt; endl;
+</pre>
+
+
+
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-4.8.3" class="outline-4">
+<h4 id="sec-4.8.3"><span class="section-number-4">4.8.3</span> set 和 map的实现 </h4>
+<div class="outline-text-4" id="text-4.8.3">
+
+<ul>
+<li>
+set 和 map的基本操作是对数级别的，显然是使用了树的数据结构，具体点说，是红
+黑树
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> chapter 5: 散列 </h2>
+<div class="outline-text-2" id="text-5">
+
+
+</div>
+
+<div id="outline-container-5.1" class="outline-3">
+<h3 id="sec-5.1"><span class="section-number-3">5.1</span> 基本思想 </h3>
+<div class="outline-text-3" id="text-5.1">
+
+<ul>
+<li>
+前面讲过的各种树，其实是为了便于排列，数据结构中都包含了顺序的信息，而散列
+只是能已常数时间插入，删除和查找的技术，为了达到常数级别，它用了散列函数和
+处理冲突的方法，所以没有保留顺序信息。findMin, findMax等肯定是没有
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-5.2" class="outline-3">
+<h3 id="sec-5.2"><span class="section-number-3">5.2</span> 散列函数 </h3>
+<div class="outline-text-3" id="text-5.2">
+
+<ul>
+<li>
+将每个键映射到0到TableSize-1这个范围的某个数的映射方法，就叫散列函数
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-5.3" class="outline-3">
+<h3 id="sec-5.3"><span class="section-number-3">5.3</span> 分离链接法 </h3>
+<div class="outline-text-3" id="text-5.3">
+
+<ul>
+<li>
+如果散列函数把两个元素映射到相同的位置，那么就会产生一个冲突，最常见的解决
+冲突的方法就是分离链接法(separate chaining)
+</li>
+<li>
+插入的时候，我们常用前插法，因为最后插入的元素最有可能不久再被使用
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-5.4" class="outline-3">
+<h3 id="sec-5.4"><span class="section-number-3">5.4</span> 不使用链表的散列表 </h3>
+<div class="outline-text-3" id="text-5.4">
+
+<ul>
+<li>
+分离链接散列算法的缺点是使用的链表要重新分配空间，因此会导致算法有些慢。另
+外一种解决冲突的办法是，当冲突发生的时候，就尝试选择另外的单元
+</li>
+<li>
+更正式地，单元h0(x), h1(x), h2(x)&hellip;依次进行选择，其中
+
+
+
+<pre class="example">hi(x) = (hash(x) + f(i)) mod TableSize
+</pre>
+
+
+
+</li>
+<li>
+因为所有数据都是放到表中的，所以要求这个方案中所需要的表要比分离链接散列需
+要的表要大，一般要达至少有一半以上的空余的单元(也就是λ&gt;0.5)，我们称这样的
+表为探测散列表，下面有三种常见的利用探测散列表的方法
+</li>
+</ul>
+
+</div>
+
+<div id="outline-container-5.4.1" class="outline-4">
+<h4 id="sec-5.4.1"><span class="section-number-4">5.4.1</span> 线性探测 </h4>
+<div class="outline-text-4" id="text-5.4.1">
+
+<ul>
+<li>
+一般情况下是f(i) = i,就是如果发现冲突，那就把数据放到下一个空闲的地址
+</li>
+<li>
+算法的效果和λ的值关系较大，在λ比较大的情况下可以考虑使用 
+</li>
+<li>
+线性探测的缺点是容易形成"一次聚集"，就是数据集中在某一块，使得下次插入变得
+更加的没效率
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-5.4.2" class="outline-4">
+<h4 id="sec-5.4.2"><span class="section-number-4">5.4.2</span> 平方探测 </h4>
+<div class="outline-text-4" id="text-5.4.2">
+
+<ul>
+<li>
+一般情况下是f(i) = i^2
+</li>
+<li>
+解决了线性探测的"一次聚集",但是又引入了"二次聚集",就是散列到同一位置上的那
+些元素将探测相同的备选单元
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-5.4.3" class="outline-4">
+<h4 id="sec-5.4.3"><span class="section-number-4">5.4.3</span> 双散列 </h4>
+<div class="outline-text-4" id="text-5.4.3">
+
+<ul>
+<li>
+也就是f(i) = i*hash2(x)
+</li>
+<li>
+解决了"二次聚集"问题，但是对hash2函数的选择很难
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-5.5" class="outline-3">
+<h3 id="sec-5.5"><span class="section-number-3">5.5</span> 再散列 </h3>
+<div class="outline-text-3" id="text-5.5">
+
+<ul>
+<li>
+再散列是指当表填的比较满的时候，要重新做一个容量是当前表两倍的表，这是个非
+常昂贵的操作，不要和"双散列"混淆
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-5.6" class="outline-3">
+<h3 id="sec-5.6"><span class="section-number-3">5.6</span> 可扩展散列 </h3>
+<div class="outline-text-3" id="text-5.6">
+
+<ul>
+<li>
+我们在讲B树的时候说过，如果涉及到磁盘操作，那么大O定理不再适用，因为一次IO
+操作的代价远远大于一次机器指令.也就是说，如果数据不能一次放到内存，那么减少
+IO操作的次数就是算法的重点
+</li>
+<li>
+在散列领域和B树有异曲同工之妙的就是可扩展散列(extendible hashing)
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> chapter 6:优先队列(堆) </h2>
+<div class="outline-text-2" id="text-6">
+
+
+</div>
+
+<div id="outline-container-6.1" class="outline-3">
+<h3 id="sec-6.1"><span class="section-number-3">6.1</span> 模型 </h3>
+<div class="outline-text-3" id="text-6.1">
+
+<ul>
+<li>
+我们知道队列(queue)，是先进先出的数据结构，而优先队列呢，就是队列总体上遵循
+先入先出的选择，但是个别元素个别对待
+</li>
+<li>
+优先队列有很多应用场景，比如操作系统中的调度策略，总体上是谁先来，谁先运行，
+但是有些进程需要运行很少的时间就结束了，那么我们就要把他们的优先级提高一些。
+</li>
+<li>
+再优先队列中，主要的两个操作，一个是insert,一个是deleteMin,分别对应于普通队
+列的enqueue和dequeue
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-6.2" class="outline-3">
+<h3 id="sec-6.2"><span class="section-number-3">6.2</span> 一些简单的实现 </h3>
+<div class="outline-text-3" id="text-6.2">
+
+<ul>
+<li>
+优先队列是始终保持一个最小值，每次删除后又能马上找到最小值，我们最直观的两
+个实现的数据结构是:
+<ol>
+<li>
+链表 : 缺点非常明显，每次都要遍历才能找到合适的删除候选，时间复杂度为
+O(N)
+</li>
+<li>
+二叉查找树: 虽然是以O(logN)的复杂度来完成insert和deleteMin这两个操作，
+但是由于我们在数据结构中维护了大量的无用信息(比如整个序列的顺序),说明我们
+数据结构还有改进的空间
+</li>
+</ol>
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-6.3" class="outline-3">
+<h3 id="sec-6.3"><span class="section-number-3">6.3</span> 二叉堆 </h3>
+<div class="outline-text-3" id="text-6.3">
+
+
+</div>
+
+<div id="outline-container-6.3.1" class="outline-4">
+<h4 id="sec-6.3.1"><span class="section-number-4">6.3.1</span> 结构性质 </h4>
+<div class="outline-text-4" id="text-6.3.1">
+
+<ul>
+<li>
+所谓堆就是一颗完全二叉树(除了最底层以外，都是满的), 既然我们用二叉查找树都
+是浪费，那用完全二叉树岂不是更浪费? 其实不然，因为完全二叉树特殊的性质，我
+们可以不用链表，而只用数组来表示他们。
+</li>
+<li>
+所谓数组表示法，就是把一颗满二叉树按层次遍历以后放到数组
+
+
+
+<pre class="example">                        +---+
+                        |A  |
+                        +---+
+               +--+&lt;--+-+   +-+-&gt;+--+
+               |B |              |C |
+               +--+              +--+
+        +--+&lt;--+  +-&gt;+--+  +--+&lt;-+  +-&gt;+--+
+        |D |         |E |  |F |        |G |
+        +--+         +--+  +--+        +--+
+ +--+ &lt;-+  +-&gt;+--+  
+ |H |         |I |
+ +--+         +--+
+
+|---+---+---+---+---+---+---+---+---+---+----+----|
+|   | A | B | C | D | E | F | G | H | I |    |    |
+|---+---+---+---+---+---+---+---+---+---+----+----|
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 |
+|---+---+---+---+---+---+---+---+---+---+----+----|
+</pre>
+
+
+
+</li>
+<li>
+二叉堆呢，就是对于堆中每个结点，X的父亲结点，小于他的两个儿子结点,根除外，
+因为根没有父亲结点(可以看到，不像二叉查找树，我们没有一定要求左节点小于右
+结点，也就没有维护顺序信息)
+
+
+
+
+
+
+
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble">
+<p class="author"> Author: feng haoran
+<a href="mailto:fenghaoran@fengmatoMacBook-Air.local">&lt;fenghaoran@fengmatoMacBook-Air.local&gt;</a>
+</p>
+<p class="date"> Date: 2011-12-06 22:13:31 CST</p>
+<p class="creator">HTML generated by org-mode 6.33x in emacs 23</p>
+</div>
+</div>
+</body>
+</html>
