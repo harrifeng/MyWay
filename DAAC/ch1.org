@@ -323,4 +323,89 @@
      是用树作为内部实现的数据结构
 *** set
     + set是一个排序后的容器，该容器不容许重复。iterator和const_iterator也嵌套于
-      set, 允许遍历
+      set, 允许遍历.
+    + 可以把set理解成是一个内部用树形结构存储的列表，又有顺序的保证，在这个意义
+      上来看set和vector以及list都是非常相似的，所以vector和list的方法,比如begin,
+      end, size, empty都可以利用在set上
+    + 因为set不允许重复，所以插入必然是特别一点的:
+      #+begin_src c++
+        /* 除了返回是否插入成功的bool值以外，还返回一个iterator
+         *  这个iterator是新插入项的地址，或者是在插入失败的情况下
+         * 指示导致插入失败的项的地址，从而进行删除，而不需要再次进
+         * 行查询操作
+         */
+        pair<iterator, bool> insert(const Object &x);
+        pair<iterator, bool> insert(iterator hint, const Object &x);
+      #+end_src
+    + 查找函数返回的是具体的iterator地址
+      #+begin_src c++
+        iterator find(const Object &x) const;
+      #+end_src
+    + 排序的话，是使用less<Object>调用operator<来进行的
+*** map
+    + 针对set不能重复的缺点，又发明了map这种数据结构，它的特点是key不可以重复，
+      但是value可以重复。其实就是key值用来构建树形结构，多加了个域来存储数据
+    + map有一个特别的获取键值的操作，可惜由于返回值是引用，所以这个操作无法应用
+      到常量的map
+      #+begin_src c++
+        ValueType & operator[] (const KeyType & key);
+      #+end_src
+    + 下面的例子来演示map的重要函数应用
+      #+begin_src c++
+        map<string, double> salaries;
+        
+        salaries["Pat"] = 75000.00;
+        cout << salaries["Pat"] << endl;
+        cout << salaries["Jan"] << endl;
+        
+        map<string, double>::const_iterator itr;
+        itr = salaries.find("Chris");
+        if (itr == salaries.end())
+            cout << "Not an employee of this company" << endl;
+        else
+            cout << itr->second << endl;
+      #+end_src
+*** set 和 map的实现
+    + set 和 map的基本操作是对数级别的，显然是使用了树的数据结构，具体点说，是红
+      黑树
+* chapter 5: 散列
+** 基本思想
+   + 前面讲过的各种树，其实是为了便于排列，数据结构中都包含了顺序的信息，而散列
+     只是能已常数时间插入，删除和查找的技术，为了达到常数级别，它用了散列函数和
+     处理冲突的方法，所以没有保留顺序信息。findMin, findMax等肯定是没有
+** 散列函数
+   + 将每个键映射到0到TableSize-1这个范围的某个数的映射方法，就叫散列函数
+** 分离链接法
+   + 如果散列函数把两个元素映射到相同的位置，那么就会产生一个冲突，最常见的解决
+     冲突的方法就是分离链接法(separate chaining)
+   + 插入的时候，我们常用前插法，因为最后插入的元素最有可能不久再被使用
+** 不使用链表的散列表
+   + 分离链接散列算法的缺点是使用的链表要重新分配空间，因此会导致算法有些慢。另
+     外一种解决冲突的办法是，当冲突发生的时候，就尝试选择另外的单元
+   + 更正式地，单元h0(x), h1(x), h2(x)...依次进行选择，其中
+     #+begin_example
+     hi(x) = (hash(x) + f(i)) mod TableSize
+     #+end_example
+   + 因为所有数据都是放到表中的，所以要求这个方案中所需要的表要比分离链接散列需
+     要的表要大，一般要达至少有一半以上的空余的单元(也就是λ>0.5)，我们称这样的
+     表为探测散列表，下面有三种常见的利用探测散列表的方法
+*** 线性探测
+    + 一般情况下是f(i) = i,就是如果发现冲突，那就把数据放到下一个空闲的地址
+    + 算法的效果和λ的值关系较大，在λ比较大的情况下可以考虑使用 
+    + 线性探测的缺点是容易形成"一次聚集"，就是数据集中在某一块，使得下次插入变得
+      更加的没效率
+*** 平方探测
+    + 一般情况下是f(i) = i^2
+    + 解决了线性探测的"一次聚集",但是又引入了"二次聚集",就是散列到同一位置上的那
+      些元素将探测相同的备选单元
+*** 双散列
+    + 也就是f(i) = i*hash2(x)
+    + 解决了"二次聚集"问题，但是对hash2函数的选择很难
+** 再散列
+   + 再散列是指当表填的比较满的时候，要重新做一个容量是当前表两倍的表，这是个非
+     常昂贵的操作，不要和"双散列"混淆
+** 可扩展散列
+   + 我们在讲B树的时候说过，如果涉及到磁盘操作，那么大O定理不再适用，因为一次IO
+     操作的代价远远大于一次机器指令.也就是说，如果数据不能一次放到内存，那么减少
+     IO操作的次数就是算法的重点
+   + 在散列领域和B树有异曲同工之妙的就是可扩展散列(extendible hashing)
