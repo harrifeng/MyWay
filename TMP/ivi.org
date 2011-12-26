@@ -1,0 +1,100 @@
+* Chapter 7 : Editing Attributes
+** Attribute Editor:
+   + 就是Attribute编辑器
+** Attributes
+   + Attribute代表了仪器的硬件配置设置
+   + 一个attribute可以和多个range table想对应，反之亦然
+   + attribute可以有影响IVI engine的选项
+** Developing Attributes
+   + 一般从比较孤立的，不影响其他attribute的attribute开始，在DMM里面就是measurement function
+** Range table in the code
+   + Discrete Values 在头文件里面定义的值，其实就是宏的值
+   + Actual Values，就是宏的数字表示
+   + CmdVal  一般就是0，是register value来存储 attribute
+   + Help Text是存放在sub文件中的
+** Error Handling 
+   + Primary error 数字
+   + Secondary error 数字
+   + Error elaboration 是一段描述
+** 两种处理error的宏
+   + viCheckErr(Other_Func(no vi))
+   + checkErr(Some_func(vi))
+** Useful IVI Engine Functions
+   + 一般来说，使用Ivi_SetErrorInfo在某些函数中，这些函数可能因为一些非library error或者 用户定义错误 而失败的情况
+   + Ivi_GetViInt32Entry 能够取得在rangeTable里面的响应的数据
+** Review of Function Attribute
+   + Ivi_GetviInt32EntryFromValue来获取command string，之后发送
+   + Ivi_GetviInt32EntryFromString来读取
+** Excise
+   #+begin_src c
+     static ViStatus _VI_FUNC hp34401aAttrFunction_WriteCallback(ViSession vi,
+                                                                 ViSession io,
+                                                                 ViConstString channelName,
+                                                                 ViAttr attributeId,
+                                                                 ViInt32 value)
+     {
+         ViStatus error = VI_SUCCESS;
+         ViString cmd;
+     
+         viCheckErr(Ivi_GetViInt32EntryFromValue(value,
+                                                 &attrFunctionRangeTable,
+                                                 VI_NULL,
+                                                 VI_NULL,
+                                                 VI_NULL,
+                                                 VI_NULL,
+                                                 &cmd,
+                                                 VI_NULL));
+         viCheckErr(viPrintf(io, ":FUNC \"%s\";", cmd));
+     Error:
+         return error;
+     }
+   #+end_src
+* chapter 8: Range Checking
+** range check
+   + 在测试中很有用
+   + 防止无用数据，提高driver性能
+   + range table 和 range callback都是好方法，IVI主要使用 range table
+** Range Table
+   + Discrete 比如我们的measurement function
+   + Ranged 比如连续的那种attribute
+   + coerced 
+** Attribute Dependencies
+   + 在DMM中，合格的range，总是和当前的meas function息息相关的
+   + 你可以设计几个static的range table，每次我们选择的时候，根据当前的meas func不同，来决定
+     该使用哪个range table
+   + 这个时候就引出了range table callback
+** Range Attributes
+   + 我们从IVI foundation可以了解到，DMM 要求rangetable 对 Range 这个attribute，要使用coerced range table
+** Range Attribute Write Callback
+   + Ivi_GetAttrRangeTable会要求IVI engine来执行Range Table Callback function来完成选择正确range table的工作
+** Range Attribute Discussion
+   + 我们知道当你设置Range Attribute的时候，如果你先设置了AUTO_RANGE_OFF,然后你再读取，你想要的结果是driver重新
+     从read函数读取，而不是让你的cache返回一个-2，这个时候，你就要依靠disable cache啦
+   + 这段逻辑联合起来就是当你设置了AUTO_RANGE_OFF的时候，我们不要从cache读取，我们要重新从仪器读取
+** 尽量禁止Auto-Range
+** 不同的DMM可能有不同的resolution
+   + 在规范里面有规定，resolution的coerce方向是朝向"所允许的最低的精度",这个时候，如果我们设置DMM1的精度为0.01V，
+     DMM1会高兴接受，如果我们设置0.01给DMM2, DMM2应该把精度设计成0.005
+** Hp34401 Resolution/Time Meas 的问题
+   + 当测试frequency或者period的时候，设置resolution的命令不起作用
+   + Absolute Resolution取决于range和resoltion in digits
+   + ResAbs = Range/ (10^Digits)
+   + Resolution和Apure Time是一回事，我们的IVI不允许Apure Time，你就转换成Resolution就好了。
+   + 许多的DMM都有一个meas accuracy在某些情况下的值，这个IVI无法计算，test enginner需要自己去
+     选择。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
