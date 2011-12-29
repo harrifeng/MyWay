@@ -1,0 +1,4 @@
+* chapter 9: An Introduction to Kernel Synchronization
+  + 在一个内存共享的环境当中，开发者必须保证自己的共享资源能够被保护，特别是在共
+    同访问的时候
+  + 在kernel内部，是没有exception的
