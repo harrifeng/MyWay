@@ -7,8 +7,8 @@ lang="en" xml:lang="en">
 <title>ch1</title>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 <meta name="generator" content="Org-mode"/>
-<meta name="generated" content="2011-12-06 22:13:31 CST"/>
-<meta name="author" content="feng haoran"/>
+<meta name="generated" content="2011-12-29 20:26:59 "/>
+<meta name="author" content=""/>
 <meta name="description" content=""/>
 <meta name="keywords" content=""/>
 <style type="text/css">
@@ -111,7 +111,7 @@ lang="en" xml:lang="en">
 <li><a href="#sec-3.2.2">3.2.2 简单链表 </a></li>
 <li><a href="#sec-3.2.3">3.2.3 STL的向量和表 </a></li>
 <li><a href="#sec-3.2.4">3.2.4 迭代器 </a></li>
-<li><a href="#sec-3.2.5">3.2.5 const_iterator </a></li>
+<li><a href="#sec-3.2.5">3.2.5 const<sub>iterator</sub> </a></li>
 </ul>
 </li>
 <li><a href="#sec-3.3">3.3 向量的实现 </a></li>
@@ -185,8 +185,10 @@ lang="en" xml:lang="en">
 <li><a href="#sec-6.3">6.3 二叉堆 </a>
 <ul>
 <li><a href="#sec-6.3.1">6.3.1 结构性质 </a></li>
+<li><a href="#sec-6.3.2">6.3.2 基本操作 </a></li>
 </ul>
 </li>
+<li><a href="#sec-6.4">6.4 优先队列的应用 </a></li>
 </ul>
 </li>
 </ul>
@@ -227,7 +229,7 @@ lang="en" xml:lang="en">
 
 <ul>
 <li>
-2^N + 2^N = 2^(N+1)
+2<sup>N</sup> + 2<sup>N</sup> = 2<sup>(N+1)</sup>
 </li>
 </ul>
 </div>
@@ -256,7 +258,7 @@ logAB = logA + logB
 
 <ul>
 <li>
-sumof(A^i | 0&lt;=i&lt;=N) = (A^(N+1) - 1)/A-1
+sumof(A<sup>i</sup> | 0&lt;=i&lt;=N) = (A<sup>(N+1)</sup> - 1)/A-1
 </li>
 <li>
 推演方法
@@ -273,7 +275,7 @@ S = 1/(1 - A)
 
 </li>
 <li>
-我们经常使用A=2时候的情况:sumof(2^i | 0&lt;=i&lt;=N) = 2^(N+1) - 1
+我们经常使用A=2时候的情况:sumof(2<sup>i</sup> | 0&lt;=i&lt;=N) = 2<sup>(N+1)</sup> - 1
 </li>
 </ul>
 </div>
@@ -307,13 +309,13 @@ S = 1/(1 - A)
 
 
 
-<pre class="src src-c++"><span style="color: #228b22;">int</span> <span style="color: #0000ff;">f</span>(<span style="color: #228b22;">int</span> <span style="color: #a0522d;">x</span>)
+<pre class="src src-c++"><span style="color: #95a99f;">int</span> <span style="color: #96a6c8;">f</span>(<span style="color: #95a99f;">int</span> <span style="color: #f4f4ff;">x</span>)
 {
-    <span style="color: #b22222;">/* </span><span style="color: #b22222;">Base Case */</span>
-    <span style="color: #7f007f;">if</span> (x == 0)
-        <span style="color: #7f007f;">return</span> 0;
-    <span style="color: #7f007f;">else</span>
-        <span style="color: #7f007f;">return</span> 2 * f(x - 1) + x * x;
+    <span style="color: #cc8c3c;">/* </span><span style="color: #cc8c3c;">Base Case */</span>
+    <span style="color: #ffdd33;">if</span> (x == 0)
+        <span style="color: #ffdd33;">return</span> 0;
+    <span style="color: #ffdd33;">else</span>
+        <span style="color: #ffdd33;">return</span> 2 * f(x - 1) + x * x;
 }
 </pre>
 
@@ -326,14 +328,14 @@ n-(n/10)*10 来代替n%10, 因为mod这个过程消耗很大
 
 
 
-<pre class="src src-c++"><span style="color: #7a378b;">#include</span> <span style="color: #8b2252;">&lt;iostream&gt;</span>
-<span style="color: #7f007f;">using</span> <span style="color: #7f007f;">namespace</span> <span style="color: #008b8b;">std</span>;
+<pre class="src src-c++"><span style="color: #95a99f;">#include</span> <span style="color: #73c936;">&lt;iostream&gt;</span>
+<span style="color: #ffdd33;">using</span> <span style="color: #ffdd33;">namespace</span> <span style="color: #95a99f;">std</span>;
 
-<span style="color: #228b22;">void</span> <span style="color: #0000ff;">printOut</span>(<span style="color: #228b22;">int</span> <span style="color: #a0522d;">n</span>)
+<span style="color: #95a99f;">void</span> <span style="color: #96a6c8;">printOut</span>(<span style="color: #95a99f;">int</span> <span style="color: #f4f4ff;">n</span>)
 {
-    <span style="color: #7f007f;">if</span> (n &gt;= 10)
+    <span style="color: #ffdd33;">if</span> (n &gt;= 10)
         printOut(n / 10);
-    <span style="color: #b22222;">/*</span><span style="color: #b22222;">
+    <span style="color: #cc8c3c;">/*</span><span style="color: #cc8c3c;">
      *use n - (n / 10) * 10 is more effective than mod, as 
      *mod is very costly for CPU
      *cout &lt;&lt; n - (n / 10) * 10;
@@ -341,11 +343,11 @@ n-(n/10)*10 来代替n%10, 因为mod这个过程消耗很大
     cout &lt;&lt; n % 10;
 }
 
-<span style="color: #228b22;">int</span> main(<span style="color: #228b22;">int</span> <span style="color: #a0522d;">argc</span>, <span style="color: #7f007f;">const</span> <span style="color: #228b22;">char</span> *<span style="color: #a0522d;">argv</span>[])
+<span style="color: #95a99f;">int</span> <span style="color: #96a6c8;">main</span>(<span style="color: #95a99f;">int</span> <span style="color: #f4f4ff;">argc</span>, <span style="color: #ffdd33;">const</span> <span style="color: #95a99f;">char</span> *<span style="color: #f4f4ff;">argv</span>[])
 {
     printOut(123459);    
     cout &lt;&lt; endl;
-    <span style="color: #7f007f;">return</span> 0;
+    <span style="color: #ffdd33;">return</span> 0;
 }
 </pre>
 
@@ -427,16 +429,16 @@ n-(n/10)*10 来代替n%10, 因为mod这个过程消耗很大
 
 
 
-<pre class="src src-c++"><span style="color: #228b22;">long</span> <span style="color: #0000ff;">pow</span>(<span style="color: #228b22;">long</span> <span style="color: #a0522d;">x</span>, <span style="color: #228b22;">int</span> <span style="color: #a0522d;">n</span>)
+<pre class="src src-c++"><span style="color: #95a99f;">long</span> <span style="color: #96a6c8;">pow</span>(<span style="color: #95a99f;">long</span> <span style="color: #f4f4ff;">x</span>, <span style="color: #95a99f;">int</span> <span style="color: #f4f4ff;">n</span>)
 {
-    <span style="color: #7f007f;">if</span> (n == 0)
-        <span style="color: #7f007f;">return</span> 1;
-    <span style="color: #7f007f;">if</span> (n == 1)
-        <span style="color: #7f007f;">return</span> x;
-    <span style="color: #7f007f;">if</span> (<span style="color: #228b22;">isEven</span>(<span style="color: #a0522d;">n</span>))
-        <span style="color: #7f007f;">return</span> pow(<span style="color: #228b22;">x</span> * <span style="color: #a0522d;">x</span>, n / 2);
-    <span style="color: #7f007f;">else</span>
-        <span style="color: #7f007f;">return</span> pow(<span style="color: #228b22;">x</span> * <span style="color: #a0522d;">x</span>, n / 2) * x;
+    <span style="color: #ffdd33;">if</span> (n == 0)
+        <span style="color: #ffdd33;">return</span> 1;
+    <span style="color: #ffdd33;">if</span> (n == 1)
+        <span style="color: #ffdd33;">return</span> x;
+    <span style="color: #ffdd33;">if</span> (isEven(n))
+        <span style="color: #ffdd33;">return</span> pow(x * x, n / 2);
+    <span style="color: #ffdd33;">else</span>
+        <span style="color: #ffdd33;">return</span> pow(x * x, n / 2) * x;
 }
 </pre>
 
@@ -529,10 +531,10 @@ void clear()
 bool empty()
 </li>
 <li>
-void push_back(const Object&amp; x)
+void push<sub>back</sub>(const Object&amp; x)
 </li>
 <li>
-void pop_back() 
+void pop<sub>back</sub>() 
 </li>
 <li>
 const Object &amp;back() const
@@ -546,10 +548,10 @@ const Object &amp;front() const
 vector在头部插入效率不高，所以下面两个函数只被list支持
 <ul>
 <li>
-void push_front(const Object &amp;x)
+void push<sub>front</sub>(const Object &amp;x)
 </li>
 <li>
-void pop_front()
+void pop<sub>front</sub>()
 </li>
 </ul>
 </li>
@@ -625,13 +627,13 @@ iterator erase(iterator start, iterator end)
 </div>
 
 <div id="outline-container-3.2.5" class="outline-4">
-<h4 id="sec-3.2.5"><span class="section-number-4">3.2.5</span> const_iterator </h4>
+<h4 id="sec-3.2.5"><span class="section-number-4">3.2.5</span> const<sub>iterator</sub> </h4>
 <div class="outline-text-4" id="text-3.2.5">
 
 <ul>
 <li>
-const_iterator和iterator的主要区别，是const_iterator的operator*返回常量引
-用，这样const_iterator类型的*iter就不能出现在赋值语句的左边
+const<sub>iterator和iterator的主要区别，是const</sub><sub>iterator的operator</sub>*返回常量引
+用，这样const<sub>iterator类型的</sub>*iter就不能出现在赋值语句的左边
 </li>
 </ul>
 </div>
@@ -717,23 +719,23 @@ const_iterator和iterator的主要区别，是const_iterator的operator*返回�
 
 
 <pre class="src src-c">template &lt;typename Iterator&gt;
-<span style="color: #228b22;">void</span> print(<span style="color: #228b22;">Iterator</span> <span style="color: #a0522d;">start</span>, <span style="color: #228b22;">Iterator</span> <span style="color: #a0522d;">end</span>, ostream &amp;out = cout)
+<span style="color: #95a99f;">void</span> print(<span style="color: #95a99f;">Iterator</span> <span style="color: #f4f4ff;">start</span>, <span style="color: #95a99f;">Iterator</span> <span style="color: #f4f4ff;">end</span>, ostream &amp;out = cout)
 {
-    <span style="color: #7f007f;">if</span> (start == end)
-        <span style="color: #7f007f;">return</span>;
+    <span style="color: #ffdd33;">if</span> (start == end)
+        <span style="color: #ffdd33;">return</span>;
 
-    out &lt;&lt; *start++ &lt;&lt; endl; <span style="color: #b22222;">// </span><span style="color: #b22222;">Print and advance start
+    out &lt;&lt; *start++ &lt;&lt; endl; <span style="color: #cc8c3c;">// </span><span style="color: #cc8c3c;">Print and advance start
 </span>    print(start, end, out);
 }
-<span style="color: #b22222;">/* </span><span style="color: #b22222;">previous recursive code can be replaced by following code </span><span style="color: #b22222;">*/</span>
+<span style="color: #cc8c3c;">/* </span><span style="color: #cc8c3c;">previous recursive code can be replaced by following code </span><span style="color: #cc8c3c;">*/</span>
 template &lt;typename Iterator&gt;
-<span style="color: #228b22;">void</span> print(<span style="color: #228b22;">Iterator</span> <span style="color: #a0522d;">start</span>, <span style="color: #228b22;">Iterator</span> <span style="color: #a0522d;">end</span>, ostream &amp;out = cout)
+<span style="color: #95a99f;">void</span> print(<span style="color: #95a99f;">Iterator</span> <span style="color: #f4f4ff;">start</span>, <span style="color: #95a99f;">Iterator</span> <span style="color: #f4f4ff;">end</span>, ostream &amp;out = cout)
 {
-    <span style="color: #7f007f;">while</span> (<span style="color: #008b8b;">true</span>)
+    <span style="color: #ffdd33;">while</span> (<span style="color: #95a99f;">true</span>)
     {
-        <span style="color: #7f007f;">if</span> (start == end)
-            <span style="color: #7f007f;">return</span>;
-        out &lt;&lt; *start++ &lt;&lt; endl; <span style="color: #b22222;">// </span><span style="color: #b22222;">Print and advance start
+        <span style="color: #ffdd33;">if</span> (start == end)
+            <span style="color: #ffdd33;">return</span>;
+        out &lt;&lt; *start++ &lt;&lt; endl; <span style="color: #cc8c3c;">// </span><span style="color: #cc8c3c;">Print and advance start
 </span>    }
 }
 </pre>
@@ -854,11 +856,11 @@ template &lt;typename Iterator&gt;
 
 
 
-<pre class="src src-c"><span style="color: #7f007f;">struct</span> <span style="color: #228b22;">BinaryNode</span>
+<pre class="src src-c"><span style="color: #ffdd33;">struct</span> <span style="color: #95a99f;">BinaryNode</span>
 {
-    <span style="color: #228b22;">Object</span>      <span style="color: #a0522d;">element</span>;
-    <span style="color: #228b22;">BinaryNode</span>  *<span style="color: #a0522d;">left</span>;
-    <span style="color: #228b22;">BinaryNode</span>  *<span style="color: #a0522d;">right</span>;
+    <span style="color: #95a99f;">Object</span>      <span style="color: #f4f4ff;">element</span>;
+    <span style="color: #95a99f;">BinaryNode</span>  *<span style="color: #f4f4ff;">left</span>;
+    <span style="color: #95a99f;">BinaryNode</span>  *<span style="color: #f4f4ff;">right</span>;
 };
 </pre>
 
@@ -908,26 +910,26 @@ insert其实就是和contains非常像，对于一个元素如果在指定地方
 
 
 
-<pre class="src src-c++"><span style="color: #b22222;">/**</span><span style="color: #b22222;">
+<pre class="src src-c++"><span style="color: #cc8c3c;">/**</span><span style="color: #cc8c3c;">
  * Internal method to insert into a subtree
  * x is the item to insert
  * t is the node that roots the subtree, t maybe
  * modified, so no const is applied.
  * Set the new root of the subtree.
  */</span>
-<span style="color: #228b22;">void</span> insert(<span style="color: #7f007f;">const</span> <span style="color: #228b22;">Comparable</span> &amp;<span style="color: #a0522d;">x</span>, <span style="color: #228b22;">BinaryNode</span>* &amp;<span style="color: #a0522d;">t</span>)
+<span style="color: #95a99f;">void</span> <span style="color: #96a6c8;">insert</span>(<span style="color: #ffdd33;">const</span> <span style="color: #95a99f;">Comparable</span> &amp;<span style="color: #f4f4ff;">x</span>, <span style="color: #95a99f;">BinaryNode</span>* &amp;<span style="color: #f4f4ff;">t</span>)
 {
-    <span style="color: #b22222;">/* </span><span style="color: #b22222;">if the fuction is contains, do nothing here */</span>
-    <span style="color: #7f007f;">if</span> (t == <span style="color: #008b8b;">NULL</span>)
-        t = <span style="color: #7f007f;">new</span> <span style="color: #228b22;">BinaryNode</span>(x, <span style="color: #008b8b;">NULL</span>, <span style="color: #008b8b;">NULL</span>);
-    <span style="color: #7f007f;">else</span> <span style="color: #7f007f;">if</span> (x &lt; t-&gt;element)
+    <span style="color: #cc8c3c;">/* </span><span style="color: #cc8c3c;">if the fuction is contains, do nothing here */</span>
+    <span style="color: #ffdd33;">if</span> (t == <span style="color: #95a99f;">NULL</span>)
+        t = <span style="color: #ffdd33;">new</span> <span style="color: #95a99f;">BinaryNode</span>(x, <span style="color: #95a99f;">NULL</span>, <span style="color: #95a99f;">NULL</span>);
+    <span style="color: #ffdd33;">else</span> <span style="color: #ffdd33;">if</span> (x &lt; t-&gt;element)
         insert(x, t-&gt;left);
-    <span style="color: #7f007f;">else</span> <span style="color: #7f007f;">if</span> (t-&gt;element &gt; x)
+    <span style="color: #ffdd33;">else</span> <span style="color: #ffdd33;">if</span> (t-&gt;element &gt; x)
         insert(x, t-&gt;right);
-    <span style="color: #b22222;">/* </span><span style="color: #b22222;">if the fuction is contains, return true here,
+    <span style="color: #cc8c3c;">/* </span><span style="color: #cc8c3c;">if the fuction is contains, return true here,
        as we find the exact node! */</span>
-    <span style="color: #7f007f;">else</span>
-        ; <span style="color: #b22222;">// </span><span style="color: #b22222;">Duplicate; do nothing
+    <span style="color: #ffdd33;">else</span>
+        ; <span style="color: #cc8c3c;">// </span><span style="color: #cc8c3c;">Duplicate; do nothing
 </span>}
 </pre>
 
@@ -962,25 +964,25 @@ remove的理解难度则要大一点，主要在两点:
 </ol>
 
 
-<pre class="src src-c++"><span style="color: #228b22;">void</span> remove(<span style="color: #7f007f;">const</span> <span style="color: #228b22;">Comparble</span> &amp;<span style="color: #a0522d;">x</span>, <span style="color: #228b22;">BinaryNode</span>* &amp;<span style="color: #a0522d;">t</span>)
+<pre class="src src-c++"><span style="color: #95a99f;">void</span> <span style="color: #96a6c8;">remove</span>(<span style="color: #ffdd33;">const</span> <span style="color: #95a99f;">Comparble</span> &amp;<span style="color: #f4f4ff;">x</span>, <span style="color: #95a99f;">BinaryNode</span>* &amp;<span style="color: #f4f4ff;">t</span>)
 {
-    <span style="color: #7f007f;">if</span> (t == <span style="color: #008b8b;">NULL</span>)
-        <span style="color: #7f007f;">return</span>;    <span style="color: #b22222;">//</span><span style="color: #b22222;">Item not found, do nothing
-</span>    <span style="color: #7f007f;">if</span> (x &lt; t-&gt;element)
+    <span style="color: #ffdd33;">if</span> (t == <span style="color: #95a99f;">NULL</span>)
+        <span style="color: #ffdd33;">return</span>;    <span style="color: #cc8c3c;">//</span><span style="color: #cc8c3c;">Item not found, do nothing
+</span>    <span style="color: #ffdd33;">if</span> (x &lt; t-&gt;element)
         remove(x, t-&gt;left);
-    <span style="color: #7f007f;">else</span> <span style="color: #7f007f;">if</span>(t-&gt;element &lt; x)
+    <span style="color: #ffdd33;">else</span> <span style="color: #ffdd33;">if</span>(t-&gt;element &lt; x)
         remove(x, t-&gt;right);
-    <span style="color: #7f007f;">else</span> <span style="color: #7f007f;">if</span> (t-&gt;left != <span style="color: #008b8b;">NULL</span> &amp;&amp; t-&gt;right != <span style="color: #008b8b;">NULL</span>) <span style="color: #b22222;">// </span><span style="color: #b22222;">two children
+    <span style="color: #ffdd33;">else</span> <span style="color: #ffdd33;">if</span> (t-&gt;left != <span style="color: #95a99f;">NULL</span> &amp;&amp; t-&gt;right != <span style="color: #95a99f;">NULL</span>) <span style="color: #cc8c3c;">// </span><span style="color: #cc8c3c;">two children
 </span>    {
         t-&gt;element = findMin(t-&gt;right)-&gt;element;
         remvoe(t-&gt;element, t-&gt;right);
     }
-    <span style="color: #7f007f;">else</span> 
+    <span style="color: #ffdd33;">else</span> 
     {
-        BinaryNode *oldNode = t; <span style="color: #b22222;">//</span><span style="color: #b22222;">temp variable
-</span>        t = (t-&gt;left != <span style="color: #008b8b;">NULL</span>) ? t-&gt;left : t-&gt;right;
-        <span style="color: #b22222;">// </span><span style="color: #b22222;">Do not need let oldNode = NULL, as we stil use it
-</span>        <span style="color: #7f007f;">delete</span> oldNode; 
+        <span style="color: #95a99f;">BinaryNode</span> *<span style="color: #f4f4ff;">oldNode</span> = t; <span style="color: #cc8c3c;">//</span><span style="color: #cc8c3c;">temp variable
+</span>        t = (t-&gt;left != <span style="color: #95a99f;">NULL</span>) ? t-&gt;left : t-&gt;right;
+        <span style="color: #cc8c3c;">// </span><span style="color: #cc8c3c;">Do not need let oldNode = NULL, as we stil use it
+</span>        <span style="color: #ffdd33;">delete</span> oldNode; 
     }
 }
 </pre>
@@ -1164,7 +1166,7 @@ B*树:在B+树基础上，为非叶子结点也增加链表指针，将结点的
 
 <ul>
 <li>
-set是一个排序后的容器，该容器不容许重复。iterator和const_iterator也嵌套于
+set是一个排序后的容器，该容器不容许重复。iterator和const<sub>iterator也嵌套于</sub>
 set, 允许遍历.
 </li>
 <li>
@@ -1177,13 +1179,13 @@ end, size, empty都可以利用在set上
 
 
 
-<pre class="src src-c++"><span style="color: #b22222;">/* </span><span style="color: #b22222;">&#38500;&#20102;&#36820;&#22238;&#26159;&#21542;&#25554;&#20837;&#25104;&#21151;&#30340;bool&#20540;&#20197;&#22806;&#65292;&#36824;&#36820;&#22238;&#19968;&#20010;iterator
+<pre class="src src-c++"><span style="color: #cc8c3c;">/* </span><span style="color: #cc8c3c;">&#38500;&#20102;&#36820;&#22238;&#26159;&#21542;&#25554;&#20837;&#25104;&#21151;&#30340;bool&#20540;&#20197;&#22806;&#65292;&#36824;&#36820;&#22238;&#19968;&#20010;iterator
  *  &#36825;&#20010;iterator&#26159;&#26032;&#25554;&#20837;&#39033;&#30340;&#22320;&#22336;&#65292;&#25110;&#32773;&#26159;&#22312;&#25554;&#20837;&#22833;&#36133;&#30340;&#24773;&#20917;&#19979;
  * &#25351;&#31034;&#23548;&#33268;&#25554;&#20837;&#22833;&#36133;&#30340;&#39033;&#30340;&#22320;&#22336;&#65292;&#20174;&#32780;&#36827;&#34892;&#21024;&#38500;&#65292;&#32780;&#19981;&#38656;&#35201;&#20877;&#27425;&#36827;
  * &#34892;&#26597;&#35810;&#25805;&#20316;
  */</span>
-<span style="color: #228b22;">pair</span>&lt;<span style="color: #228b22;">iterator</span>, <span style="color: #228b22;">bool</span>&gt; <span style="color: #0000ff;">insert</span>(<span style="color: #7f007f;">const</span> <span style="color: #228b22;">Object</span> &amp;<span style="color: #a0522d;">x</span>);
-<span style="color: #228b22;">pair</span>&lt;<span style="color: #228b22;">iterator</span>, <span style="color: #228b22;">bool</span>&gt; insert(<span style="color: #228b22;">iterator</span> <span style="color: #a0522d;">hint</span>, <span style="color: #7f007f;">const</span> <span style="color: #228b22;">Object</span> &amp;<span style="color: #a0522d;">x</span>);
+<span style="color: #95a99f;">pair</span>&lt;<span style="color: #95a99f;">iterator</span>, <span style="color: #95a99f;">bool</span>&gt; <span style="color: #96a6c8;">insert</span>(<span style="color: #ffdd33;">const</span> <span style="color: #95a99f;">Object</span> &amp;<span style="color: #f4f4ff;">x</span>);
+<span style="color: #95a99f;">pair</span>&lt;<span style="color: #95a99f;">iterator</span>, <span style="color: #95a99f;">bool</span>&gt; <span style="color: #96a6c8;">insert</span>(<span style="color: #95a99f;">iterator</span> <span style="color: #f4f4ff;">hint</span>, <span style="color: #ffdd33;">const</span> <span style="color: #95a99f;">Object</span> &amp;<span style="color: #f4f4ff;">x</span>);
 </pre>
 
 
@@ -1194,7 +1196,7 @@ end, size, empty都可以利用在set上
 
 
 
-<pre class="src src-c++">iterator <span style="color: #228b22;">find</span>(<span style="color: #7f007f;">const</span> <span style="color: #228b22;">Object</span> &amp;<span style="color: #a0522d;">x</span>) <span style="color: #7f007f;">const</span>;
+<pre class="src src-c++"><span style="color: #95a99f;">iterator</span> <span style="color: #96a6c8;">find</span>(<span style="color: #ffdd33;">const</span> <span style="color: #95a99f;">Object</span> &amp;<span style="color: #f4f4ff;">x</span>) <span style="color: #ffdd33;">const</span>;
 </pre>
 
 
@@ -1223,7 +1225,7 @@ map有一个特别的获取键值的操作，可惜由于返回值是引用，�
 
 
 
-<pre class="src src-c++"><span style="color: #228b22;">ValueType</span> &amp; <span style="color: #7f007f;">operator</span><span style="color: #0000ff;">[]</span> (<span style="color: #7f007f;">const</span> <span style="color: #228b22;">KeyType</span> &amp; <span style="color: #a0522d;">key</span>);
+<pre class="src src-c++">ValueType &amp; <span style="color: #ffdd33;">operator</span>[] (<span style="color: #ffdd33;">const</span> <span style="color: #95a99f;">KeyType</span> &amp; <span style="color: #f4f4ff;">key</span>);
 </pre>
 
 
@@ -1234,17 +1236,17 @@ map有一个特别的获取键值的操作，可惜由于返回值是引用，�
 
 
 
-<pre class="src src-c++"><span style="color: #228b22;">map</span>&lt;<span style="color: #228b22;">string</span>, <span style="color: #228b22;">double</span>&gt; <span style="color: #a0522d;">salaries</span>;
+<pre class="src src-c++"><span style="color: #95a99f;">map</span>&lt;<span style="color: #95a99f;">string</span>, <span style="color: #95a99f;">double</span>&gt; <span style="color: #f4f4ff;">salaries</span>;
 
-salaries[<span style="color: #8b2252;">"Pat"</span>] = 75000.00;
-cout &lt;&lt; salaries[<span style="color: #8b2252;">"Pat"</span>] &lt;&lt; endl;
-cout &lt;&lt; salaries[<span style="color: #8b2252;">"Jan"</span>] &lt;&lt; endl;
+salaries[<span style="color: #73c936;">"Pat"</span>] = 75000.00;
+cout &lt;&lt; salaries[<span style="color: #73c936;">"Pat"</span>] &lt;&lt; endl;
+cout &lt;&lt; salaries[<span style="color: #73c936;">"Jan"</span>] &lt;&lt; endl;
 
-<span style="color: #008b8b;">map</span>&lt;<span style="color: #228b22;">string</span>, <span style="color: #228b22;">double</span>&gt;::<span style="color: #228b22;">const_iterator</span> <span style="color: #a0522d;">itr</span>;
-itr = salaries.find(<span style="color: #8b2252;">"Chris"</span>);
-<span style="color: #7f007f;">if</span> (itr == salaries.end())
-    cout &lt;&lt; <span style="color: #8b2252;">"Not an employee of this company"</span> &lt;&lt; endl;
-<span style="color: #7f007f;">else</span>
+<span style="color: #95a99f;">map</span>&lt;<span style="color: #95a99f;">string</span>, <span style="color: #95a99f;">double</span>&gt;::<span style="color: #95a99f;">const_iterator</span> <span style="color: #f4f4ff;">itr</span>;
+itr = salaries.find(<span style="color: #73c936;">"Chris"</span>);
+<span style="color: #ffdd33;">if</span> (itr == salaries.end())
+    cout &lt;&lt; <span style="color: #73c936;">"Not an employee of this company"</span> &lt;&lt; endl;
+<span style="color: #ffdd33;">else</span>
     cout &lt;&lt; itr-&gt;second &lt;&lt; endl;
 </pre>
 
@@ -1379,7 +1381,7 @@ set 和 map的基本操作是对数级别的，显然是使用了树的数据结
 
 <ul>
 <li>
-一般情况下是f(i) = i^2
+一般情况下是f(i) = i<sup>2</sup>
 </li>
 <li>
 解决了线性探测的"一次聚集",但是又引入了"二次聚集",就是散列到同一位置上的那
@@ -1543,6 +1545,74 @@ O(N)
 二叉堆呢，就是对于堆中每个结点，X的父亲结点，小于他的两个儿子结点,根除外，
 因为根没有父亲结点(可以看到，不像二叉查找树，我们没有一定要求左节点小于右
 结点，也就没有维护顺序信息)
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-6.3.2" class="outline-4">
+<h4 id="sec-6.3.2"><span class="section-number-4">6.3.2</span> 基本操作 </h4>
+<div class="outline-text-4" id="text-6.3.2">
+
+<ul>
+<li>
+insert:插入的过程其实就是在树的最后加入一个新的结点，然后加入新的值。之后
+和父辈进行比较比父辈小就和父辈替换，然后依次进行下去，直到新插入的数值找到
+合适的位置。
+</li>
+<li>
+从上图看，就是在10处插入J,然后J和自己的父亲E比较大小哦，如果替
+换了E，再和B比较，如果替换了B再和A比较
+</li>
+<li>
+deleteMin:另外一个主要的操作是删除最小元素，我们知道二叉堆的根节点就是最小
+的，去掉根结点后，我们就可以重新的组织堆的结构，从根开始，把两个子结点和最
+后一个结点比较，三者最小的做根，然后一直下去，直到平衡
+</li>
+<li>
+从上图看，就是把A删掉，然后B,C,I比较，小的放到A的位置上，如果I成功的放置的
+话，删除结束，如果没有的话，比如是B到了A,那么B的位置又空下来了，接下来，
+D,E，I再比较，依次继续，知道I找到位置。I原来的位置就被删除了。从总体看，就
+是数组少了一个成员，然后其余成员还是维护了二叉堆的性质
+</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-6.4" class="outline-3">
+<h3 id="sec-6.4"><span class="section-number-3">6.4</span> 优先队列的应用 </h3>
+<div class="outline-text-3" id="text-6.4">
+
+<ul>
+<li>
+选择问题:找一个含有N个元素序列的第K大的值，利用二叉堆这种数据结构，我们可以
+有两者办法解决，复杂度都小于简单排序的O(N<sup>2</sup>):
+<ol>
+<li>
+先将这N个元素读入到一个数组，然后对该数组做buildHeap操作，这个过程是
+O(N), 然后执行K次deleteMin操作，复杂度是O(K*logN)，剩下的就是第K大，整个
+过程的复杂度是O(N + K*logN):
+<ul>
+<li>
+如果 K = O(N/logN)，那么运行时间主要是决定于buildHeap
+</li>
+<li>
+如果 K = N/2, 那么运行时间就是O(NlogN)
+</li>
+<li>
+如果 K = N，那么其实就是对整个数组进行了排序
+</li>
+</ul>
+</li>
+<li>
+第二种方法，把K个数读入数组，然后buildHeap,这次是build一个最大堆，复杂度
+为O(K), 之后把剩下的N-K个一次和最大堆的最大值比较，如果小于那个最大值，
+就用新值替换那个最大值，最后剩下的那个最大堆的最大值就是第K大的值。这个
+过程的复杂度为O((N-K)logK), 整个过程的时间复杂度为O(K + (N-K)logK) =
+O(NlogK), 该算法也指出，找出中位数的复杂度为O(NlogN)
 
 
 
@@ -1551,16 +1621,17 @@ O(N)
 
 
 </li>
+</ol>
+</li>
 </ul>
 </div>
 </div>
 </div>
-</div>
 <div id="postamble">
-<p class="author"> Author: feng haoran
-<a href="mailto:fenghaoran@fengmatoMacBook-Air.local">&lt;fenghaoran@fengmatoMacBook-Air.local&gt;</a>
+<p class="author"> Author: 
+<a href="mailto:harrifeng@HARRIFENG-PC">&lt;harrifeng@HARRIFENG-PC&gt;</a>
 </p>
-<p class="date"> Date: 2011-12-06 22:13:31 CST</p>
+<p class="date"> Date: 2011-12-29 20:26:59 </p>
 <p class="creator">HTML generated by org-mode 6.33x in emacs 23</p>
 </div>
 </div>

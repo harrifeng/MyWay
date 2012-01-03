@@ -1,0 +1,41 @@
+* CSS
+** Type Selector: CSS 如果要把格式应用到一类里面,那么就用type selector
+   #+begin_src html
+     h1 {
+     font-size: 120%
+     }
+     p {
+     color: blue
+     }
+   #+end_src
+** Class Selector: CSS 如果要把格式应用到多个类里面,那么就要用class selector,
+   他的特点是,有个句号(.)在名字前面
+   #+begin_src html
+     .warning {
+       font-weight: bold;
+     }
+     
+     <li class="warning"><a href="http://www.baidu.com">Baidu></a></li>
+   #+end_src
+** ID Selector: 和class selector类似的是ID selector,他俩的区别是ID selector
+   在HTMl文档里面只出现一次, 他的特点是,有个井号(#)在名字前面.ID嘛只能出现一次
+   #+begin_src html
+     #navigation {
+       border: 1px solid black;
+       padding: 40px;
+     }
+   #+end_src
+** Dscendant Selector:还有一类叫做Descendant selector,其实就是满足继承关系的
+   css才起作用,比如下面的,只有在li下面的a才会被设置格式, p下面的a保持原貌
+   #+begin_src html
+      li a {
+       font-size: 200%
+     }
+   #+end_src
+** Universal Selector: 最后还有一类selector,就是全局selector,对所有的部分都
+   起作用,特点是有个星号(*)在前面
+   #+begin_src html
+     * {
+       font-family:Verdana, Arial, sans-serif;
+     }
+   #+end_src
