@@ -484,9 +484,57 @@
         就用新值替换那个最大值，最后剩下的那个最大堆的最大值就是第K大的值。这个
         过程的复杂度为O((N-K)logK), 整个过程的时间复杂度为O(K + (N-K)logK) =
         O(NlogK), 该算法也指出，找出中位数的复杂度为O(NlogN)
-
-
-
+** d堆
+   + d堆就是对二叉堆的一个升华,所有节点都有d个儿子的堆,就叫做d堆
+   + d堆的insert操作复杂度降低到了O((logd)N),但是在deleteMin和Merge操作的时候,速
+     度就慢多了
+** 左堆式
+   + 左堆式是为了更快的进行合并操作而设计的堆结构
+** 斜堆
+   + 斜堆是左式堆的自调节形式,斜堆和左式堆的关系,就好像伸展树和AVL树的关系一样,
+     斜对的操作最坏的情形运行时间为O(N),然而,正如伸展树一样,对任意M次操作,总的最
+     坏情况运行时间是O(MlogN)
+** 二项队列
+     + 二项式堆当然还是保留堆最主要的特性,那就是logN时间能够取到极值
+     + 二项式堆是d堆,但是是能够支持平均最坏logN,平均常数时间插入操作的d堆
+     + 左堆式和斜堆都是d堆,但是他们的插入操作要话费logN时间
+** 标准库中的优先队列
+   + 在STL中,二叉堆是通过<queue>中的priority_queue的类模板实现的,它是实现的一个
+     最大堆,而不是最小堆,最小堆的实现,可以通过添加一个比较函数来实现,如下
+     #+begin_src c++
+       #include <iostream>
+       #include <vector>
+       #include <queue>
+       #include <functional>
+       #include <string>
+       using namespace std;
+       
+       // Empty the priority queue and print its contents.
+       template <typename PriorityQueue>
+       void dumpContents(const string& msg, PriorityQueue& pq)
+       {
+           cout << msg << ":" << endl;
+           while (!pq.empty()) {
+               cout << pq.top() << endl;
+               pq.pop();
+           }
+       }
+       
+       //Do some inserts and removes (done in dumpContents)
+       int main()
+       {
+           priority_queue<int>      maxPQ;
+           priority_queue<int, vector<int>, greater<int>> minPQ;
+       
+           minPQ.push(4); minPQ.push(3); minPQ.push(5);
+           maxPQ.push(4); maxPQ.push(3); maxPQ.push(5);
+       
+           dumpContents("minPQ", minPQ);
+           dumpContents("maxPQ", maxPQ);
+       
+           return 0;
+       }
+     #+end_src
 
 
 
