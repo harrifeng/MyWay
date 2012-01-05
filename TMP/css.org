@@ -15,7 +15,7 @@
        font-weight: bold;
      }
      
-     <li class="warning"><a href="http://www.baidu.com">Baidu></a></li>
+     <li class="warning"><a href="http://www.baidu.com">Baidu</a></li>
    #+end_src
 ** ID Selector: 和class selector类似的是ID selector,他俩的区别是ID selector
    在HTMl文档里面只出现一次, 他的特点是,有个井号(#)在名字前面.ID嘛只能出现一次
