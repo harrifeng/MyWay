@@ -1,4 +1,4 @@
-* chapter 1: Introducing Jquery
+* Chapter 1: Introducing Jquery
 ** Power in the econmy of code
    + 经过对比发现，使用jquery可以节省很多代码。jquery会把所有的javascript实现都
      放到头部去
@@ -92,4 +92,35 @@
     + 其中$.fn.disable就是说，"我们正在扩展jquery"
     + this就是代表这个函数将要打开的所有的DOM元素
     + each()函数，就是对所有的这些元素进行操作
+* chapter 2: Selecting the elements upon which to act
+  + 我们前面讲过，如何选择某一个特定的DOM element以及如何确定要调用哪个函数来处
+    理特定的DOM 元素
+  + 这一章，我们主要讲解如何利用selector来选择DOM元素已经如何创建DOM元素
+** Selecting elements for mainipulation
+   + 前一章讲到了wrapper function，要使用wrapper function，我们必须要知道是作用
+     在哪些的元素上面，有些时候，这些元素非常好描述，比如, "这个页面上面所有的元
+     素", 但是有些时候，对元素的描述则复杂的多，比如"所有的包含listElement类的成
+     员，里面要包含链接，而且要在list的第一位"
+*** Controlling the context
+    + 我们可以通过给$()函数一个optional的参数的方式来限定我们的DOM选择的范围，比
+      如，在我们的例子中就是如下的方法来限定我们高亮的区域都是控制在ID为
+      sampleDOM的区域中的(在这个例子中sampleDOM是一个DIV区域)
+      #+begin_src js
+        var selector = $.trm($('#selectorField').val());
+        var wrappedSet = $(selector, '#sampleDOM');
+      #+end_src
+*** Using basic CSS selector
+    + 我们的jquery也是复合css3标准的，所以以下selector的写法都是可行的
+      | Example                   | Description                                         |
+      | a                         | Matches all anchor (<a>) elements                   |
+      | #specialID                | Matches the elements with the id value of specialID |
+      | .specialClass             | Matches the elements with the class specialClass    |
+      | a#specialID.specialClasss | Matches the elements with the id value specialID    |
+      |                           | if it's an anchor tag and has class specialClass    |
+      | p a.specialClass          | Matches al anchor elements with the class           |
+      |                           | specialClass that are descendants of <p> elements   |
+      |---------------------------+-----------------------------------------------------|
+
+
+
         
