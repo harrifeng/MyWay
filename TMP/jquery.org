@@ -120,7 +120,90 @@
       | p a.specialClass          | Matches al anchor elements with the class           |
       |                           | specialClass that are descendants of <p> elements   |
       |---------------------------+-----------------------------------------------------|
-
-
-
+*** Using child, container, and attribute selectors
+    + 刚才我们说到的，是css里面所使用的最简单的selector，主要通过id，名字等基本
+      信息，在IE7以后已经其他主流浏览器中，我们还可以使用元素之间的继承关系，容
+      器，属性等等来进行"精确定位"
+    + 比如如下例子中，如果我们想要得到 Query support的话,我们就不能再使用简单的
+      "ul.myList li a"了,因为这样的话,会包括css1,css2,css3,这个时候,我们就要使用
+      child selector "ul.myList > li > a"
+      #+begin_src html
+        <ul class="myList">
+            <li><a href="http://jquery.com">jQuery support</a>
+             <ul>
+               <li><a href="css1">css1</a></li>
+               <li><a href="css2">css2</a></li>
+               <li><a href="css3">css3</a></li>
+               <li>Basic</li>
+             </ul>
+            </li>
+        </ul>
+      #+end_src
+    + 还是上面那个例子,如果ul.myList下面有多个li,a的情况下,我想精确的定准是打击
+      某一个item,那么,我们这里有一个强有力的武器:attribute selector, 类似于正则
+      表达式的方法,让控制更加细致
+      #+begin_src js
+        ul.myList > li > a[href^='http://']      
+      #+end_src
+    + 这种tag+[]+正则表达式的方法,生发开来,有如下几种应用:
+      #+begin_src js
+        form[method]
+        div[title^='my']
+        a[href$='.pdf']
+        a[href*='jquery.com']
+      #+end_src
+    + 最后就是我们可以通过具体位置的信息来筛选元素,比如,我们想要每个页面第一个a,
+      最后一个li, 奇数个div,等等
+      #+begin_src js
+        a:first
+        p:odd
+        p:even
+        ul li:last-child
+      #+end_src
+    + 常见的情况如下:
+      | Selector      | Description                                        |
+      |---------------+----------------------------------------------------|
+      | :first        | Matches the first match within the context         |
+      | :last         | Matches the last match within the context          |
+      | :first-child  | Matches the first child element within the context |
+      | :last-child   | Matches the last child element within the context  |
+      | :only-child   | Returns all elements that have no siblings         |
+      | :nth-child(n) | Matches the nth element within the context         |
+      | :gt(n)        | Matches matching elements after and excluding the  |
+      |               | nth matching element                               |
+      | :lt(n)        | Matches matching elements before and excluding the |
+      |               | nth matching element                               |
+*** Using CSS and custom JQuery filtr selectors
+    + 除了上面各种方法以外,我们还可以使用filter selector来处理一些难度比较大的定
+      位.
+    + 比如,我们想定位当前所有被check的checkbox,我们不能简单的检查checked这个状态,因
+      为这个是初始状态,所以我们要使用input:checked这个selector来确定即时状态:
+      | Selector        | Description                                             |
+      | :animated       | Selects only elements that are currently under animated |
+      |                 | control.                                                |
+      | :button         | Selects only button elements                            |
+      | :checkbox       | Selects only checkbox elements                          |
+      | :checked        | Selects only checkboxes or radio elements in checked    |
+      |                 | state                                                   |
+      | :contains(food) | Selects only elements containing the text food          |
+      | :disabled       | Selects only elements in disabled state                 |
+      | :enabled        | Selects only elements in enabled state                  |
+      | :file           | Selects only file input elements                        |
+      | :has(selector)  | Selects only elements that contain at least one element |
+      |                 | that mtches the specified selector                      |
+      | :header         | Selects only elements that are headers                  |
+      | :hidden         | Selects only elements that are hidden                   |
+      | :image          | Selects only image input elements                       |
+      | :input          | Selects only form elements(input, select, textarea,     |
+      |                 | button)                                                 |
+      | :not(selector)  | Negates the specified selector                          |
+      | :parent         | Selects only elemsnts that ahave children               |
+      | :rdio           | Selects only radio elements                             |
+      | :reset          | Selects only reset buttons                              |
+      | :selected       | Selects only <option> elements that are in selected     |
+      |                 | state                                                   |
+      | :submit         | Selects only submit button                              |
+      | :text           | Selects only text elements                              |
+      | :visable        | Selects only elements that are visable.                 |
+** Genarating new HTML
         
