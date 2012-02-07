@@ -92,7 +92,7 @@
     + 其中$.fn.disable就是说，"我们正在扩展jquery"
     + this就是代表这个函数将要打开的所有的DOM元素
     + each()函数，就是对所有的这些元素进行操作
-* chapter 2: Selecting the elements upon which to act
+* Chapter 2: Selecting the elements upon which to act
   + 我们前面讲过，如何选择某一个特定的DOM element以及如何确定要调用哪个函数来处
     理特定的DOM 元素
   + 这一章，我们主要讲解如何利用selector来选择DOM元素已经如何创建DOM元素
@@ -206,4 +206,65 @@
       | :text           | Selects only text elements                              |
       | :visable        | Selects only elements that are visable.                 |
 ** Genarating new HTML
-        
+   + 有很多时候,我们想要插入某些html元素到当前的html文件中来,这个时候,可以采用如
+     的方法:
+     #+begin_src js
+       $(function() {
+           $('<img>',
+             {
+                 src: 'mages/little.bear.png',
+                 alt: 'Little Bear',
+                 title: 'I woof in your general direction',
+                 click: function() {
+                     alter($(this).attr('title'));
+                 }
+             })
+               .css ({
+                   cursor: 'pointer',
+                   border: '1px solid black',
+                   padding: '12px 12px 20px 12px',
+                   backgroundColor: 'white'
+               })
+               .appendTo('body');
+       });
+     #+end_src
+   + 这里的"click: function"就是所谓的handler,我们后面会介绍,其实也就是处理用户
+     的鼠标点击事件
+    
+** Managing the wrapped element set
+   + 我们前面也说过了如何选择一些有共同特点的元素,以及我们自己插入某些元素到html
+     里面,无论如何,我们以及能够得到一个数组的元素了,下面来讲如何对这些元素进行处理
+     以期改变它们的状态
+*** Determing the size of a wrapped set
+    + 我们可以通过size函数来确定"有某些共同特点的元素集合"的大小
+      #+begin_src js
+        $('#someDiv')
+            .html('There are ' + $('a').size() + 'link(s) on this
+            page.');
+      #+end_src
+*** Obtaining elements from a wrapped set
+    + 从这个元素集合中取出某些成员的方法有如下几种:
+      1) 通过索引取出成员
+         #+begin_src js
+           var imgElement = $('img[alt]')[0]
+           var imgElement = $('img[alt]').get(0)
+         #+end_src 
+      2) 不想取出元素,而是取出带$()的元素集合,好进行连续操作
+         #+begin_src js
+           $($('p').get(23))
+           $('p').eq(23)
+         #+end_src 
+      3) 取得最开始和最后的元素
+         #+begin_src js
+         #+end_src 
+      4) 返回一个数组
+         #+begin_src js
+         #+end_src
+      5) 查找元素所在的位置
+         #+begin_src js
+         #+end_src 
+*** Slicing and dicing a wrapped element set
+    + 我们还可以把一个元素集进行切分
+         
+            
+            
