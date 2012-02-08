@@ -256,15 +256,109 @@
          #+end_src 
       3) 取得最开始和最后的元素
          #+begin_src js
+           $('p').first()
+           $('p').last()
          #+end_src 
       4) 返回一个数组
          #+begin_src js
+           // all the <button> elements on the page
+           // before a <label> elements
+           var allLabeledButtons = $('label+button').toArray();
          #+end_src
       5) 查找元素所在的位置
          #+begin_src js
+           // we want to know ordinal index of image with id of findMe
+           var n = $('img').index($('img#findMe')[0]);
+           // it's located by id, so the [0] can be omitted
+           var n = $('img').index('img#findMe');
          #+end_src 
 *** Slicing and dicing a wrapped element set
-    + 我们还可以把一个元素集进行切分
+    + 得到元素集合以后,照样还是要对这个集合进行更改:
+      1) 增加一些成员:
+         #+begin_src js
+           $('img[alt]').add('img[title]')
+         #+end_src
+      2) 减去一些成员,这个名字取成了not,而不是delete,not传入的参数是某一类元素
+         集合,比如,下面例子中not被传入的是"没有keepMe的类"的集合:
+         #+begin_src js
+           $('img').not(function() {return !$(this).
+           hasClass('keepMe');})
+         #+end_src
+      3) 过滤某些元素,我们看到not是当function为true的情况下进行过滤,而filter是当
+         function为false的情况下进行过滤.简单点说,就是filter是得到符合(exp)的结
+         果,而not是去掉符合(exp)的结果,比如下面例子中,就是我们要得到,某些img里面
+         title中有dog的元素
+         #+begin_src js
+           $('img')
+               .addClass('seeThrough')
+               .filter('[title*=dog]')
+               .addClass('thickBorder')
+         #+end_src
+      4) 我们还可以取"数组的一部分"
+         #+begin_src js
+           $('*').slice(2,3)         
+         #+end_src
+      5) 还可以从元素继承的角度来取得某些元素,比如下面就是div中包含至少一个img元素,
+         而且这个img元素拥有alt属性
+         #+begin_src js
+           $('div').has('img[alt]')         
+         #+end_src
+      6) 为某个集合里面所有的成员调用callback函数,并且把返回值组成一个函数返回.
+         #+begin_src js
+           var allIds=$('div').map(function() {
+               return (this.id==undefined) ? null : this.id;
+           }).get();
+         #+end_src
+      7) 为某个集合所有成员进行某种操作还有更方便的方法,就是each,但是each不像map
+         一样收集返回值
+         #+begin_src js
+           $('img').each(function(n) {
+               this.alt='This is image['+n+'] with an id of '+this.id;
+           });
+         #+end_src
+*** Getting wrapped sets using relationships
+    + 通过相互间的继承关系,我们可以有更多的方法来获取某些元素,这种函数很多,我就举如下
+      两个简单的例子
+      #+begin_src js
+        //find the <div> block within which the button is defined
+        //this refer this button
+        $(this).closest('div.myButtonContainer')
+        //find a sibling button with a particular title attribute:
+        $(this).siblings('button[title="Close"]')
+      #+end_src
+*** Even more ways to use a wrapped set
+    + 我们可以从当前的元素集合中找出满足某些继承关系的子集:
+      #+begin_src js
+        wrappedSet.find('p cite')      
+      #+end_src
+    + 还可以判断当前元素集合中是否存在某种元素
+      #+begin_src js
+        // This statements sets the value of the hasImage
+        // variable to true if the current DOM has an imag
+        // element
+        var hasImage = $('*').is('img')
+      #+end_src
+*** Manage Jquery chains
+    + 我们知道jquery的函数返回的,往往还是一个元素几何,然后可以链式调用
+      但是,有时候我们会通过各种方法去掉一些元素,后来又想恢复去掉的函数
+      这个时候就要用到end函数
+      #+begin_src js
+        // The filter() method returns the set of titled imags,
+        // but by calling end() we back up to the previous
+        // wrapped set
+        $('img').filter('[title]').hide().end().addClass('anImage');      
+      #+end_src
+    + 还可以把相邻的两个元素集合合并起来,利用andSelf()函数,比如下面的例子就是把
+      所以div先赋予一个class,然后取出其中的b赋予另外一个class,把两个元素集合合
+      并起来赋予第三个class
+      #+begin_src js
+        $('div')
+            .addClass('a')
+            .find('img')
+            .addClass('b')
+            .andSelf()
+            .addClass('c');
+      #+end_src
          
             
             
