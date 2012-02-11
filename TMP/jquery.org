@@ -361,4 +361,69 @@
       #+end_src
          
             
-            
+* Chapter 3: Bringing pages to life with jQuery
+** Working with element properties and attributes
+   + 对于DOM元素来说,我们要改变的其实是两种基本组成部分,一种叫properties, 另外一
+     个叫做attributes,他俩的区别如下:
+     - property 是Javascript里面的概念,每一个property都有name和value, Javascript
+       灵活的特性,让我们可以轻松的创建各种property
+     - attribute不是Javascript的概念,而是一个DOM的概念, 它也有自己的name和value
+   + 下面的例子中tag是img, 而id, src, alt, class title都是这个元素的attribute
+     #+begin_src html
+       <img id="myImage" src="image.gif" alt="An image" class="someClass"
+            title="This is an image"/>     
+     #+end_src
+   + 我们可以看到浏览器是依靠attribute来生成了一个nodelist,从而显示页面的.而
+     Javascript内部则是用的property, 被限定在某个element里面
+*** Manipulating element properties
+    + 我们先看看如何找到元素中的property,这其实就是我们前两章讲的内容,一旦我们能
+      够定位某些元素,那么jquery就会以数组的形式返回给我们,我们取就可以了,比如:
+      - $(whatever)[n]
+      - get()
+      - each(), map()
+      - eq()
+      - filter()
+    + 比如下面的例子就是把DOM中每个元素的id 这个 property设置为 tagName 和 序列n
+      的和
+      #+begin_src js
+        $('*').each(function(n) {
+            this.id = this.tagName + n;
+        }
+      #+end_src
+*** Fetching attribute value
+    + 获取attribute的方法是attr()这个函数.
+    + 而且我们的attr()还可以返回用户自己设置的参数,比如下面的例子,attr还可以返回
+      data-custom 这个attribute
+      #+begin_src html
+        <img id="myImage" src="image.gif" alt="An image" class="someClass"
+             title="This is an image" data-custom="some value"/>
+        $("#myImage").attr("data-custom")
+      #+end_src
+    + 注意,在html5中,所有自定义的attribute都必须以data-开头
+    + 说了这么多,我们发现attribute好像比起property来麻烦很多啊,那为啥还要访问
+      attribute啊,这是因为因为历史原因,每个浏览器的attribute都不一样,而jquery为
+      了能够跨平台,为他们规范了一个统一的名字,比如
+      | Jquery normalized name | DOM name                               |
+      | cssFloat               | styleFloat for IE, cssFloat for others |
+      | cellspacing            | cellSpacing                            |
+      | class                  | className                              |
+*** Setting attribute values
+    + 设置attribute也是有两种方法,都是用attr()函数,只不过参数不同:
+      1) attr(name, value): 除了常规设置,value还可以是一个function,而这个
+         function带两个参数, 一个参数是数组的index(因为我调用者总是元素集合),另
+         外一个就是当前的value,返回值作为新的value赋予当前的attribute
+         #+begin_src js
+           $('*').attr('title', function(index, previousValue) {
+               return previousValue + 'I am element ' + index +
+                      'and my name is' + (this.id || 'unset');
+           }
+         #+end_src
+      2) attr(attributes): 就是直接把一个object付给attr函数,类似拷贝构造函数
+         #+begin_src js
+           $('input').attr (
+               {value: '', title: 'Please enter a value'}
+           );
+         #+end_src
+    + 需要注意的是IE不允许更改input 元素的内容  
+ 
+      
