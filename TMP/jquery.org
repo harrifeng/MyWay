@@ -360,7 +360,6 @@
             .addClass('c');
       #+end_src
          
-            
 * Chapter 3: Bringing pages to life with jQuery
 ** Working with element properties and attributes
    + 对于DOM元素来说,我们要改变的其实是两种基本组成部分,一种叫properties, 另外一
@@ -425,5 +424,25 @@
            );
          #+end_src
     + 需要注意的是IE不允许更改input 元素的内容  
- 
+*** Removing attributes
+    + 我们使用removeAttr(name)来移除一个attribute,但是需要注意的是,我们remove一
+      个attribute并不意味着和attribute对应的property也被移除了,比如我们remove
+      readonly这个attribute,那么相应的property就会从true变成false
+*** Fun with attributes
+    + 第一个例子是这样的,我们想要所有的链接都在新窗口打开,但是如果我们是一个wiki
+      page的话,用户也会增加新的链接,用户的链接是本页内的,它不希望它们在新的页面
+      打开.我们分析一下,凡是要在新的页面打开的,就是以http为开头的链接,我们可以用
+      下面的代码来保证这一部分链接在新的窗口打开
+      #+begin_src js
+        $("a[href^=http://]").attr("target", "_blank");      
+      #+end_src
+    + 第二个例子是防止用户重复点击的,这个在labview的Block Node中也有涉及,比如我
+      们确认一个提交,如果点击了一下网络速度比较慢,那么用户会再点击一下,这样会给
+      server端带来麻烦,正确的方法是用户点击一下,就把button给disable掉.
+      #+begin_src js
+        $("form").submit(function() {
+            $(":submit", this).attr("disabled", "disabled");
+        });
+      #+end_src
+** Changing element styling
       
