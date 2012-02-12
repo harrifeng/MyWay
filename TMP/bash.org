@@ -1,0 +1,63 @@
+* grep 命令
+  + grep其实是search文档内容
+** 实例:
+   + 通过管道过略输出的内容,只显示以a开头的行
+     #+begin_src sh
+       ls -l | grep '^a'     
+     #+end_src
+   + 显示所有以d开头的文件中包含test的行
+     #+begin_src sh
+       grep 'test' d*     
+     #+end_src
+   + 在文件aa bb cc中显示匹配test的行
+     #+begin_src sh 
+       grep 'test' aa bb cc
+     #+end_src
+   + 在当前文件夹下寻找匹配test的行
+     #+begin_src sh
+       grep -r 'test' . 
+     #+end_src
+   + 在aa中寻找这样一些行,这些行至少包含一个字符串,这个字符串至少有5个连续的小写
+     字母
+     #+begin_src sh 
+       grep '[a-z]\{5\}' aa
+       #如果用egrep或者-E的话,那么不需要'\'来进行转意
+       grep -E '[a-z]{5}' aa
+       egrep '[a-z]{5}' aa
+     #+end_src
+   + 比如我们想要找如"westfhres"或者"westes"这样的字符串:es出现了两次第一次被w和
+     t包裹着,t后面跟若干任意字符,在接一次es:
+     #+begin_src sh
+       grep 'w\(es\)t.*\1' aa
+       #egrep的情况下"\1"还是不能省的
+       egrep 'w(es)t.*\1' aa
+     #+end_src
+
+
+
+
+
+
+
+       
+
+     
+
+     
+     
+     
+
+     
+     
+
+
+    
+
+  
+
+* find 命令
+  + find命令其实是search文件名
+** 实例:
+   + 
+  
+       
