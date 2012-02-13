@@ -445,4 +445,70 @@
         });
       #+end_src
 ** Changing element styling
+*** Add and removing class names
+   + class attribute是DOM element里面非常特殊的成员,我们是通过添加或者删除一个
+     class来起到更改元素风格的目的
+   + class的特性就是能够被赋予任意多个的class name,在html中就是以空格区分的各个
+     name的形象
+     #+begin_src html 
+       <div class="someClass anotherClass yetAnotherClass"></div>
+     #+end_src
+   + 然而,class的这几个名字却不是存在一个数组里面的,他们全体是一个字符串!也就是
+     说,如果我们要删除anotherClass,我们要先在class里面寻找是不是有这个字符串,有
+     的话就删除,没有就不删除
+   + 于是在jquery里面就有了下面的两个API来添加和删除class的value:
+     - addClass(names): 添加一个class
+     - removeClass(names): 删除一个class
+     - toogleClass(name): 如果一个元素里面没有这个class,那么就添加,如果有这个
+       class就删除, 这个在间或的更改style方面非常有帮助,比如,我们下面的例子,开始
+       给even行赋予style striped,odd行啥也没有,然后每当鼠标移进或者移出table控
+       制的区域的时候,再给每个tr调用toggleClass,那么原来是style striped的行就变
+       成没有style了,原来没有style的行就变成style striped了:
+       #+begin_src js 
+         $(function() {
+             $("table tr:nth-child(even)").addClass("striped");
+             $("table").mouseover(swapThem).mouseout(swapThem);
+         });
+         
+         function swapThem() {
+             $('tr').toogleClass('striped');
+         }
+       #+end_src
+     - toggleClass(name, switch):如果switch为true,那么就添加这个class name,否则
+       就删除这个class name
+     - hasClass(name):显然就是判断是否存在这个class啦
+     - 我们还可以用如下的方法来返回一个元素集里面的所有的class name的数组:
+       #+begin_src js 
+         $.fn.getClassNames = function() {
+             var name = this.attr("className");
+             if (name != null) {
+                 return name.split(" ");
+             }
+             else {
+                 return [];
+             }
+         };
+       #+end_src
+*** Getting and setting styles
+    + 和前面的attr()设置attribute一样,我们也有同样的方法,来设置property:
+      - css(name, value): 直接设置某个property的value, value可以是一个function,
+        这个和attr非常像
+        #+begin_src js 
+          $("div.expandable").css("width", function(index, currentWidth) {
+              return currentWidth + 20;
+          });
+        #+end_src
+      - css(properties): 给某些元素设置为properties
+      - css(name):取得名字为name的property 
+      - width(value) height(value) :设置元素的高和宽
+      - width(), height(): 返回元素的高和宽
+** Setting element content
+*** Replacing HTML or text content
+    + html(): 返回第一个元素的HTML content
+    + html(content): 设置所有元素的 HTML content
+    + text(): 返回元素所有的文本内容
+    + text(content): 设置元素的文本内容
+    
+
+       
       
