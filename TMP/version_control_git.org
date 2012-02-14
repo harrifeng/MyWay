@@ -1,0 +1,110 @@
+* Chapter 1: Introduction
+  + Background:
+    主要就是介绍凡是一切可以保存不同版本信息的工具都叫Version Control System
+  + The Birth of Git:
+    Git的诞生是因为Linux内核开发开源软件,和如下几个特殊的特性的需要,而产生的:
+    - 需要支持分布式开发:
+      新的VCS必须能够让不同的私有代码库在不用和主代码库进行频繁同步的情况下独自
+      开发
+    - 可以能够应付数以万计的开发者:
+    - 能够快速有效的进行运行:
+    - 保证数据的完整性:
+      使用了SHAQ 算法来校验
+    - 为每一次提交强制保留注释
+    - 某些代码必须不能改动
+    - 操作必须有原子性
+    - 必须而且要鼓励分支开发(branched development)
+    - 每一个开发者的本地信息足够丰富,可以在不查询中心服务器的情况下,了解自己的版
+      本历史
+    - 内部设计要简洁
+  + Precedents
+    我们也有必要来了解一下VCS的历史:
+    1) 第一个成功的VCS是SCCS, 这个软件发明了repository这个词,用来表示中心代码库,
+       同时提供了一直简单的锁文件的方法:如果一个用户想要运行代码,那么就要保证代
+       码是unlock的状态,然后把代码check out出来并且加锁.等编辑完之后再check in并
+       且unlock,简言之就是一旦要check out就一定保证在server端加锁,这样其他人就不
+       能使用这些代码了
+    2) 1986年诞生的CVS,更改了SCCS每次一个文件只能有一个人更改的策略,转而给一个文
+       件的不同用户都有写的权限,然后当两个用户写完时,再进行merge,如果两者改动了
+       同一行,那么要手动进行merge,否则CVS可以自动为用户进行merge
+    3) CVS自身的各种问题,导致了新一代VCS的诞生,那就是SVN, SVN对CVS系统的贡献是:
+       能够自动提交代码并且对分支支持的更好
+    4) 第四代的VCS就是以BitKeeper和Mercurial为代表了,他们的更改非常激进:他们摒弃
+       了中央代码库的设计,让代码进行分布式存储,每一个用户都有一份可分享的拷贝.Git正
+       是继承了这种P2P的存储方式
+    5) Git又从Mercurial那里学到了利用文件内容来进行唯一判定文件的方法
+  + Time Line
+  + What's in a Name?
+* Chapter 2: Instlling Git
+  + Using Linux Binary Distributions:
+    在Debian/Ubuntu上面有:
+    - git-core: git主要的文件
+    - git-arch, git-cvs, git-svn: 从其他VCS里面导入到git中需要的软件
+    - git-gui, gitk, gitweb:是三种gui或者web的显示方式
+    - git-email:用邮件发送Git patch
+    - git-daemon-run: 通过匿名的下载来分享你的代码库(github上面下载zip包应该就是
+      利用了这个程序)
+* Chapter 3: Getting Started
+** The Git Command Line
+    + git中有很多的option, 这些option有些是为git服务的(比如下面的--version),有些
+      是为subcommand服务的(比如下面的--amend)
+      #+begin_src sh 
+        $ git --version
+        git version 1.6.0
+        
+        $ git commit --amend
+      #+end_src
+    + git命令同时兼容长的和短的option,比如
+      #+begin_src sh 
+        $ git commit -m "Fixed a typo."
+        $ git commit --message="Fixed a type"
+      #+end_src
+    + 上面的message 这个长参数使用了"--"来隔开,在git里面,为了突出filename,也经常
+      用到"--":下面第一个例子里面tools/Makefile就是一个文件. 第一个main.c为一个
+      tag name,而第二个main.c为一个filename
+      #+begin_src sh 
+        $git diff -w master origin -- tools/Makefile
+        
+        #Checkout the tag named "main.c"
+        $ git checkout main.c
+        
+        #Checkout the file named "main.c"
+        $ git checkout -- main.c
+      #+end_src
+** Quick Introduction to Using Git
+*** Creating an Initial Repository
+    + 我们建立一个文件夹,然后把他初始化为git repository:
+      #+begin_src sh 
+        $ mkdir ~/public_html
+        $ cd ~/public_html
+        $ echo 'My website is alive!' > index.html
+        # turn public_html into a Git repository
+        $ git init
+      #+end_src
+    + 我们可以发现git repository的过程,并不需要当前文件夹为空,而git init的结果就
+      是在public_html下面建立了一个.git的隐藏文件夹,即便在public_html文件夹里面
+      再建立其他文件夹也不会产生其他.git文件夹了,这个是Git又和其他VCS不一样的地
+      方,它所有的信息都存在了这一个文件夹里面.
+*** Adding a File to Your Repository
+    + 我们把一个文件加入到代码库的方法如下, 然后查看当前repository信息
+      #+begin_src sh 
+        $ git add index.html
+        $ git status
+        # On branch master
+        #
+        # Initial commit
+        #
+        # Changes to be committed:
+        #   (use "git rm --cached <file>..." to unstage)
+        #
+        #   new file:   index.html
+        #
+      #+end_src
+
+
+
+
+
+
+      
+      
