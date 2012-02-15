@@ -100,6 +100,28 @@
         #   new file:   index.html
         #
       #+end_src
+    + 如果真正的想把文件提交到代码库,需要commit:
+      #+begin_src sh 
+        $ git commit -m "Initial contents of public_html" \
+            --author="Haoran Feng <harrifeng@gmail.com>"
+        [master (root-commit) ed24602] Initial contents of public_html
+         Author: Haoran Feng <harrifeng@gmail.com>
+         1 files changed, 1 insertions(+), 0 deletions(-)
+         create mode 100644 index.html
+      #+end_src
+    + 之后再看status,就发现没有需要提交的代码了
+    + 之所以要把代码提交分成add和commit两个阶段,我想是因为commit一定要写注释,而
+      且多次的add, remove等操作都是不需要的.一系列有意义的add remove change才需
+      要写一次注释,从而进行一次commit. 进而也不至于使得代码库过于凌乱
+      #+begin_src sh 
+        $ git status
+        # On branch master
+        nothing to commit (working directory clean)
+      #+end_src
+ 
+        
+
+
 
 
 
@@ -108,3 +130,188 @@
 
       
       
+
+*** Configuring the Commit Author
+    + 为了不每次都设置用户名和邮箱名,我们可以在开始把这些基本信息都设置好:
+      #+begin_src sh 
+        $ git config user.name "Haoran Feng"
+        $ git config user.email "harrifeng@gmail.com"
+      #+end_src
+*** Making Another Commit
+    + 我们可以对index.html进行一次更改,然后进行提交,如此一来,这个文件就有两个版
+      本了
+*** Viewing Your Commits
+    + 我们可以通过git log来取出历次commit的信息
+      #+begin_src sh 
+        $ git log
+        
+        commit 3fa3f7afbc62195565a8a70649fe02dbe2ce3061
+        Author: Harri Feng <fenghaoran18@gmail.com>
+        Date:   Wed Feb 15 20:58:56 2012 +0800
+        
+            Convert to HTML
+        
+        commit ed24602fa5fb09d1af03af30e12d3406781b09dd
+        Author: Haoran Feng <harrifeng@gmail.com>
+        Date:   Wed Feb 15 20:43:45 2012 +0800
+        
+            Initial contents of public_html
+      #+end_src
+    + author和date很容易理解,而commit就是指的git用的一种ID叫做
+      "Content-Addressable Name", 后面会讲到 
+    + 我们还可以使用git show来查看某个commit id
+      #+begin_src sh 
+        $ git show ed24602fa5fb09d1af03af30e12d3406781b09dd
+        
+        commit ed24602fa5fb09d1af03af30e12d3406781b09dd
+        Author: Haoran Feng <harrifeng@gmail.com>
+        Date:   Wed Feb 15 20:43:45 2012 +0800
+        
+            Initial contents of public_html
+        
+        diff --git a/index.html b/index.html
+        new file mode 100644
+        index 0000000..34217e9
+        --- /dev/null
+        +++ b/index.html
+        @@ -0,0 +1 @@
+        +My website is alive!
+      #+end_src
+    + 如果我们不知道commit id,那么我们可以用git show-branch来查看代码库里面的分
+      支, 默认只显示最新的,所以我们要加一个参数--more=10
+      #+begin_src sh 
+        $ git show-branch --more=10
+        [master] Convert to HTML
+        [master^] Initial contents of public_html
+      #+end_src
+*** Viewing Commit Differences
+    + 我们可以用git diff来对比两个commit id
+      #+begin_src sh 
+        $ git diff ed24602fa5fb09d1af03af30e12d3406781b09dd \
+        3fa3f7afbc62195565a8a70649fe02dbe2ce3061
+        
+        diff --git a/index.html b/index.html
+        index 34217e9..b74b202 100644
+        --- a/index.html
+        +++ b/index.html
+        @@ -1 +1,5 @@
+        -My website is alive!
+        +<html>
+        +  <body>
+        +    My website is alive!
+        +  </body>
+        +</html>
+      #+end_src
+*** Removing and Renaming Files in Your Respository
+    + 删除的过程也需要两步:git rm 和 git commit
+     #+begin_src sh 
+       $ git rm poem.html 
+       $ rm 'poem.html'
+       > git commit -m "Remove a poem"
+       [master 32f4eb9] Remove a poem
+        1 files changed, 0 insertions(+), 1 deletions(-)
+        delete mode 100644 poem.html
+     #+end_src
+    + 重命名的过程依然有两步 git mv和git commit
+      #+begin_src sh
+        $ git mv foo.html bar.html
+        $ git commit -m "Move foo to bar"
+        [master b732219] Move foo to bar
+         1 files changed, 0 insertions(+), 0 deletions(-)
+         rename foo.html => bar.html (100%) 
+      #+end_src
+    + git是move操作和其他相似的VCS不同,它是基于内容相似度的一种操作,后面会讲到
+*** Making a Copy of Your Repository
+    + 我们可以通过git clone来完整的复制一个代码库, 这个和cp -a 命令不一样,因为并
+      不是所有的东西都是复制的,在.git文件夹中有些东西会改变的
+      #+begin_src sh 
+        $ git clone public_html my_website
+        Cloning into my_website...
+        done.
+      #+end_src
+*** Configuration Files
+    + 对于git来说,主要的配置文件有如下三个:
+      - /etc/gitconfig: 这个是系统的git配置信息,需要你有相应的权限才能改写,但是
+        这个文件是优先级最低的,很可能在其他的位置,或者压根就不存在.如果有的话,是
+        配置某一台host上面的git信息
+      - ~/.gitconfig: 通过"~"我们可以知道,这个是一台host上面某个用户的git配置信
+        息.这个在设置的时候要用到 --global
+        #+begin_src sh 
+          > git config --global user.email "fenghaoran18@gmail.com"
+        #+end_src
+      - .git/config: 这个是在.git文件夹下的,也就是每个项目不同的配置信息,一个用
+        户可能有好几个项目,并不一定都要一样的用户名和用户邮箱, 这个在设置的时候,
+        不要用 --global参数
+        #+begin_src sh 
+          > git config user.email "harrifeng@gmail.com"
+        #+end_src
+
+    + 下面这个例子可以看出配置文件的区别,这个用户一般用harrifeng@gmail.com但是为
+      了public_html,他选择了fenghaoran10@gmail.com
+      #+begin_src sh 
+        > cat ~/.gitconfig 
+        [user]
+            name = Haoran Feng
+            email = harrifeng@gmail.com
+        > cat ~/public_html/.git/config
+        [core]
+            repositoryformatversion = 0
+            filemode = true
+            bare = false
+            logallrefupdates = true
+            ignorecase = true
+        [user]
+            email = fenghaoran10@gmail.com
+        > pwd
+        /Users/fenghaoran/public_html
+        > git config -l
+        user.name=Haoran Feng
+        user.email=harrifeng@gmail.com
+        core.repositoryformatversion=0
+        core.filemode=true
+        core.bare=false
+        core.logallrefupdates=true
+        core.ignorecase=true
+        user.email=fenghaoran10@gmail.com
+      #+end_srcb
+    + 如果你想覆盖原来的设置的话,重新再设置一遍就自动覆盖了        
+    + 如果我们想删除某些设置,我们可以用--unset来取消某些设置:
+      #+begin_src sh 
+        > git config --unset --global user.email
+        > git config -l
+        user.name=Haoran Feng
+        core.repositoryformatversion=0
+        core.filemode=true
+        core.bare=false
+        core.logallrefupdates=true
+        core.ignorecase=true
+        user.email=fenghaoran10@gmail.com
+      #+end_src
+*** Configuring an Alians
+    + 我们可以通过下面的方法把git log --graph --abbrev-commit --pretty=oneline
+      重命名为git show-graph
+      #+begin_src sh 
+        > git config --global alias.show-graph 'log --graph --abbrev-commit --pretty=oneline'
+        > git show-graph
+        
+        ,* b732219 Move foo to bar
+        ,* 3107dd6 add foo
+        ,* d0fe499 <E8><BE><BE><E5><88><B0>
+        ,* 32f4eb9 Remove a poem
+        ,* 5c776e9 add poem
+        ,* 3fa3f7a Convert to HTML
+        ,* ed24602 Initial contents of public_html
+      #+end_src
+
+
+
+
+
+
+
+
+
+
+
+
+
