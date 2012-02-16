@@ -315,3 +315,63 @@
 
 
 
+* Chapter 4: Basic Git Concepts
+** Repositories
+   + 像其他的VCS一样, git保留了整个项目的所有代码,不同的是,git还把代码库的信息都
+     复制保存了一份.
+   + 当然了,代码库中的配置信息部分,比如user.name啦, email.address啦不是复制保存
+     的,是根据不同的用户保存的不同的信息
+   + 除了配置信息和代码本身,在.git里面最重要的就是代码库信息(repository data),
+     Git保存了两种代码库信息:
+     - object store
+     - index
+** Git Object Types
+   + Git的核心存储方式就是object store,数据信息,用户资料,log信息,版本信息,分支信
+     息等等都是存在object store里面
+   + Git的object store有如下四种:
+     1) Blobs: Blob是 binary large object的缩写,所谓blob就是在计算中指那些内部是
+        二进制,我们对内部的内容也不感兴趣的文件.blob甚至不包括文件名这类信息,在
+        文件系统中,和blob相似的是data block
+     2) Tree: 代表了内部代码的文件夹信息
+     3) Commits: 一个commit object保存了某次提交的用户,提交者,提交时间,log信息,
+        每个commit都是和一个tree object相对应的
+     4) Tags: 我们知道每次我们commit都有一个commit ID通常是一个20位的十六进制数,
+        我们想要更容易的读取,那么就用Tag
+   + 所有这些信息最终都是压缩以后存储的
+** Index
+   + index是一个保存repository的内部架构的数据结构, 在后面我们会看到,index在
+     merge方面,以及让多个版本的相同文件共存方面,有非常重要的作用
+   + 在git中index的位置和文件系统中的文件夹差不多
+** Content-Addressable Names
+   + Git是通过把文件内容通过SHA1哈希之后,得到了一个40-digit的十六进制数
+   + 每一个微小的改动,都会导致这个数的改变,而完全相同的内容,SHA1哈希也保证能够生
+     成完全相同的40-digit数
+** Git Tracks Content
+   + Git 对于文件内容的执着,导致了它如下的两个特性:
+     1) Git的object store是基于文件内容的哈希的,和文件名字没有任何的关系
+     2) Git的内部不是存储一个文件,然后每次存储对这个文件的增删改查,而是每当有一
+        点改动,也存储一个新的版本.这是由于git按照文件内容哈希的本质决定的
+   + 从用户角度看到的Git可以区分出版本信息,并且能从一个版本到另外一个版本,完全都
+     是编造出来的.
+** Pathname Versus Content
+   + 和其他的VCS一样,git也需要保存一系列的文件列表.但是,这并不意味着我们一定要存
+     储文件名. 实际上,Git把文件名当成是和文件内容不相关的信息.
+   + 像传统的数据库的理论一样,Git把index和data区别开来了
+     | System               | Index mechanism   | Data store                 |
+     | Traditional database | ISAM              | Data records               |
+     | Unix filesystem      | Directories       | Blocks of data             |
+     | Git                  | .git/objects/hash | Blob objects, tree objects |
+
+** Object Store Pictures
+   + 我们来看看object store的架构:
+     1) blob object是最基本的内容存储,他不会引用其他的object store,但是会被tree
+        object给引用
+     2) tree object会指向blob,或者其他的tree. tree object会被commit object引用
+     3) commit会指向一个tree objcet, 这个tree object是被这个commit引入到代码库里
+        面来的. 而后来的commit会指向前面的commit,也就是说parent commit是头指针.
+     4) tag是和最多一个commit相互联系的
+     5) branch不是一个git的概念,但是它对于commit里面的信息有很重要作用.
+
+
+  
+     
