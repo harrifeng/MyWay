@@ -311,10 +311,6 @@
 
 
 
-
-
-
-
 * Chapter 4: Basic Git Concepts
 ** Repositories
    + 像其他的VCS一样, git保留了整个项目的所有代码,不同的是,git还把代码库的信息都
@@ -371,6 +367,119 @@
         面来的. 而后来的commit会指向前面的commit,也就是说parent commit是头指针.
      4) tag是和最多一个commit相互联系的
      5) branch不是一个git的概念,但是它对于commit里面的信息有很重要作用.
+** Inside the .git directory
+   + 如果我们新建一个空的代码库,在.git文件夹下,会有很多的隐藏文件,这些文件我们不
+     用过于在意,git有一些plumbing命令来处理这些文件,但是我们一般用不到
+     #+begin_src js 
+       > mkdir ~/tmp/hello
+       > cd ~/tmp/hello
+       > git init
+       Initialized empty Git repository in /Users/fenghaoran/tmp/hello/.git/
+       > find .
+       .
+       ./.git
+       ./.git/branches
+       ./.git/config
+       ./.git/description
+       ./.git/HEAD
+       ./.git/hooks
+       ./.git/hooks/applypatch-msg.sample
+       ./.git/hooks/commit-msg.sample
+       ./.git/hooks/post-commit.sample
+       ./.git/hooks/post-receive.sample
+       ./.git/hooks/post-update.sample
+       ./.git/hooks/pre-applypatch.sample
+       ./.git/hooks/pre-commit.sample
+       ./.git/hooks/pre-rebase.sample
+       ./.git/hooks/prepare-commit-msg.sample
+       ./.git/hooks/update.sample
+       ./.git/info
+       ./.git/info/exclude
+       ./.git/objects
+       ./.git/objects/info
+       ./.git/objects/pack
+       ./.git/refs
+       ./.git/refs/heads
+       ./.git/refs/tags
+     #+end_src
+   + 一般情况下, .git/objects文件夹是空的(除了某些占位符)
+     #+begin_src sh 
+       > find .git/objects
+       .git/objects
+       .git/objects/info
+       .git/objects/pack
+     #+end_src
+   + 而如果我们加入了某些文件,则这个文件夹下会多出关于这个文件的id信息
+     #+begin_src sh 
+       > echo "hello world" > hello.txt
+       > git add hello.txt
+       > find .git/objects
+       .git/objects
+       .git/objects/3b
+       .git/objects/3b/18e512dba79e4c8300dd08aeb37f8e728b8dad
+       .git/objects/info
+       .git/objects/pack
+     #+end_#+begin_src c++ 
+     #+end_src
+
+** Objects, Hashes, and Blobs
+   + 当我们有新文件创建的时候,git不太关系文件名字,而是关心文件的内容,因为他会把
+     内容通过SHA1 哈希以后,得到一个id,来唯一标示这个文件,这个哈希结果通常是一个
+     40bytes的字符串,而刚才我们的试验中字符串是38bytes的,这是因为在某些操心系统
+     中,如果一个文件夹下有太多的文件,那么文件系统就会变得特别的慢,所以git在前两
+     个byte加入一个"/"把所有的文件分成了256个子文件夹,这也是为什么上面的例子中
+     会出现一个3b文件夹
+   + 我们可以通过hash id来找到我们的内容, 如果你不太记得id是啥了,可以通过
+     rev-parse来查询
+     #+begin_src sh 
+       > cd ~/tmp/hello
+       > git cat-file -p 3b18e512dba79e4c8300dd08aeb37f8e728b8dad
+       hello world
+       > git rev-parse 3b18e512
+       3b18e512dba79e4c8300dd08aeb37f8e728b8dad
+     #+end_src
+** Files and Trees
+   + 我们已经为内容找好了id,那文件名呢,我们如何保存代码库中的文件名,没有文件名版
+     本管理也就没有意义了,我们前面说过,git通过tree 这个object store来保存路径信
+     息,但是当你仅仅add的时候,是不会创建tree的,而先会在.git/index里面保留文件的
+     来龙去脉.刚add完之后index的内容如下
+     #+begin_src sh 
+       > git ls-files -s
+       100644 3b18e512dba79e4c8300dd08aeb37f8e728b8dad 0   hello.txt
+     #+end_src
+   + 如果我们commit的话,会产生新的tree object store,但是我们也可以通过write-tree
+     命令来强制它产生tree. 我们可以看到一个tree就和一个文件夹是一样的,其内部的内
+     容就是文件的路径信息. 也可以这么理解git write-tree其实就是 git add "folder"
+     #+begin_src sh 
+       > git write-tree
+       68aba62e560c0ebc3396e8ae9335232cd93a3f60
+       
+       > find .git/objects
+       .git/objects
+       .git/objects/3b
+       .git/objects/3b/18e512dba79e4c8300dd08aeb37f8e728b8dad
+       .git/objects/68
+       .git/objects/68/aba62e560c0ebc3396e8ae9335232cd93a3f60
+       .git/objects/info
+       .git/objects/pack
+     #+end_src
+   + 为了证实我们关于tree其实就是一个文件夹的想法,我们通过git cat-file来看一下
+     tree的内容为何, 可以看到,其实就是关于路径的信息,我们又用同样的命令来看了
+     hello.txt的id,可以得到hello.txt的内容
+     #+begin_src sh 
+       > git cat-file -p 68aba6
+       100644 blob 3b18e512dba79e4c8300dd08aeb37f8e728b8dad    hello.txt
+       > git cat-file -p 3b18e
+       hello world
+     #+end_src
+
+
+
+
+
+
+
+
 
 
   
