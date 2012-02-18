@@ -472,6 +472,18 @@
        > git cat-file -p 3b18e
        hello world
      #+end_src
+** A Note on Git's Use of SHA1
+   + 相同内容导致的hash id相同,不叫碰撞,只有不同的内容产生了相同的hash id才叫碰
+     撞呢.
+   + 所以,你一旦在某个代码库里面找到了一个hash id,你就能确信,这个id对应的内容一
+     定是你希望的. 同样的,如果一旦一个hash id没有被找到,那说明这里面肯定没有你想
+     要的内容
+   + 我们在来看一下most recent commit, 它一定会包含自己的parent commit以及parent
+     commit 的tree.因为最开始的commit是根,所以最开始的commit能够标示整个项目
+   + hash function在对比文件方面,有其巨大优势,可以有效的对比两个文件,即便两者非
+     常的大.
+** Tree Hierachies
+   + 
 
 
 
