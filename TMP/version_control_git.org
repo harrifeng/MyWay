@@ -310,7 +310,6 @@
 
 
 
-
 * Chapter 4: Basic Git Concepts
 ** Repositories
    + 像其他的VCS一样, git保留了整个项目的所有代码,不同的是,git还把代码库的信息都
@@ -483,7 +482,82 @@
    + hash function在对比文件方面,有其巨大优势,可以有效的对比两个文件,即便两者非
      常的大.
 ** Tree Hierachies
-   + 
+   + 下面我通过新建一个subdir来研究,发现新创建了一个tree 4924, 而这个tree里面有
+     两种文件,一个是hello.txt,另一个是subdir这个文件夹. 而subdir这个文件夹的id
+     (68aba62)表明,它就是利用的原来的顶级文件夹(~/tmp/hello/), 因为题目的内容都
+     相同,都是只有一个叫做hello.txt的文件,这个文件里面,就一句话"hello world"
+     #+begin_src sh 
+       > pwd
+       /Users/fenghaoran/tmp/hello
+       > mkdir subdir
+       > cp hello.txt subdir/
+       > git add subdir/hello.txt 
+       > git write-tree
+       492413269336d21fac079d4a4672e55d5d2147ac
+       > git cat-file -p 4924
+       100644 blob 3b18e512dba79e4c8300dd08aeb37f8e728b8dad    hello.txt
+       040000 tree 68aba62e560c0ebc3396e8ae9335232cd93a3f60    subdir
+     #+end_src
+   + 我们还发现subdir的类型不再是blob了,而变成了tree.
+   + 通过find命令,我们也发现,相比于上一步,我们仅仅多了一个文件夹,这个文件夹里面
+     包含一个subdir文件夹和hello.txt
+     #+begin_src sh 
+       > find .git/objects
+       .git/objects
+       .git/objects/3b
+       .git/objects/3b/18e512dba79e4c8300dd08aeb37f8e728b8dad
+       .git/objects/49
+       .git/objects/49/2413269336d21fac079d4a4672e55d5d2147ac
+       .git/objects/68
+       .git/objects/68/aba62e560c0ebc3396e8ae9335232cd93a3f60
+       .git/objects/info
+       .git/objects/pack
+     #+end_src
+** Commits
+   + 我们也可以通过如下的管道操作来达到创建commit的目的
+     #+begin_src sh 
+       > echo -n "Commit a file that syas hello\n" | git commit-tree 492413269336d21fac079d4a4672e55d5d2147ac
+       0a9f5a02b15245e71748387cda37f47b9195b63c
+       > git cat-file -p 0a9f
+       tree 492413269336d21fac079d4a4672e55d5d2147ac
+       author haoran feng <fenghaoran18@gmail.com> 1329550638 +0800
+       committer haoran feng <fenghaoran18@gmail.com> 1329550638 +0800
+       
+       Commit a file that syas hello
+     #+end_src
+   + 这一次生成的commit id就不再会是和教材上面相同的了,因为commit会包括用户名,邮
+     箱,创建时间等等. 一个基本的commit信息就包括了:
+     - 对应的tree: 一般一个commit对应一个tree,一个tree却可以有多个commit对应它.
+     - 谁添加了这个新版本,添加的时间
+     - 谁提交了这个新版本,提交时间
+     - commit description
+** Tags
+   + 存在两种tag类型:
+     1) lightweight tags是对应于一个commit object,并且是每个代码库私有的.并不会
+        创建object
+     2) annotated tag更为具体,而且会创建object,默认是这种tag,因为他是永久的
+   + tag的方法如下,我们也可以通过cat-file来查看tag的信息
+     #+begin_src sh 
+       # 0a9f refers a commit id
+       > git tag -m"Tag version 1.0" V1.1 0a9f
+       > git rev-parse V1.1
+       0f5c44fa6e2a89fdce3c1ec84640b566b44d7774
+       > git cat-file -p 0f5c44
+       object 0a9f5a02b15245e71748387cda37f47b9195b63c
+       type commit
+       tag V1.1
+       tagger haoran feng <fenghaoran18@gmail.com> Sat Feb 18 16:14:11 2012 +0800
+       
+       Tag version 1.0
+     #+end_src
+   + Git通常是对一个commit来进行tag,所代表的就是一个tree,通过这个tree就代表了当
+     时所有的文件.这和CVS里面对一个文件进行tag是不同的
+
+
+
+
+
+
 
 
 
@@ -496,3 +570,226 @@
 
   
      
+* Chapter 5: File Management and the Index
+  + 传统的版本管理系统是你在工作目录编辑好之后,直接commit到代码库,而git则多加了
+    一层叫做index的,你要在工作目录编辑好之后,add到index,然后再提交到代码库
+  + 其实在提交到index这一层有很多的工作,比如add, remove, move等等,这些重要的工作
+    其实在commit之前就做好了.
+  + 在Git里面提交分成了两步:stage change & commit change. 但是如果你是add或者
+    change一个文件的话,可以简单的利用下面这一步
+    #+begin_src sh 
+      > git commit index.html
+    #+end_src
+** It's All About the Index
+   + 虽然Git的高端命令一直在试图隐藏index,但是作为一个程序员,你还是时刻要记得
+     index的存在, 无论何时,你都可以利用git status来查看当前index的status
+** File Classifications in Git
+   + Git把你的文件分成了三类:
+     1) Tracked: 已经被index所收录的文件
+     2) Ignored: 被忽略的文件,比如编辑器生成的临时文件, 编译器生成的目标文件等等,我
+        们可以通过设置.gitignore来设置哪些文件被忽略
+     3) 如果不是前面两种,那么就是第三种:没有被index收录的文件
+   + 如果我们新创建一个文件的话,通常是untracked的
+     #+begin_src sh 
+       > cd ~/tmp/my_stuff/
+       > git init
+       Initialized empty Git repository in /Users/fenghaoran/tmp/my_stuff/.git/
+       > git status
+       # On branch master
+       #
+       # Initial commit
+       #
+       nothing to commit (create/copy files and use "git add" to track)
+       > echo "New data" > data
+       > git status
+       # On branch master
+       #
+       # Initial commit
+       #
+       # Untracked files:
+       #   (use "git add <file>..." to include in what will be committed)
+       #
+       #   data
+       nothing added to commit but untracked files present (use "git add" to track)
+     #+end_src
+   + 我们可以通过更改.gitignore来忽略某些文件
+     #+begin_src sh 
+       > touch main.o
+       > git status
+       # On branch master
+       #
+       # Initial commit
+       #
+       # Untracked files:
+       #   (use "git add <file>..." to include in what will be committed)
+       #
+       #   data
+       #   main.o
+       nothing added to commit but untracked files present (use "git add" to track)
+       > echo main.o > .gitignore
+       > git status
+       # On branch master
+       #
+       # Initial commit
+       #
+       # Untracked files:
+       #   (use "git add <file>..." to include in what will be committed)
+       #
+       #   .gitignore
+       #   data
+       nothing added to commit but untracked files present (use "git add" to track)
+     #+end_src
+** Using git add
+   + 我们可以通过git add来吧untrack的文件给track到index里面
+    #+begin_src sh 
+      > git status
+      # On branch master
+      #
+      # Initial commit
+      #
+      # Untracked files:
+      #   (use "git add <file>..." to include in what will be committed)
+      #
+      #   .gitignore
+      #   data
+      nothing added to commit but untracked files present (use "git add" to track)
+      > git add data .gitignore 
+      > git status
+      # On branch master
+      #
+      # Initial commit
+      #
+      # Changes to be committed:
+      #   (use "git rm --cached <file>..." to unstage)
+      #
+      #   new file:   .gitignore
+      #   new file:   data
+      #
+    #+end_src
+   + 从Git object model的角度 add之后,马上文件的SHA1 name就生成好了,然后被放
+     到.git文件夹下.所以add file又叫"caching file" 或者"putting a file in the index"
+** Using git commit --all
+   + 我们可以通过git -all 或者 git -a来自动把所有unstaged的file给stage掉,然后
+     commit,下面这个例子中ready和notyet都是原来在代码库中的(已经至少提交过一次),
+     然后ready是再次更改然后add了, notyet是再次更改没有add, suddir是新建的文件夹,
+     而new是subdir里面的新建的文件(我们发现git并没有发现它)
+     #+begin_src sh 
+       > mkdir subdir
+       > echo Nope >> subdir/new
+       > git status
+       # On branch master
+       # Changes to be committed:
+       #   (use "git reset HEAD <file>..." to unstage)
+       #
+       #   modified:   ready
+       #
+       # Changes not staged for commit:
+       #   (use "git add <file>..." to update what will be committed)
+       #   (use "git checkout -- <file>..." to discard changes in working directory)
+       #
+       #   modified:   notyet
+       #
+       # Untracked files:
+       #   (use "git add <file>..." to include in what will be committed)
+       #
+       #   subdir/
+     #+end_src
+   + 我们调用commit -all会发现只有两个文件被commit,而subdir是新文件夹,而这个文件
+     夹中没有文件被track,那么这个文件夹就是空的(对于git来说),空文件的话git是不会
+     去track的
+     #+begin_src sh 
+         1                                                                                 
+         2 # Please enter the commit message for your changes. Lines starting              
+         3 # with '#' will be ignored, and an empty message aborts the commit.             
+         4 # On branch master                                                              
+         5 # Changes to be committed:                                                      
+         6 #   (use "git reset HEAD <file>..." to unstage)                                 
+         7 #                                                                               
+         8 #   modified:   notyet                                                          
+         9 #   modified:   ready                                                           
+        10 #                                                                               
+        11 # Untracked files:                                                              
+        12 #   (use "git add <file>..." to include in what will be committed)              
+        13 #                                                                               
+        14 #   subdir/
+     #+end_src
+** Writing Commit Log Messages
+   + 如果你没有通过-m来写log,那么就会给你在默认editor里面打开文件让你填写log, 如
+     果这个时候你后悔了的话,可以填一个空的commit log, git不会提交一个log为空的
+     commit的
+** Using git rm
+   + git rm是和git add相反的,不过它不仅仅把文件从代码库中移除,而且同时会把代码从
+     工作目录中移除. 如果想仅仅从代码库中移除,我们可以git rm --cahed(尽量不要用
+     这个方法,因为你会经常的忘掉的)
+     #+begin_src sh 
+       > echo "Random stuff" > oops
+       > git rm opps
+       fatal: pathspec 'opps' did not match any files
+       > git add oops
+       > git status
+       # On branch master
+       #
+       # Initial commit
+       #
+       # Changes to be committed:
+       #   (use "git rm --cached <file>..." to unstage)
+       #
+       #   new file:   .gitignore
+       #   new file:   data
+       #   new file:   oops
+       #
+       > git ls-files --stage
+       100644 0487f44090ad950f61955271cf0a2d6c6a83ad9a 0   .gitignore
+       100644 e476983f39f6e4f453f0fe4a859410f63b58b500 0   data
+       100644 fcd87b055f261557434fa9956e6ce29433a5cd1c 0   oops
+       > git rm --cached oops
+       rm 'oops'
+       > git ls-files --stage
+       100644 0487f44090ad950f61955271cf0a2d6c6a83ad9a 0   .gitignore
+       100644 e476983f39f6e4f453f0fe4a859410f63b58b500 0   data
+     #+end_src
+   + 如果我们想删除一个已经被提交的代码,那么很简单,就是git rm filename就可以.如
+     果不小心误删了,我们可以通过checkout HEAD来取回
+     #+begin_src sh 
+       > git rm data
+       rm 'data'
+       > git status
+       # On branch master
+       # Changes to be committed:
+       #   (use "git reset HEAD <file>..." to unstage)
+       #
+       #   deleted:    data
+       #
+       > git checkout HEAD -- data
+       > cat data
+       New data
+       And some more data now
+       > git status
+       # On branch master
+       nothing to commit (working directory clean)
+     #+end_src
+   + 如果我们git rm的时候, 当前的文件相对于index中,已经改变了,那么我们需要加一
+     个-f才能强制删除(git为了防止放弃没有保存的修改)
+     #+begin_src sh 
+       > echo "2" >> data
+       > git status
+       # On branch master
+       # Changes not staged for commit:
+       #   (use "git add <file>..." to update what will be committed)
+       #   (use "git checkout -- <file>..." to discard changes in working directory)
+       #
+       #   modified:   data
+       #
+       no changes added to commit (use "git add" and/or "git commit -a")
+       > git rm data
+       error: 'data' has local modifications
+       (use --cached to keep the file, or -f to force removal)
+     #+end_src
+
+
+
+
+
+
+        
+
