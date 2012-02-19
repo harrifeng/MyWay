@@ -336,7 +336,8 @@
 ** Index
    + index是一个保存repository的内部架构的数据结构, 在后面我们会看到,index在
      merge方面,以及让多个版本的相同文件共存方面,有非常重要的作用
-   + 在git中index的位置和文件系统中的文件夹差不多
+   + 在git中index的作用,是在工作目录和代码库之间多加了一层(也就是说在git commit
+     之前多加了个git add, add就是说add到index, 然后从index提交到代码库)
 ** Content-Addressable Names
    + Git是通过把文件内容通过SHA1哈希之后,得到了一个40-digit的十六进制数
    + 每一个微小的改动,都会导致这个数的改变,而完全相同的内容,SHA1哈希也保证能够生
@@ -361,7 +362,9 @@
    + 我们来看看object store的架构:
      1) blob object是最基本的内容存储,他不会引用其他的object store,但是会被tree
         object给引用
-     2) tree object会指向blob,或者其他的tree. tree object会被commit object引用
+     2) tree object会指向blob,或者其他的tree. tree object会被commit object引
+        用,tree所起到的作用和文件系统中的文件夹是一样的,tree用来表达不同文件之间
+        的关系
      3) commit会指向一个tree objcet, 这个tree object是被这个commit引入到代码库里
         面来的. 而后来的commit会指向前面的commit,也就是说parent commit是头指针.
      4) tag是和最多一个commit相互联系的
@@ -436,7 +439,9 @@
        hello world
        > git rev-parse 3b18e512
        3b18e512dba79e4c8300dd08aeb37f8e728b8dad
+     #+end_#+begin_src c++ 
      #+end_src
+
 ** Files and Trees
    + 我们已经为内容找好了id,那文件名呢,我们如何保存代码库中的文件名,没有文件名版
      本管理也就没有意义了,我们前面说过,git通过tree 这个object store来保存路径信
@@ -785,6 +790,108 @@
        error: 'data' has local modifications
        (use --cached to keep the file, or -f to force removal)
      #+end_src
+** Using git mv
+   + 如果我们想更改一个文件的名字,或者移动一个文件,可以用git mv
+     #+begin_src sh 
+       > git mv data mydata
+       > git status
+       # On branch master
+       # Changes to be committed:
+       #   (use "git reset HEAD <file>..." to unstage)
+       #
+       #   renamed:    data -> mydata
+       #
+       > git commit -m"Moved data to mydata"
+       [master af10b99] Moved data to mydata
+        1 files changed, 0 insertions(+), 0 deletions(-)
+        rename data => mydata (100%)
+     #+end_src
+   + 查看被重命名过的文件的历史记录需要--follow
+     #+begin_src sh 
+       > git log mydata
+       commit af10b99dba133773f8cf05acaae61ebc2092b391
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Sun Feb 19 15:32:53 2012 +0800
+       
+           Moved data to mydata
+       > git log --follow mydata
+       commit af10b99dba133773f8cf05acaae61ebc2092b391
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Sun Feb 19 15:32:53 2012 +0800
+       
+           Moved data to mydata
+       
+       commit 7caba47386e31cd5b6bc2faba985f1dee8f41678
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Sun Feb 19 15:06:23 2012 +0800
+       
+           Add some files
+     #+end_src
+** A Note on Tracking Renames
+   + 传统的VCS在面对rename的时候,都是非常头疼的,因为传统的VCS是只保存两个版本之
+     间的不同,如果你要move一个文件,对于他们来说,就和先删除原文件里面的所有的行,
+     然后再把所有的行再粘贴再重命名后的文件里面.
+   + 为了克服这个问题,Subversion开始对rename的情况进行特殊的单独处理,这也就意味
+     着你必须使用svn mv而不是svn rm和svn add, 从下面的例子你可以看到Git能够聪明
+     的认识这是个重命名,即便是先rm再add
+     #+begin_src sh 
+       > mv mydata yourdata
+       > git rm mydata
+       rm 'mydata'
+       > git add yourdata 
+       > git status
+       # On branch master
+       # Changes to be committed:
+       #   (use "git reset HEAD <file>..." to unstage)
+       #
+       #   renamed:    mydata -> yourdata
+       #
+       > git commit -m "rename again to test wether git can understand rm & add -> mv"
+       [master e6f37c0] rename again to test wether git can understand rm & add -> mv
+        1 files changed, 0 insertions(+), 0 deletions(-)
+        rename mydata => yourdata (100%)
+       > git log --follow yourdata
+       commit e6f37c0c67ce8a4edc2097ab0308e78f43c24262
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Sun Feb 19 15:48:51 2012 +0800
+       
+           rename again to test wether git can understand rm & add -> mv
+       
+       commit af10b99dba133773f8cf05acaae61ebc2092b391
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Sun Feb 19 15:32:53 2012 +0800
+       
+           Moved data to mydata
+       
+       commit 7caba47386e31cd5b6bc2faba985f1dee8f41678
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Sun Feb 19 15:06:23 2012 +0800
+       
+           Add some files
+     #+end_src
+   + Git之所以能够如此聪明的识别rename,在于Git把data和index分开了, 文件之间的关
+     系都是由tree保留的,通过hash后git发现文件内容不变(也就是bolb不变), 变的只是
+     tree,那么就很容易得出这是一个rename的操作,无论你是git mv 还是git rm &
+     git add
+** The .gitignore File
+   + 我们前面说过了如果你有某些文件不想被加入到版本里面,那么就要设置.gitignore文
+     件.
+   + 这个文件对当前文件夹的文件和子文件夹起作用的,如果子文件夹有特殊需求,那就在
+     子文件里面再加一个.gitgnore,前面的要求,可以通过"!"命令来修正,比如下面的例子,所
+     有的*.o文件都不会被加到版本管理里面,但是vendor_files文件夹下面的driver.o文
+     件却可以.
+     #+begin_src sh 
+       > cd my_package/
+       > cat .gitignore 
+       ,*.o
+       
+       > cd my_package/vendor_files/
+       > cat .gitignore 
+       !driver.o
+     #+end_src
+   + .gitignore既然是设置在非.git文件夹下,那么就是一个正常的文件,在clone的时候,
+     每个用户的代码库中都会有一份,如果你想让这个被忽略的文件列表只对你个人成立,
+     那么请把规则写到.git/info/exclude 这个文件
 
 
 
