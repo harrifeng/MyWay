@@ -925,5 +925,23 @@
        adf2a1e16625b7bed13ef21becde2bae431bf196 daily2
      #+end_src
 ** refs and symrefs
-   + 
+   + ref 是一个SHA1 hash ID指向Git object store的
+   + symbolic ref就是symref,是指向一个Git object的名字(通常是英文的)
+   + 每一个symbolic ref都有一个明确的全称,而这些全称有三个namespace:
+     - .git/refs/heads/ref : local branch的symref的前缀
+     - .git/refs/remotes/ref: remote tracking branch的symref的前缀
+     - .git/refs/tags/ref: tag的symref的前缀
+   + 举个例子,比如经常我们会起一个branch name叫做dev,其实他的全称是
+     refs/heads/dev,一个tag叫做v.2.6.23,其实是refs/tags/v2.6.23
+   + 如果你的tag和branch同名,而且你没有用全名,那么git就会从.git的列表的某个顺序
+     开始找,先找到哪个算哪个
+   + 如下四个symref最常用:
+     - HEAD: 指向当前branch最近的提交,每当branch改变,自动指向最新
+     - ORIG_HEAD: ORIG_HEAD就是HEAD的前一次commit
+     - FETCH_HEAD: 我们以后会接触到一个git fetch命令,这个命令会记录所有branch的
+       head在.git/FETCH_HEAD里面. FETCH_HEAD就是最新得到的branch的head
+     - MERGE_HEAD: 当进行merge的时候,其他branch的head的symref就是MERGE_HEAD
+** Relative Commit Names
+     
+    
 
