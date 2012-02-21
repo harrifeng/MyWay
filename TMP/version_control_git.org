@@ -309,7 +309,6 @@
 
 
 
-
 * Chapter 4: Basic Git Concepts
 ** Repositories
    + 像其他的VCS一样, git保留了整个项目的所有代码,不同的是,git还把代码库的信息都
@@ -574,7 +573,6 @@
 
 
   
-     
 * Chapter 5: File Management and the Index
   + 传统的版本管理系统是你在工作目录编辑好之后,直接commit到代码库,而git则多加了
     一层叫做index的,你要在工作目录编辑好之后,add到index,然后再提交到代码库
@@ -899,4 +897,33 @@
 
 
         
+
+
+* Chapter 6: Commits
+  + 我们前面讲过了,当我们git add, git mv的时候,其实我们是把变化提交到index
+  + 而commit就是把index的结果提交到代码库了
+  + Git 通过比较当前的index和上次的index来判断新增加了哪些文件和文件夹,他会为新
+    增加的文件创建blob,为新增加的文件夹创建tree
+  + commit之间是有相互顺序关系的,后提交的commit会指向前面的commit
+** Atomic Changesets
+   + 所有的commit都是原子操作:要么全部更新成功,要么全部更新失败
+** Identifying Commits
+   + 如何来找一个commit呢?最准确的方法,当然是commit ID.
+   + 其他的方法当然还有最近一次的commit的别名叫做 HEAD
+   + 还可以用relative name来找前几次的commit
+** Absolute Commit Names
+   + 40-hex-digit的 Commit ID无疑是最准确的ID, 它是全局唯一的(不仅仅是在自己的代
+     码库里面)
+   + 40-hex-digit的ID实在是太长了,在特定代码库里面,我们允许用一些前缀来代替
+     #+begin_src sh 
+       > git log -1 --pretty=oneline HEAD
+       adf2a1e16625b7bed13ef21becde2bae431bf196 daily2
+       > git log -1 --pretty=oneline abf2a
+       fatal: ambiguous argument 'abf2a': unknown revision or path not in the working tree.
+       Use '--' to separate paths from revisions
+       > git log -1 --pretty=oneline adf2
+       adf2a1e16625b7bed13ef21becde2bae431bf196 daily2
+     #+end_src
+** refs and symrefs
+   + 
 
