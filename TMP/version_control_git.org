@@ -306,9 +306,6 @@
 
 
 
-
-
-
 * Chapter 4: Basic Git Concepts
 ** Repositories
    + 像其他的VCS一样, git保留了整个项目的所有代码,不同的是,git还把代码库的信息都
@@ -570,9 +567,6 @@
 
 
 
-
-
-  
 * Chapter 5: File Management and the Index
   + 传统的版本管理系统是你在工作目录编辑好之后,直接commit到代码库,而git则多加了
     一层叫做index的,你要在工作目录编辑好之后,add到index,然后再提交到代码库
@@ -896,9 +890,6 @@
 
 
 
-        
-
-
 * Chapter 6: Commits
   + 我们前面讲过了,当我们git add, git mv的时候,其实我们是把变化提交到index
   + 而commit就是把index的结果提交到代码库了
@@ -942,6 +933,120 @@
        head在.git/FETCH_HEAD里面. FETCH_HEAD就是最新得到的branch的head
      - MERGE_HEAD: 当进行merge的时候,其他branch的head的symref就是MERGE_HEAD
 ** Relative Commit Names
-     
+   + Git同样也提供了通过相对的路径来寻找某个commit,比如master^就是master的前一次
+     提交
+   + 相对commit主要是靠两个符号:
+     1) 插入符(^): 插入符用来在有多个parent的情况下选择某个parent比如对于提交C,
+        C^1就是他的第一个parent, C^2是第二个parent, C^3是第三个parent
+     2) 波浪号(~): 波浪号是在寻找更远的直系亲属(parent的parent)比如对于提交C,
+        C~1是它的父亲, C~2就是它的祖父, C~3是曾祖父等等
+   + 我们可以通过git rev-parse 和 git show-branch来查看commit历史,并解析这些相对
+     的名字:
+     #+begin_src sh
+       c:/github/flask $ git show-branch --more=35 | tail -10
+       [master~15^2^2] Added PasswordField in docs/patterns/wtforms.rst
+       [master~16] Mention that people subscribe with **extra.
+       [master~17] Subscribe to signals with extra kwargs in the docs
+       [master~18] Added a newline
+       [master~19] Merge branch '0.8-maintenance'
+       [master~19^2] Removed a newline
+       [master~20] Added support for anchor link generation.
+       [master~21] Merge branch '0.8-maintenance'
+       [master~19^2^] Fixed an issue with an unused module for Python 2.5 (flask.session)
+       [master~19^2~2] Prepare for an 0.8.1 release
+       c:/github/flask $ git rev-parse master~19^2~2
+       766522cb587850f643f3bb6cb011735ae6a98510
+       c:/github/flask $ git rev-parse master
+       e940c8e024bbf5def4cda3dff3820604907b1571
+     #+end_src
+** Commit History & View Old Commits
+   + 我们可以通过git log命令来查看所有的commit, 从某种意义上来说git log就是git
+     log HEAD的简称,它会从最新的一条commit显示到最开始的一条.
+   + 这也就是说,我们可以git log ref或者 git log commit ID来从某一条显示
+   + 当然,也可以设定一个区间,在区间里面的commit才显示, 比如下例就是显示的从
+     倒数第一到倒数第四个这总共四个commit的信息
+     #+begin_src sh 
+       c:/github/flask $ git log --pretty=short --abbrev-commit master~5..master~1
+       commit 94c007f
+       Author: Harri Feng <fenghaoran18@gmail.com>
+       
+           update
+       
+       commit ca4aec9
+       Author: Harri Feng <fenghaoran18@gmail.com>
+       
+           can show admin
+       
+       commit a9726c4
+       Author: Armin Ronacher <armin.ronacher@active-4.com>
+       
+           Updated mod_wsgi docs to reference the sys.path hackery
+       
+       commit c90858a
+       Author: Armin Ronacher <armin.ronacher@active-4.com>
+       
+           Added a branch to test functionality enabled by new test client
+     #+end_src
+   + 参数-p用来打印此次commit引入的改变, 注意,如果不加限定还是会从尾打到头,所以
+     下面的例子用-1来限定只打印一个
+     #+begin_src sh
+       c:/github/MyWay/TMP $ git log -1 -p master
+       commit 1f50ab4d2272d42ba75f72b718c4f488fc467975
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Tue Feb 21 22:54:33 2012 +0800
+       
+           daily for chapter 6
+       
+       diff --git a/TMP/version_control_git.org b/TMP/version_control_git.org
+       index bac4497..5aeaa7a 100644
+       --- a/TMP/version_control_git.org
+       +++ b/TMP/version_control_git.org
+       @@ -925,5 +925,23 @@
+               adf2a1e16625b7bed13ef21becde2bae431bf196 daily2
+       ,      #+end_src
+        ** refs and symrefs
+       -   + 
+       +   + ref 是一个SHA1 hash ID指向Git object store的
+       +   + symbolic ref就是symref,是指向一个Git object的名字(通常是英文的)
+       +   + 每一个symbolic ref都有一个明确的全称,而这些全称有三个namespace:
+     #+end_src
+
+   + 参数--stat用来统计某次commit引入的行, 注意这里如果不加以限定范围的话,还是会
+     和log一样从尾打印到头. 下面的例子是从倒数第三打印到头.
+     #+begin_src sh 
+       c:/github/MyWay/TMP $ git log --stat master~3..master
+       commit 1f50ab4d2272d42ba75f72b718c4f488fc467975
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Tue Feb 21 22:54:33 2012 +0800
+       
+           daily for chapter 6
+       
+        TMP/version_control_git.org |   20 +++++++++++++++++++-
+        1 files changed, 19 insertions(+), 1 deletions(-)
+       
+       commit 167ddc015929c41dea00ab3868170032f86c6f82
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Tue Feb 21 22:25:49 2012 +0800
+       
+           daily
+       
+        TMP/version_control_git.org |   31 +++++++++++++++++++++++++++++--
+        1 files changed, 29 insertions(+), 2 deletions(-)
+       
+       commit ed8a398a906d14ad2b9ac7524771f0eef04baefa
+       Author: haoran feng <fenghaoran18@gmail.com>
+       Date:   Sun Feb 19 16:24:18 2012 +0800
+       
+           finish chapter 5
+       
+        TMP/version_control_git.org |  111 ++++++++++++++++++++++++++++++++++++++++++-
+        1 files changed, 109 insertions(+), 2 deletions(-)
+     #+end_src
+  + 我们还可以通过git show来查看object store
+** Commit Graphic
+   
+
+
     
+
 
