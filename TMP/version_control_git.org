@@ -305,7 +305,6 @@
 
 
 
-
 * Chapter 4: Basic Git Concepts
 ** Repositories
    + 像其他的VCS一样, git保留了整个项目的所有代码,不同的是,git还把代码库的信息都
@@ -553,7 +552,6 @@
      #+end_src
    + Git通常是对一个commit来进行tag,所代表的就是一个tree,通过这个tree就代表了当
      时所有的文件.这和CVS里面对一个文件进行tag是不同的
-
 
 
 
@@ -884,11 +882,6 @@
    + .gitignore既然是设置在非.git文件夹下,那么就是一个正常的文件,在clone的时候,
      每个用户的代码库中都会有一份,如果你想让这个被忽略的文件列表只对你个人成立,
      那么请把规则写到.git/info/exclude 这个文件
-
-
-
-
-
 
 * Chapter 6: Commits
   + 我们前面讲过了,当我们git add, git mv的时候,其实我们是把变化提交到index
