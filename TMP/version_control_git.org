@@ -1037,7 +1037,109 @@
      #+end_src
   + 我们还可以通过git show来查看object store
 ** Commit Graphic
-   
+   + 可以用命令 gitk来查看版本信息的图片格式
+** Commit Ranges
+   + 可以通过".."符号来隔开两个版本,然后显示这两个版本之间的版本信息,比如
+     M~12..M~10 的意思就是第11老和第10老的commit, 都是从当前的最近的一次提交算作
+     最新的一次commit. 值得注意的是,这里是"前开后闭"的方式来取range的.也就是说是
+     (12, 10], 所以range里面不包括第12老的commit
+   + 我们还可以通过前置的(^)来剔除某些我们不想要的值,比如git log ^X Y其实就是和
+     log X..Y一样,因为默认前开后闭么.
+   + 我们可以通过一个例子来加深理解,HEAD就是最近一次的提交,所谓的master~2就是相
+     对于HEAD来说是距离为2
+     #+begin_src sh
+       c:/tmpfile $ git log master
+       commit 9ded61f6601d0b9ebaa563e43a5bb6f382eb5fee
+       Author: harrifeng <fenghaoran18@gmail.com>
+       Date:   Thu Mar 1 22:47:48 2012 +0800
+       
+           commit 3
+       
+       commit 00d0b820c03b8cb85dd0d1e8c1a4c591bc0ab5f7
+       Author: harrifeng <fenghaoran18@gmail.com>
+       Date:   Thu Mar 1 22:42:42 2012 +0800
+       
+           commit 2
+       
+       commit 3bbd42824af9c8ccfe4999263fb3f19b4f74908e
+       Author: harrifeng <fenghaoran18@gmail.com>
+       Date:   Thu Mar 1 22:42:23 2012 +0800
+       
+           commit 1
+       c:/tmpfile $ git log master~..HEAD
+       commit 9ded61f6601d0b9ebaa563e43a5bb6f382eb5fee
+       Author: harrifeng <fenghaoran18@gmail.com>
+       Date:   Thu Mar 1 22:47:48 2012 +0800
+       
+           commit 3
+       c:/tmpfile $ git log master~2..master~1
+       commit 00d0b820c03b8cb85dd0d1e8c1a4c591bc0ab5f7
+       Author: harrifeng <fenghaoran18@gmail.com>
+       Date:   Thu Mar 1 22:42:42 2012 +0800
+       
+           commit 2     
+       c:/tmpfile $ git log master~2..master
+       commit 9ded61f6601d0b9ebaa563e43a5bb6f382eb5fee
+       Author: harrifeng <fenghaoran18@gmail.com>
+       Date:   Thu Mar 1 22:47:48 2012 +0800
+       
+           commit 3
+       
+       commit 00d0b820c03b8cb85dd0d1e8c1a4c591bc0ab5f7
+       Author: harrifeng <fenghaoran18@gmail.com>
+       Date:   Thu Mar 1 22:42:42 2012 +0800
+       
+           commit 2
+     #+end_src
+   + 这里的range的(start, end]中的start和end可以是各种别名,比如master..dev,这些
+     情况都比较复杂,我们只介绍其中比较简单的情况,比如下图, 所谓topic..master就是
+     说,所有不在topic,而在master里面的commit, 那么就只剩下commit v 和 commit x了,
+     T和U被排除的原因是他们为topic的C做了贡献
+     #+begin_example
+       +-----+      +-----+       +-----+       +-----+
+       |  A  |----->|  B  | ----->|  C  | ----->|  D  |          topic
+       +-----+      +-----+   --->+-----+       +-----+
+                             /  
+                            /    
+       +-----+      +------/      +-----+       +-----+
+       |  T  |----->|  U  | ----->|  V  | ----->|  X  |          master
+       +-----+      +-----+       +-----+       +-----+
+       
+                range topic..master == v, x
+            
+     #+end_example
+   + 在看下面的情况, 这次topic是merge到master里面去的.所以T,U都没有对topic做过贡
+     献topic..master就剩下了T,U,V,X
+     #+begin_example
+       +-----+      +-----+ 
+       |  A  |----->|  B  |                                      topic
+       +-----+      +-----+--      
+                             \  
+                              \  
+       +-----+      +------    - >+-----+       +-----+
+       |  T  |----->|  U  | ----->|  V  | ----->|  X  |          master
+       +-----+      +-----+       +-----+       +-----+
+       
+                range topic..master == T, U, V, X
+     #+end_example
+   + 最后一种情况最复杂, 先branch,然后merge. 最终的结果是W,X,Y,Z 因为无论如何,这
+     四个commit都没有影响到topic分支
+     #+begin_example
+        +-----+       +-----+       +-----+      +-----+ 
+        |  A  | ----->|  B  | ----->|  C  |----->|  D  |                                topic
+        +-----+       +-----+   --->+-----+      +-----+--      
+                               /                          \  
+                             -/                            \  
+        +-----+       +-----+       +-----+      +------    - >+-----+       +-----+
+        |  U  | ----->|  V  | ----->|  W  |----->|  X  | ----->|  Y  | ----->|  Z  |    master
+        +-----+       +-----+       +-----+      +-----+       +-----+       +-----+
+                
+                range topic..master = W, X, Y, Z
+            
+     #+end_example
+
+     
+
 
 
     
