@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>bash</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-03-02 17:42:16 "/>
+<meta name="author" content="ahei"/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  {margin-left:auto; margin-right:0px;  text-align:right;}
+  .left   {margin-left:0px;  margin-right:auto; text-align:left;}
+  .center {margin-left:auto; margin-right:auto; text-align:center;}
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top;  }
+  th.right  { text-align:center;  }
+  th.left   { text-align:center;   }
+  th.center { text-align:center; }
+  td.right  { text-align:right;  }
+  td.left   { text-align:left;   }
+  td.center { text-align:center; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">bash</h1>
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 grep 命令 </a>
+<ul>
+<li><a href="#sec-1_1">1.1 实例: </a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2 find 命令 </a>
+<ul>
+<li><a href="#sec-2_1">2.1 实例: </a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> grep 命令 </h2>
+<div class="outline-text-2" id="text-1">
+
+<ul>
+<li>
+grep其实是search文档内容
+</li>
+</ul>
+
+
+</div>
+
+<div id="outline-container-1_1" class="outline-3">
+<h3 id="sec-1_1"><span class="section-number-3">1.1</span> 实例: </h3>
+<div class="outline-text-3" id="text-1_1">
+
+<ul>
+<li>
+通过管道过略输出的内容,只显示以a开头的行
+
+
+
+<pre class="src src-sh">ls -l | grep <span style="color: #ff00ff;">'^a'</span>     
+</pre>
+
+
+</li>
+<li>
+显示所有以d开头的文件中包含test的行
+
+
+
+<pre class="src src-sh">grep <span style="color: #ff00ff;">'test'</span> d*     
+</pre>
+
+
+</li>
+<li>
+在文件aa bb cc中显示匹配test的行
+
+
+
+<pre class="src src-sh">grep <span style="color: #ff00ff;">'test'</span> aa bb cc
+</pre>
+
+
+</li>
+<li>
+在当前文件夹下寻找匹配test的行
+
+
+
+<pre class="src src-sh">grep -r <span style="color: #ff00ff;">'test'</span> . 
+</pre>
+
+
+</li>
+<li>
+在aa中寻找这样一些行,这些行至少包含一个字符串,这个字符串至少有5个连续的小写
+字母
+
+
+
+<pre class="src src-sh">grep <span style="color: #ff00ff;">'[a-z]\{5\}'</span> aa
+<span style="color: #ff7f24;">#</span><span style="color: #ff0000;">&#22914;&#26524;&#29992;egrep&#25110;&#32773;-E&#30340;&#35805;,&#37027;&#20040;&#19981;&#38656;&#35201;'\'&#26469;&#36827;&#34892;&#36716;&#24847;
+</span>grep -E <span style="color: #ff00ff;">'[a-z]{5}'</span> aa
+egrep <span style="color: #ff00ff;">'[a-z]{5}'</span> aa
+</pre>
+
+
+</li>
+<li>
+比如我们想要找如"westfhres"或者"westes"这样的字符串:es出现了两次第一次被w和
+t包裹着,t后面跟若干任意字符,在接一次es:
+
+
+
+<pre class="src src-sh">grep <span style="color: #ff00ff;">'w\(es\)t.*\1'</span> aa
+<span style="color: #ff7f24;">#</span><span style="color: #ff0000;">egrep&#30340;&#24773;&#20917;&#19979;"\1"&#36824;&#26159;&#19981;&#33021;&#30465;&#30340;
+</span>egrep <span style="color: #ff00ff;">'w(es)t.*\1'</span> aa
+</pre>
+
+
+
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> find 命令 </h2>
+<div class="outline-text-2" id="text-2">
+
+<ul>
+<li>
+find命令其实是search文件名
+</li>
+</ul>
+
+
+</div>
+
+<div id="outline-container-2_1" class="outline-3">
+<h3 id="sec-2_1"><span class="section-number-3">2.1</span> 实例: </h3>
+<div class="outline-text-3" id="text-2_1">
+
+<ul>
+</ul>
+
+</div>
+</div>
+</div>
+<div id="postamble">
+<p class="author"> Author: ahei
+</p>
+<p class="date"> Date: 2012-03-02 17:42:16 </p>
+<p class="creator">HTML generated by org-mode 7.3 in emacs 23</p>
+</div>
+</div>
+</body>
+</html>
