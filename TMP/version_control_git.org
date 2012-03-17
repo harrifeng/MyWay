@@ -304,7 +304,6 @@
       #+end_src
 
 
-
 * Chapter 4: Basic Git Concepts
 ** Repositories
    + 像其他的VCS一样, git保留了整个项目的所有代码,不同的是,git还把代码库的信息都
@@ -552,7 +551,6 @@
      #+end_src
    + Git通常是对一个commit来进行tag,所代表的就是一个tree,通过这个tree就代表了当
      时所有的文件.这和CVS里面对一个文件进行tag是不同的
-
 
 
 
@@ -1137,11 +1135,42 @@
                 range topic..master = W, X, Y, Z
             
      #+end_example
+** 
+* Chapter 7: Branches
+** Reasons for Using Branches
+   + 一般来说一个branch都是为一个customer release准备的,比如现在是1.0版本,那么要
+     开发1.1版本就要准备一个branch
+   + branch还可以代表开发的不同时期
+   + branch还可以单独用来解决一个复杂的bug或者开发一个新的feature
+   + branch还可以代表不同的开发者的工作
+** Branch Names
+   + branch的名字是可以随便取的,除了如下几个不同:
+     + 代码库中默认的branch是master,一般这里面是最可靠的代码
+     + 在命名branch的时候,我们可以采用unix文件结构的形式,给名字多加一层,比如bug/pr-1023,
+       bug/pr-17这种
+** Dos and Don'ts in Branch Names
+   + 不要以slash结尾
+   + 不要再"/"后面跟一个".", 比如feature/.new
+   + 不要再名字中包含: space, :, ~, ^,等等这些在git中有意义的字符串
+** Using Branches
+   + 在一个代码库中,可以有多个branch,但是只有一个branch是"active"的, 默认情况下,
+     master就是那个active的branch,当然你也可以设定任何其他的为active branch
+   + 每个branch都有一个唯一的名字,比如叫做dev,而这个名字一直都是和最新提交到这个
+     branch上的commit联系在一块的.某个branch上最新提交的commit就叫做tip,或者head
+   + Git不会跟踪branch上面的所有提交的, 也就是说,如果你想要找到dev branch前面五个
+     提交,那么你就要用dev~5,这种写法.如果它非常有意义,那么你给他个tag好了,比如
+     stable v1.2
+   + Merge是一个branch的重点,一旦merge,那么原来的branch会融合到一个新的branch里面去
+** Creating Branches
+   + 一个新的branch是基于某个特定的commit的,是由你来决定哪个commit来作为一个branch
+     的七点的
+   + 比如你选择从当前的HEAD开始,建立一个branch俩解决Problem Report 1138, 那么你就可以
+     #+begin_src sh
+       > git branch prs/pr-1138
+     #+end_src
+   + 创建了branch只是说现在代码库里面多了个branch而已,你并没有转移到这个新的bracnh,
+     你所有的操作还是基于原来的active branch的
+   + git 创建除了可以默认从HEAD开始以外,还可以从指定commit,这需要commit ID (也可以从
+     其他的branch name开始, 但是commit id无疑是最精确的)
 
-     
-
-
-
-    
-
-
+** 
