@@ -1172,5 +1172,108 @@
      你所有的操作还是基于原来的active branch的
    + git 创建除了可以默认从HEAD开始以外,还可以从指定commit,这需要commit ID (也可以从
      其他的branch name开始, 但是commit id无疑是最精确的)
-
-** 
+     #+begin_src sh
+       > git branch prs/pr-1138 db7de5feebef
+     #+end_src
+** Listing Branche Names
+   + 我们可以用git branch 来列出topic branch
+   + 加上-r可以列出remote tracking branch
+   + 加上-a可以把两者都列出
+** Viewing Branches
+   + git show-branch会有更多更详细的信息
+** Checking Out Branches
+   + 我们可以用git checkout来调整当前的active branch
+     #+begin_src sh
+       c:/code/testgit $ git branch
+         bug/fix101
+       ,* master
+       c:/code/testgit $ git checkout bug/fix101
+       Switched to branch 'bug/fix101'
+       c:/code/testgit $ git branch
+       ,* bug/fix101
+         master
+     #+end_src
+   + checkout 替换branch的话,会对代码库造成影响, 新branch存在而老branch不存在的文件会被
+     重新放出来.反之亦然.
+** Checking out when you have uncommited changes:
+   + 如果我们在想转换到其他的branch的时候,我们有没提交的代码,那么就会出现error而无法提交
+     情况如下
+     #+begin_src sh
+       c:/code/testgit $ git branch
+         dev
+       ,* master
+       c:/code/testgit $ git checkout dev
+       error: Your local changes to the following files would be overwritten by checkout:
+               NewStuff
+       Please, commit your changes or stash them before you can switch branches.
+       Aborting
+       c:/code/testgit $ git diff NewStuff 
+       diff --git a/NewStuff b/NewStuff
+       index 0f2416e..5e79566 100644
+       --- a/NewStuff
+       +++ b/NewStuff
+       @@ -1 +1,2 @@
+        Something
+       +Something else
+       c:/code/testgit $ git show dev:NewStuff
+       Something
+       A Change
+     #+end_src
+   + 这种情况下有如下选择:
+     1) 加一个-f可以把当前的代码放弃掉,强制转换到dev
+     2) commit当前代码到master,然后转移到dev,但是Something else这个改变是无法传递
+        给dev了.
+     3) 还可以加一个 -m 参数来成功把改变传递给dev branch,并且转到新的branch,但是
+	其实内容是明文书写出两者的不同
+	#+begin_src sh
+          c:/code/testgit $ git checkout -m dev
+          M       NewStuff
+          Switched to branch 'dev'
+          c:/code/testgit $ cat NewStuff 
+          Something
+          <<<<<<< dev
+          A Change
+          =======
+          Something else
+          >>>>>>> local
+          c:/code/testgit $ git show master:NewStuff
+          Something
+        #+end_src
+   + 上面的最后一行,说明,如果是merge进到dev里面话,master是不会添加这个更改的, 为什么
+     要这么设计呢?这是为了如果某个代码是为dev准备的,而不小心写到了master里面,我们可以
+     通过这个方式来把代码传给dev. 如果是新添加代码,我们可以不用加-m,而自动的merge进
+     到新的branch里面去,比如下面的例子
+     #+begin_src sh
+       c:/code/testgit $ echo "Some bug fix" >> NewStuff 
+       c:/code/testgit $ cat NewStuff 
+       Something
+       Some bug fix
+       c:/code/testgit $ git show bug/pr-1:NewStuff
+       Something
+       c:/code/testgit $ git checkout bug/pr-1
+       M       NewStuff
+       Switched to branch 'bug/pr-1'
+       c:/code/testgit $ cat NewStuff 
+       Something
+       Some bug fix
+       c:/code/testgit $ git diff
+       diff --git a/NewStuff b/NewStuff
+       index 0f2416e..b4d8596 100644
+       --- a/NewStuff
+       +++ b/NewStuff
+       @@ -1 +1,2 @@
+        Something
+       +Some bug fix
+     #+end_src
+** Creating and Checking out a New Branch
+   + 如果上面的情况不是把新添加的代码提交到一个已有的branch,而是想新添加一个branch,那么
+     加一个-b就可以解决问题
+   + 也就是说下面的命令1==命令2+命令3
+     #+begin_src sh
+       git checkout -b new-branch start-point
+       
+       git branch new-branch start-point
+       git checkout new-branch
+     #+end_src
+     
+     
