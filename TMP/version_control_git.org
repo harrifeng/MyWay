@@ -1275,5 +1275,109 @@
        git branch new-branch start-point
        git checkout new-branch
      #+end_src
-     
-     
+** Detached HEAD Branches
+   + 一般情况下,我们都是checkout某一个branch name的,那么默认就是checkout这个
+     branch的HEAD,但是我们其实是可以checkout 任何一个commit,在这种条件下,Git会给
+     我们创建一个匿名的branch来存放,叫做detached HEAD
+   + 具体来说,创建detached HEAD的情况有如下几种:
+     1) checkout 某一个commit, 此commit并不是branch的head
+     2) checkout一个 tracking branch
+     3) checkout一个 tag指向的commit
+     4) 使用git bisect
+     5) 使用git submodule update
+   + 我们在得到detached HEAD的情况下,git branch的结果是空的,我们要自己申请一个新
+     的branch
+     #+begin_src sh
+       c:/github/git $ git checkout v1.6.0
+       Checking out files: 100% (2171/2171), done.
+       Note: checking out 'v1.6.0'.
+       
+       You are in 'detached HEAD' state. You can look around, make experimental
+       changes and commit them, and you can discard any commits you make in this
+       state without impacting any branches by performing another checkout.
+       
+       If you want to create a new branch to retain commits you create, you may
+       do so (now or later) by using -b with the checkout command again. Example:
+       
+         git checkout -b new_branch_name
+       
+       HEAD is now at ea02eef... GIT 1.6.0
+       c:/github/git $ git branch
+       ,* (no branch)
+         master
+       c:/github/git $ git checkout -b new_branch
+       Switched to a new branch 'new_branch'
+       c:/github/git $ git branch
+         master
+       ,* new_branch
+     #+end_src
+   + 或者我们在这种情况下选择转换到已有的branch
+     #+begin_src sh
+       c:/github/git $ git branch
+       ,* (no branch)
+         master
+         new_branch
+       c:/github/git $ git checkout master
+       Checking out files: 100% (2171/2171), done.
+       Previous HEAD position was ea02eef... GIT 1.6.0
+       Switched to branch 'master'
+       c:/github/git $ git branch
+       ,* master
+     #+end_src
+** Deleting Branches
+   + 删除branch的命令是git branch -d, 但是删除也不是那么容易的,因为需要保证:
+     1) 不能再bug-fix branch,否则无法删除当前branch
+     2) 如果在bug-fix上面的某个commit是独有的,那么删除这个branch显然会导致某些
+        commit访问不到,这种情况下,我们就要么-D强制删除,要么把bug-fix branch里面
+        的内容merge到master上面去
+     #+begin_src sh 
+       c:/github/testgit $ git branch -d bug-fix
+       error: Cannot delete the branch 'bug-fix' which you are currently on.
+       c:/github/testgit $ git checkout master
+       Switched to branch 'master'
+       c:/github/testgit $ git branch -d bug-fix
+       error: The branch 'bug-fix' is not fully merged.
+       If you are sure you want to delete it, run 'git branch -D bug-fix'.
+       c:/github/testgit $ git merge bug-fix
+       Auto-merging test.c
+       CONFLICT (content): Merge conflict in test.c
+       Automatic merge failed; fix conflicts and then commit the result.
+       c:/github/testgit $ cat test.c
+       first
+       <<<<<<< HEAD
+       third
+       =======
+       second
+       >>>>>>> bug-fix
+       c:/github/testgit $ cat test.c
+       first
+       second
+       third
+       c:/github/testgit $ git add test.c
+       c:/github/testgit $ git branch -d bug-fix
+       error: The branch 'bug-fix' is not fully merged.
+       If you are sure you want to delete it, run 'git branch -D bug-fix'.
+       c:/github/testgit $ git show-branch
+       ! [bug-fix] second commit
+        * [master] third commit
+       --
+        * [master] third commit
+       +  [bug-fix] second commit
+       +* [master^] first commit
+       c:/github/testgit $ git commit -m "merge"
+       [master 445df98] merge
+       c:/github/testgit $ git show-branch
+       ! [bug-fix] second commit
+        * [master] merge
+       --
+        - [master] merge
+       +* [bug-fix] second commit
+       c:/github/testgit $ git branch -d bug-fix
+       Deleted branch bug-fix (was 0a3a64b).
+       c:/github/testgit $ git show-branch
+       [master] merge
+     #+end_src
+
+	
+   
+   
