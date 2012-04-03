@@ -1381,3 +1381,182 @@
 	
    
    
+* Chapter 8: Diffs
+** Forms of the git diff Command
+   + git diff 主要有下面四种命令格式:
+     1) git diff : 主要显示你的working directory 和 index(也就是staged而没有
+        commit的部分)的区别
+     2) git diff commit: 显示workding directory 和指定commit的区别, 比如HEAD, 这
+        个可以比较working directory和上次提交的差别
+     3) git diff --cached commit: 显示index和某个特定的commit的区别
+     4) git diff commit1 commit2: 显示两个commit之间的区别
+* Chapter 9: Merges
+** Merge Examples
+   + 为了能够把"other_branch" merge到"branch"里面去,你要做到如下:先进入想要去的
+     branch, 然后git merge
+     #+begin_src sh 
+       > git checkot branch
+       > gt merge other_branch
+     #+end_src
+** Preparing for a Merge
+   + 你不必要clean了才进行merge,但是clean了再merge肯定更好
+** Merging Two Branches
+   + 我们先来看一个能够自动merge的例子
+     #+begin_src sh 
+       c:/github/mergeExample $ echo 'line 1' >> file
+       c:/github/mergeExample $ echo 'line 2' >> file
+       c:/github/mergeExample $ echo 'line 3' >> file
+       c:/github/mergeExample $ cat file
+       line 1
+       line 2
+       line 3
+       c:/github/mergeExample $ git add file
+       c:/github/mergeExample $ git commit -m "initial 3 line file"
+       [master (root-commit) cbc0418] initial 3 line file
+        1 files changed, 3 insertions(+), 0 deletions(-)
+        create mode 100644 file
+       c:/github/mergeExample $ echo 'Here is stuff on another file' > other_file
+       c:/github/mergeExample $ git add other_file 
+       c:/github/mergeExample $ git commit -m "Another file"
+       [master 511b0fc] Another file
+        1 files changed, 1 insertions(+), 0 deletions(-)
+        create mode 100644 other_file
+       c:/github/mergeExample $ git checkout -b alternate master^
+       Switched to a new branch 'alternate'
+       c:/github/mergeExample $ git show-branch
+       ,* [alternate] initial 3 line file
+        ! [master] Another file
+       --
+        + [master] Another file
+       ,*+ [alternate] initial 3 line file
+       c:/github/mergeExample $ echo 'Line 4 alternate stuff' >> file
+       c:/github/mergeExample $ git commit -a -m"Add alternate's line4"
+       [alternate 628c5c9] Add alternate's line4
+        1 files changed, 1 insertions(+), 0 deletions(-)
+       c:/github/mergeExample $ git checkout master
+       Switched to branch 'master'
+       c:/github/mergeExample $ git status
+       # On branch master
+       nothing to commit (working directory clean)
+       c:/github/mergeExample $ git merge alternate
+       Merge made by the 'recursive' strategy.
+        file |    1 +
+        1 files changed, 1 insertions(+), 0 deletions(-)
+       c:/github/mergeExample $ git log --graph --pretty=oneline --abbrev-commit
+       ,*   25dc4a4 Merge branch 'alternate'
+       |\  
+       | * 628c5c9 Add alternate's line4
+       ,* | 511b0fc Another file
+       |/  
+       ,* cbc0418 initial 3 line file
+     #+end_src
+   + 这个例子是常见的merge情况, 'alternate' branch是从master前面一个版本分出去的,
+     然后要merge到最新的master, 新的master比起'alternate'最开始的状态来说就是多
+     了一个other_file, 所以对于file的更改merge回到master显得那么的顺理成章
+** A Merge with a Conflict
+   + 我们再来看看如果出现无法自动merge的情况,其实也很简单,只要记得解决merge之后
+     add一下就可以了
+     #+begin_src sh 
+       c:/github/mergeExample $ git branch
+         alternate
+       ,* master
+       Line 4 alternate stuff
+       c:/github/mergeExample $ echo 'line 5' >> file
+       c:/github/mergeExample $ echo 'line 6' >> file
+       c:/github/mergeExample $ cat file
+       line 1
+       line 2
+       line 3
+       Line 4 alternate stuff
+       line 5
+       line 6
+       c:/github/mergeExample $ git commit -a -m "Add line 5 and 6"
+       [master a1cf4f2] Add line 5 and 6
+        1 files changed, 2 insertions(+), 0 deletions(-)
+       c:/github/mergeExample $ git checkout alternate
+       Switched to branch 'alternate'
+       c:/github/mergeExample $ git show-branch
+       ,* [alternate] Add alternate's line4
+        ! [master] Add line 5 and 6
+       --
+        + [master] Add line 5 and 6
+       ,*+ [alternate] Add alternate's line4
+       c:/github/mergeExample $ echo 'line 5 alternate stuff' >> file
+       c:/github/mergeExample $ echo 'line 6 alternate stuff' >> file
+       c:/github/mergeExample $ git diff
+       diff --git a/file b/file
+       index f68a94a..bb009f4 100644
+       --- a/file
+       +++ b/file
+       @@ -2,3 +2,5 @@ line 1
+        line 2
+        line 3
+        Line 4 alternate stuff
+       +line 5 alternate stuff
+       +line 6 alternate stuff
+       c:/github/mergeExample $ git commit -a -m "Add alternate line 5 and 6"
+       [alternate 2361730] Add alternate line 5 and 6
+        1 files changed, 2 insertions(+), 0 deletions(-)
+       c:/github/mergeExample $ git show-branch
+       ,* [alternate] Add alternate line 5 and 6
+        ! [master] Add line 5 and 6
+       --
+       ,*  [alternate] Add alternate line 5 and 6
+        + [master] Add line 5 and 6
+       ,*+ [alternate^] Add alternate's line4
+       c:/github/mergeExample $ git checkout master
+       Switched to branch 'master'
+       c:/github/mergeExample $ git merge alternate
+       Auto-merging file
+       CONFLICT (content): Merge conflict in file
+       Automatic merge failed; fix conflicts and then commit the result.
+       nnc:/github/mergeExample $ git diff
+       diff --cc file
+       index afd51ce,bb009f4..0000000
+       --- a/file
+       +++ b/file
+       @@@ -2,5 -2,5 +2,10 @@@ line 
+         line 2
+         line 3
+         Line 4 alternate stuff
+       ++<<<<<<< HEAD
+        +line 5
+        +line 6
+       ++=======
+       + line 5 alternate stuff
+       + line 6 alternate stuff
+       ++>>>>>>> alternate
+       c:/github/mergeExample $ cat file
+       line 1
+       line 2
+       line 3
+       Line 4 alternate stuff
+       line 5
+       line 6 alternate stuff
+       c:/github/mergeExample $ git add file
+       c:/github/mergeExample $ git commit 
+       error: Terminal is dumb, but EDITOR unset
+       Please supply the message using either -m or -F option.
+       c:/github/mergeExample $ git commit -m "Merge branch 'altenate'"
+       [master f31a8e5] Merge branch 'altenate'
+       c:/github/mergeExample $ git show-branch
+       ! [alternate] Add alternate line 5 and 6
+        * [master] Merge branch 'altenate'
+       --
+        - [master] Merge branch 'altenate'
+       +* [alternate] Add alternate line 5 and 6
+       c:/github/mergeExample $ git log --graph --pretty=oneline --abbrev-commit
+       ,*   f31a8e5 Merge branch 'altenate'
+       |\  
+       | * 2361730 Add alternate line 5 and 6
+       ,* | a1cf4f2 Add line 5 and 6
+       ,* |   25dc4a4 Merge branch 'alternate'
+       |\ \  
+       | |/  
+       | * 628c5c9 Add alternate's line4
+       ,* | 511b0fc Another file
+       |/  
+       ,* cbc0418 initial 3 line file
+     #+end_src
+
+
