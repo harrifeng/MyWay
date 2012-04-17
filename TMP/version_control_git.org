@@ -1,3 +1,4 @@
+#+OPTIONS: ^:nil
 * Chapter 1: Introduction
   + Background:
     主要就是介绍凡是一切可以保存不同版本信息的工具都叫Version Control System
@@ -140,7 +141,6 @@
 *** Making Another Commit
     + 我们可以对index.html进行一次更改,然后进行提交,如此一来,这个文件就有两个版
       本了
-#+OPTIONS: ^:nil
 *** Viewing Your Commits
     + 我们可以通过git log来取出历次commit的信息
       #+begin_src sh 
