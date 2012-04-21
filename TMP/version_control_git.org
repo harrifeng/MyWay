@@ -304,7 +304,6 @@
         ,* ed24602 Initial contents of public_html
       #+end_src
 
-
 * Chapter 4: Basic Git Concepts
 ** Repositories
    + 像其他的VCS一样, git保留了整个项目的所有代码,不同的是,git还把代码库的信息都
@@ -552,7 +551,6 @@
      #+end_src
    + Git通常是对一个commit来进行tag,所代表的就是一个tree,通过这个tree就代表了当
      时所有的文件.这和CVS里面对一个文件进行tag是不同的
-
 
 
 
@@ -1381,7 +1379,6 @@
 
 	
    
-   
 * Chapter 8: Diffs
 ** Forms of the git diff Command
    + git diff 主要有下面四种命令格式:
@@ -1560,4 +1557,209 @@
        ,* cbc0418 initial 3 line file
      #+end_src
 ** Working with Merge Conficts
+   + 首先建立一个无法通过自动merge成功的例子
+     #+begin_src sh 
+       c:\tmp\hellotest>git init
+       git init
+       Initialized empty Git repository in c:/tmp/hellotest/.git/
+       
+       c:\tmp\hellotest>echo hello > hello
+       echo hello > hello
+       
+       c:\tmp\hellotest>git add hello
+       git add hello
+       
+       c:\tmp\hellotest>git commit -m"Initial hello file"
+       git commit -m"Initial hello file"
+       [master (root-commit) cb52e24] Initial hello file
+       
+       c:\tmp\hellotest>git checkout -b alt
+       git checkout -b alt
+       Switched to a new branch 'alt'
+       
+       c:\tmp\hellotest>echo world >> hello
+       echo world >> hello
+       
+       c:\tmp\hellotest>echo 'Yay!' >> hello
+       echo 'Yay!' >> hello
+       
+       c:\tmp\hellotest>git commit -a -m"Onew world"
+       git commit -a -m"Onew world"
+       [alt c546e44] Onew world
+        1 files changed, 2 insertions(+), 0 deletions(-)
+       
+       c:\tmp\hellotest>git checkout master
+       git checkout master
+       Switched to branch 'master'
+       
+       c:\tmp\hellotest>echo worlds >> hello
+       echo worlds >> hello
+       
+       c:\tmp\hellotest>echo 'Yay!' >> hello
+       echo 'Yay!' >> hello
+       
+       c:\tmp\hellotest>git commit -a -m"All worlds"
+       git commit -a -m"All worlds"
+       [master dcd882e] All worlds
+        1 files changed, 2 insertions(+), 0 deletions(-)
+       
+       c:\tmp\hellotest>git merge alt
+       git merge alt
+       Auto-merging hello
+       CONFLICT (content): Merge conflict in hello
+       Automatic merge failed; fix conflicts and then commit the result.
+       
+       c:\tmp\hellotest>cat hello
+       cat hello
+       hello 
+       <<<<<<< HEAD
+       worlds 
+       =======
+       world 
+       >>>>>>> alt
+       'Yay!' 
+       
+     #+end_src
+** Locating Conflicted Files
+   + 在自动merge 失败以后,我们有两种方法来了解当前的merge情况,一个是git status,
+     一个是git ls-files
+     #+begin_src sh 
+       c:\tmp\hellotest>git status
+       git status
+       # On branch master
+       # Unmerged paths:
+       #   (use "git add/rm <file>..." as appropriate to mark resolution)
+       #
+       #       both modified:      hello
+       #
+       no changes added to commit (use "git add" and/or "git commit -a")
+       
+       c:\tmp\hellotest>git ls-files -u
+       git ls-files -u
+       100644 f2aa86d258996d05834897f0e3b668d342109bdc 1       hello
+       100644 d5c2ed886cb598005a265c23f8712260e76074e0 2       hello
+       100644 045f32f803e86abb0a18afd4b3778d69d46d705f 3       hellow
+     #+end_src
+** Inspecting Conflicts
+   + 我们查看具体差别有三种方式
+     1) 工作目录下面的文件和HEAD比较
+	#+begin_src sh 
+          c:\tmp\hellotest>git diff HEAD
+          git diff HEAD
+          diff --git a/hello b/hello
+          index d5c2ed8..a883836 100644
+          --- a/hello
+          +++ b/hello
+          @@ -1,3 +1,7 @@
+           hello 
+          +<<<<<<< HEAD
+           worlds 
+          +=======
+          +world 
+          +>>>>>>> alt
+           'Yay!' 
+	#+end_src
+     2) 工作目录下面的文件和MERGE_HEAD比较
+	#+begin_src sh 
+          c:\tmp\hellotest>git diff MERGE_HEAD
+          git diff MERGE_HEAD
+          diff --git a/hello b/hello
+          index 045f32f..a883836 100644
+          --- a/hello
+          +++ b/hello
+          @@ -1,3 +1,7 @@
+           hello 
+          +<<<<<<< HEAD
+          +worlds 
+          +=======
+           world 
+          +>>>>>>> alt
+           'Yay!' 
+	#+end_src
+     3) 工作目录下面的文件和HEAD以及MERGE_HEAD同时比较, 如果什么参数都不写就是默
+        认和两个head比较,需要注意的是这次"+"号是错开的,没有对齐.
+	#+begin_src sh 
+          c:\tmp\hellotest>git diff 
+          git diff 
+          diff --cc hello
+          index d5c2ed8,045f32f..0000000
+          --- a/hello
+          +++ b/hello
+          @@@ -1,3 -1,3 +1,7 @@@
+            hello 
+          ++<<<<<<< HEAD
+           +worlds 
+          ++=======
+          + world 
+          ++>>>>>>> alt
+            'Yay!' 
+	#+end_src
+   + 回想我们前面"git ls-files -u"看到的三个结点,也就不难想出他们代表的含义了
+   + 同时注意的是后来git又新增了git diff --ours来作为git diff HEAD的同义词, 使用
+     git diff --theirs来作为git diff MERGE_HEAD的同义词
+     - ours是指的你从哪里开始merge
+     - theris是指的目的地,你merge到哪里.在这个例子里面就是master, 所以git diff
+       --theirs 就是master新增的内容会加"+"
+   + 如果你直接把"++<<<<<<"和"++>>>>>"去掉,你看到的就是如下的情景: 也就是说,对于
+     Git来说那些<<<<>>>>只是起到了提示作用,熟悉了就能从+号的错位来判断出来改变源
+     自不同的head(同时注意这时候,工作目录里面的文件内容也改变了,因为我们直接去掉
+     了<<<>>>就等于合并了两次的修改)
+     #+begin_src sh 
+       c:\tmp\hellotest>git diff
+       git diff
+       diff --cc hello
+       index d5c2ed8,045f32f..0000000
+       --- a/hello
+       +++ b/hello
+       @@@ -1,3 -1,3 +1,4 @@@
+         hello 
+        +worlds 
+       + world 
+         'Yay!' 
+     #+end_src
+** Finishing Up a Conflict Resolution
+   + 等我们自己解决好conflict,然后add一下,就解决问题啦,在ls-files一看,就只有一个
+     hello了, git show可以看到这次commit的具体情况
+     #+begin_src sh 
+       c:\tmp\hellotest>git add hello 
+       git add hello 
+       
+       c:\tmp\hellotest>git ls-files -s
+       git ls-files -s
+       100644 b9d31fc9f31ecbee1c9ab60816144e4b5ff9a882 0       hello
+
+       c:\tmp\hellotest>git commit -m "already include all the files"
+       git commit -m "already include all the files"
+       [master ae2c2d6] already include all the files
+       c:\tmp\hellotest>git show
+
+       git show
+       commit ae2c2d6e6f0c8d724638a2e758ebfce7715b7880
+       Merge: dcd882e c546e44
+       Author: T60p <harrifeng@gmail.com>
+       Date:   Sun Apr 22 00:19:56 2012 +0800
+       
+           already include all the files
+       
+       diff --cc hello
+       index d5c2ed8,045f32f..b9d31fc
+       --- a/hello
+       +++ b/hello
+       @@@ -1,3 -1,3 +1,4 @@@
+         hello 
+        +worlds 
+       + world 
+         'Yay!' 
+       
+     #+end_src
+
+** Aborting or Restarting a Merge
+   + 如果还没commit,我们可以用下面的命令来强制返回没merge的状态
+     #+begin_src sh 
+       git reset --hard HEAD
+     #+end_src
+   + 如果已经commit了,我们可以用下面的命令来强制返回没merge的状态
+     #+begin_src sh 
+       git reset --hard ORIG_HEAD
+     #+end_src
 
